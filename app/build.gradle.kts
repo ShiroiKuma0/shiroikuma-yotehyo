@@ -22,9 +22,12 @@ fun hasSigningVars(): Boolean {
             && providers.environmentVariable("SIGNING_STORE_PASSWORD").orNull != null
 }
 
+val forkVersionName = "${project.property("VERSION_NAME")}+${project.property("BUILD_NUMBER")}"
+val forkVersionCode = project.property("VERSION_CODE").toString().toInt() * 10000 +
+        project.property("BUILD_NUMBER").toString().toInt()
+
 base {
-    val versionCode = project.property("VERSION_CODE").toString().toInt()
-    archivesName = "calendar-$versionCode"
+    archivesName = "shiroikuma-yotehyo_${forkVersionName}_arm64-v8a"
 }
 
 android {
@@ -34,8 +37,8 @@ android {
         applicationId = project.property("APP_ID").toString()
         minSdk = project.libs.versions.app.build.minimumSDK.get().toInt()
         targetSdk = project.libs.versions.app.build.targetSDK.get().toInt()
-        versionCode = project.property("VERSION_CODE").toString().toInt()
-        versionName = project.property("VERSION_NAME").toString()
+        versionCode = forkVersionCode
+        versionName = forkVersionName
         vectorDrawables.useSupportLibrary = true
         ksp {
             arg("room.schemaLocation", "$projectDir/schemas")
@@ -116,7 +119,7 @@ android {
         )
     }
 
-    namespace = project.property("APP_ID").toString()
+    namespace = project.property("APP_NAMESPACE").toString()
 
     lint {
         checkReleaseBuilds = false
@@ -138,6 +141,48 @@ detekt {
     config.setFrom("$rootDir/detekt.yml")
     buildUponDefaultConfig = true
     allRules = false
+}
+
+tasks.register("buildFoss") {
+    description = "Build the signed foss release APK, copy it to ~/tmp, then bump BUILD_NUMBER"
+    dependsOn("assembleFossRelease")
+    doLast {
+        val apkName = "shiroikuma-yotehyo_${forkVersionName}_arm64-v8a.apk"
+        val outputDir = layout.buildDirectory.dir("outputs/apk/foss/release").get().asFile
+        val targetDir = File(System.getProperty("user.home"), "tmp")
+        targetDir.mkdirs()
+        outputDir.listFiles { _, name -> name.endsWith(".apk") }?.firstOrNull()?.let { apk ->
+            val targetFile = File(targetDir, apkName)
+            apk.copyTo(targetFile, overwrite = true)
+            println("[1;36m>>> ~/tmp/$apkName[0m")
+
+            // Optional convenience prompt for manual terminal runs. Under Claude Code
+            // this read gets EOF and is skipped — Claude asks and runs `adb push` itself.
+            ProcessBuilder("bash", "-c", """
+                echo -e '\033[1;33m>>> CONNECT YOUR PHONE VIA USB AND ENABLE ADB <<<\033[0m'
+                read -p ${'$'}'\033[1;33m>>> Push to phone? (y/n) \033[0m' ans
+                if [[ "${'$'}ans" =~ ^[Yy]${'$'} ]]; then
+                    adb shell mkdir -p /sdcard/tmp
+                    adb push '${targetFile.absolutePath}' '/sdcard/tmp/$apkName'
+                    echo -e '\033[1;32m>>> Pushed to /sdcard/tmp/$apkName\033[0m'
+                else
+                    echo "Skipped adb push."
+                fi
+            """.trimIndent()).inheritIO().start().waitFor()
+        }
+
+        // Auto-increment BUILD_NUMBER so the next build is the next "+N"
+        val propsFile = rootProject.file("gradle.properties")
+        val currentBuildNumber = project.property("BUILD_NUMBER").toString().toInt()
+        val nextBuildNumber = currentBuildNumber + 1
+        propsFile.writeText(
+            propsFile.readText().replace(
+                "BUILD_NUMBER=$currentBuildNumber",
+                "BUILD_NUMBER=$nextBuildNumber"
+            )
+        )
+        println("[1;36m>>> BUILD_NUMBER bumped to $nextBuildNumber[0m")
+    }
 }
 
 dependencies {
