@@ -7,14 +7,18 @@ import android.provider.CalendarContract
 import androidx.core.app.NotificationManagerCompat
 import org.fossify.calendar.BuildConfig
 import org.fossify.calendar.R
+import org.fossify.calendar.extensions.ThemeSlot
 import org.fossify.calendar.extensions.config
 import org.fossify.calendar.extensions.getAlarmManager
 import org.fossify.calendar.extensions.refreshCalDAVCalendars
+import org.fossify.calendar.extensions.themeColor
 import org.fossify.commons.activities.BaseSimpleActivity
 import org.fossify.commons.dialogs.ConfirmationDialog
 import org.fossify.commons.dialogs.PermissionRequiredDialog
+import org.fossify.commons.extensions.applyColorFilter
 import org.fossify.commons.extensions.openNotificationSettings
 import org.fossify.commons.extensions.openRequestExactAlarmSettings
+import org.fossify.commons.views.MyAppBarLayout
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.helpers.isSPlus
 import org.fossify.commons.helpers.isTiramisuPlus
@@ -23,6 +27,16 @@ open class SimpleActivity : BaseSimpleActivity() {
     val CALDAV_REFRESH_DELAY = 3000L
     val calDAVRefreshHandler = Handler()
     var calDAVRefreshCallback: (() -> Unit)? = null
+
+    // Recolor a sub-screen's toolbar title + back arrow (+ any overflow icon) from the SETTINGS_TITLE
+    // slot. Call after setupTopAppBar(); applyColorFilter overrides the colorFilter commons bakes in.
+    fun applyTopBarForeground(appBar: MyAppBarLayout) {
+        val fg = themeColor(ThemeSlot.SETTINGS_TITLE)
+        val toolbar = appBar.requireToolbar()
+        toolbar.setTitleTextColor(fg)
+        toolbar.navigationIcon?.applyColorFilter(fg)
+        toolbar.overflowIcon?.applyColorFilter(fg)
+    }
 
     override fun getAppIconIDs() = arrayListOf(
         R.mipmap.ic_launcher_red,

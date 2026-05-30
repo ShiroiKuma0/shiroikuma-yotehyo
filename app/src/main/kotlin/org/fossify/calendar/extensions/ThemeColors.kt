@@ -24,6 +24,7 @@ import org.fossify.commons.helpers.LOWER_ALPHA
 enum class ThemeGroup(@StringRes val labelRes: Int) {
     FOUNDATION(R.string.theme_group_foundation),
     SEARCH(R.string.theme_group_search),
+    CHROME(R.string.theme_group_chrome),
     CALENDAR(R.string.theme_group_calendar),
 }
 
@@ -47,6 +48,11 @@ enum class ThemeSlot(
     SEARCH_HINT("theme_search_hint", ThemeGroup.SEARCH, R.string.theme_search_hint),
     SEARCH_ICON("theme_search_icon", ThemeGroup.SEARCH, R.string.theme_search_icon),
     SEARCH_BORDER("theme_search_border", ThemeGroup.SEARCH, R.string.theme_search_border),
+
+    // Top bar (action / overflow icons), overflow menu text, and the Settings toolbar foreground
+    TOOLBAR_ICONS("theme_toolbar_icons", ThemeGroup.CHROME, R.string.theme_toolbar_icons),
+    MENU_TEXT("theme_menu_text", ThemeGroup.CHROME, R.string.theme_menu_text),
+    SETTINGS_TITLE("theme_settings_title", ThemeGroup.CHROME, R.string.theme_settings_title),
 
     // Calendar surfaces
     EVENT_TEXT("theme_event_text", ThemeGroup.CALENDAR, R.string.theme_event_text, hasFont = true),
@@ -87,6 +93,11 @@ private fun Context.themeDefault(slot: ThemeSlot): Int = when (slot) {
     ThemeSlot.SEARCH_HINT -> themeColor(ThemeSlot.PRIMARY).adjustAlpha(0.5f)
     ThemeSlot.SEARCH_ICON -> themeColor(ThemeSlot.PRIMARY)
     ThemeSlot.SEARCH_BORDER -> themeColor(ThemeSlot.PRIMARY)
+
+    // Top bar / menu chrome
+    ThemeSlot.TOOLBAR_ICONS -> themeColor(ThemeSlot.PRIMARY)
+    ThemeSlot.MENU_TEXT -> themeColor(ThemeSlot.TEXT)
+    ThemeSlot.SETTINGS_TITLE -> themeColor(ThemeSlot.PRIMARY).getContrastColor()
 
     // Calendar: today markers follow the accent; weekend reuses the stock weekend color;
     // grid lines inherit the text color at the same low alpha the views already use.

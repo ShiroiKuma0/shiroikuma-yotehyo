@@ -6,7 +6,11 @@
     <string name="theme_and_colors">テーマと色</string>
     <string name="theme_group_foundation">基本</string>
     <string name="theme_group_search">検索バー</string>
+    <string name="theme_group_chrome">上部バーとメニュー</string>
     <string name="theme_group_calendar">カレンダー</string>
+    <string name="theme_toolbar_icons">上部バーのアイコン</string>
+    <string name="theme_menu_text">メニューの文字</string>
+    <string name="theme_settings_title">設定のタイトルと矢印</string>
     <string name="theme_background">背景</string>
     <string name="theme_primary">メイン / アクセント</string>
     <string name="theme_text">文字</string>
