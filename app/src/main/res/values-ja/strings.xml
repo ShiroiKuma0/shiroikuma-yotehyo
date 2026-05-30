@@ -1,6 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_launcher_name">白い熊 予定表</string>
+    <!-- 白い熊 予定表 UI: granular theming -->
+    <string name="shiroikuma_ui_category">白い熊 予定表 UI</string>
+    <string name="theme_and_colors">テーマと色</string>
+    <string name="theme_group_foundation">基本</string>
+    <string name="theme_group_search">検索バー</string>
+    <string name="theme_group_calendar">カレンダー</string>
+    <string name="theme_background">背景</string>
+    <string name="theme_primary">メイン / アクセント</string>
+    <string name="theme_text">文字</string>
+    <string name="theme_text_secondary">補助の文字</string>
+    <string name="theme_search_fill">検索バーの背景</string>
+    <string name="theme_search_text">検索バーの文字</string>
+    <string name="theme_search_hint">検索バーのヒント</string>
+    <string name="theme_search_icon">検索バーのアイコン</string>
+    <string name="theme_search_border">検索バーの枠線</string>
+    <string name="theme_today_highlight">今日の強調</string>
+    <string name="theme_weekend">週末</string>
+    <string name="theme_grid_lines">グリッド線</string>
     <string name="change_view">ビューの変更</string>
     <string name="daily_view">日</string>
     <string name="weekly_view">週</string>

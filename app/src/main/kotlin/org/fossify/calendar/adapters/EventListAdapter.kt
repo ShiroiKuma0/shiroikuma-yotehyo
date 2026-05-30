@@ -37,6 +37,7 @@ class EventListAdapter(
     private val dimPastEvents = activity.config.dimPastEvents
     private val dimCompletedTasks = activity.config.dimCompletedTasks
     private val now = getNowSeconds()
+    private val todayColor = activity.themeColor(ThemeSlot.TODAY_HIGHLIGHT)
     private var use24HourFormat = activity.config.use24HourFormat
     private var currentItemsHash = listItems.hashCode()
     private var isPrintVersion = false
@@ -157,7 +158,7 @@ class EventListAdapter(
             var newTextColor = textColor
             if (listEvent.isAllDay || listEvent.startTS <= now && listEvent.endTS <= now) {
                 if (listEvent.isAllDay && Formatter.getDayCodeFromTS(listEvent.startTS) == Formatter.getDayCodeFromTS(now) && !isPrintVersion) {
-                    newTextColor = properPrimaryColor
+                    newTextColor = todayColor
                 }
 
                 val adjustAlpha = if (listEvent.isTask) {
@@ -169,7 +170,7 @@ class EventListAdapter(
                     newTextColor = newTextColor.adjustAlpha(MEDIUM_ALPHA)
                 }
             } else if (listEvent.startTS <= now && listEvent.endTS >= now && !isPrintVersion) {
-                newTextColor = properPrimaryColor
+                newTextColor = todayColor
             }
 
             eventItemTime.setTextColor(newTextColor)
@@ -191,7 +192,7 @@ class EventListAdapter(
     private fun setupListSectionDay(view: View, listSectionDay: ListSectionDay) {
         EventListSectionDayBinding.bind(view).eventSectionTitle.apply {
             text = listSectionDay.title
-            val dayColor = if (listSectionDay.isToday) properPrimaryColor else textColor
+            val dayColor = if (listSectionDay.isToday) todayColor else textColor
             setTextColor(dayColor)
         }
     }

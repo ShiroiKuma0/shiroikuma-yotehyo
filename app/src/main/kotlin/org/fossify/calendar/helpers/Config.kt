@@ -294,6 +294,17 @@ class Config(context: Context) : BaseConfig(context) {
         set(highlightWeekendsColor) = prefs.edit()
             .putInt(HIGHLIGHT_WEEKENDS_COLOR, highlightWeekendsColor).apply()
 
+    // Granular theming: one Int override per color slot, THEME_UNSET means "follow the default".
+    var themeV1Seeded: Boolean
+        get() = prefs.getBoolean(THEME_V1_SEEDED, false)
+        set(value) = prefs.edit().putBoolean(THEME_V1_SEEDED, value).apply()
+
+    fun getThemeOverride(key: String): Int = prefs.getInt(key, THEME_UNSET)
+
+    fun setThemeOverride(key: String, color: Int) = prefs.edit().putInt(key, color).apply()
+
+    fun clearThemeOverride(key: String) = prefs.edit().remove(key).apply()
+
     var lastUsedEventSpan: Int
         get() = prefs.getInt(LAST_USED_EVENT_SPAN, YEAR_SECONDS)
         set(lastUsedEventSpan) = prefs.edit().putInt(LAST_USED_EVENT_SPAN, lastUsedEventSpan)

@@ -138,6 +138,12 @@ const val WEEKLY_VIEW_DAYS = "weekly_view_days"
 const val HIGHLIGHT_WEEKENDS = "highlight_weekends"
 const val HIGHLIGHT_WEEKENDS_COLOR = "highlight_weekends_color"
 const val LAST_USED_EVENT_SPAN = "last_used_event_span"
+
+// Granular theming (白い熊 予定表 UI)
+const val THEME_V1_SEEDED = "theme_v1_seeded"
+const val THEME_UNSET = Int.MIN_VALUE // a slot with this stored value follows its inherited default
+const val PALETTE_BLACK = 0xFF000000.toInt()
+const val PALETTE_YELLOW = 0xFFFFEB3B.toInt()
 const val ALLOW_CREATING_TASKS = "allow_creating_tasks"
 const val WAS_FILTERED_OUT_WARNING_SHOWN = "was_filtered_out_warning_shown"
 const val AUTO_BACKUP = "auto_backup"

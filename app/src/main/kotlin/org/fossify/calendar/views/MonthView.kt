@@ -43,6 +43,7 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
     private var dayWidth = 0f
     private var dayHeight = 0f
     private var primaryColor = 0
+    private var todayColor = 0
     private var textColor = 0
     private var weekendsTextColor = 0
     private var weekDaysLetterHeight = 0
@@ -69,6 +70,7 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
 
     init {
         primaryColor = context.getProperPrimaryColor()
+        todayColor = context.themeColor(ThemeSlot.TODAY_HIGHLIGHT)
         textColor = context.getProperTextColor()
         weekendsTextColor = config.highlightWeekendsColor
         showWeekNumbers = config.showWeekNumbers
@@ -97,7 +99,7 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
         }
 
         gridPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = textColor.adjustAlpha(LOWER_ALPHA)
+            color = context.themeColor(ThemeSlot.GRID_LINES)
         }
 
         circleStrokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -302,7 +304,7 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
             val xPos = horizontalOffset + (i + 1) * dayWidth - dayWidth / 2
             var weekDayLetterPaint = textPaint
             if (i == currDayOfWeek && !isPrintVersion) {
-                weekDayLetterPaint = getColoredPaint(primaryColor)
+                weekDayLetterPaint = getColoredPaint(todayColor)
             } else if (highlightWeekends && context.isWeekendIndex(i)) {
                 weekDayLetterPaint = getColoredPaint(weekendsTextColor)
             }
@@ -315,7 +317,7 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
 
         for (i in 0 until ROW_COUNT) {
             val weekDays = days.subList(i * 7, i * 7 + 7)
-            weekNumberPaint.color = if (weekDays.any { it.isToday && !isPrintVersion }) primaryColor else textColor
+            weekNumberPaint.color = if (weekDays.any { it.isToday && !isPrintVersion }) todayColor else textColor
 
             // fourth day of the week determines the week of the year number
             val weekOfYear = days.getOrNull(i * 7 + 3)?.weekOfYear ?: 1
@@ -392,7 +394,7 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
 
     private fun getTextPaint(startDay: DayMonthly): Paint {
         var paintColor = when {
-            !isPrintVersion && startDay.isToday -> primaryColor.getContrastColor()
+            !isPrintVersion && startDay.isToday -> todayColor.getContrastColor()
             highlightWeekends && startDay.isWeekend -> weekendsTextColor
             else -> textColor
         }
@@ -444,7 +446,7 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
 
     private fun getCirclePaint(day: DayMonthly): Paint {
         val curPaint = Paint(textPaint)
-        var paintColor = primaryColor
+        var paintColor = todayColor
         if (!day.isThisMonth) {
             paintColor = paintColor.adjustAlpha(MEDIUM_ALPHA)
         }
@@ -500,7 +502,7 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
         }
 
         textPaint.color = textColor
-        gridPaint.color = textColor.adjustAlpha(LOWER_ALPHA)
+        gridPaint.color = if (isPrintVersion) textColor.adjustAlpha(LOWER_ALPHA) else context.themeColor(ThemeSlot.GRID_LINES)
         invalidate()
         initWeekDayLetters()
     }

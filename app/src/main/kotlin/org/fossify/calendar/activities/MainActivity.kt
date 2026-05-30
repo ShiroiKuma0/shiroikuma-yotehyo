@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.ShortcutInfo
 import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.Icon
 import android.graphics.drawable.LayerDrawable
 import android.os.Bundle
@@ -12,6 +13,9 @@ import android.provider.ContactsContract.CommonDataKinds
 import android.provider.ContactsContract.Contacts
 import android.provider.ContactsContract.Data
 import android.view.MenuItem
+import android.view.View
+import android.widget.EditText
+import android.widget.ImageView
 import android.widget.Toast
 import org.fossify.calendar.R
 import org.fossify.calendar.adapters.EventListAdapter
@@ -31,6 +35,8 @@ import org.fossify.calendar.extensions.getFirstDayOfWeek
 import org.fossify.calendar.extensions.launchNewEventIntent
 import org.fossify.calendar.extensions.launchNewTaskIntent
 import org.fossify.calendar.extensions.seconds
+import org.fossify.calendar.extensions.ThemeSlot
+import org.fossify.calendar.extensions.themeColor
 import org.fossify.calendar.extensions.tryImportEventsFromFile
 import org.fossify.calendar.extensions.updateWidgets
 import org.fossify.calendar.fragments.DayFragmentsHolder
@@ -162,6 +168,8 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
     private var mStoredHighlightWeekends = false
     private var mStoredStartWeekWithCurrentDay = false
     private var mStoredHighlightWeekendsColor = 0
+    private var mStoredTodayColor = 0
+    private var mStoredGridColor = 0
 
     // search results have endless scrolling, so reaching the top/bottom fetches further results
     private var minFetchedSearchTS = 0L
@@ -257,6 +265,7 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
         if (mStoredTextColor != getProperTextColor() || mStoredBackgroundColor != getProperBackgroundColor() || mStoredPrimaryColor != getProperPrimaryColor()
             || mStoredDayCode != Formatter.getTodayCode() || mStoredDimPastEvents != config.dimPastEvents || mStoredDimCompletedTasks != config.dimCompletedTasks
             || mStoredHighlightWeekends != config.highlightWeekends || mStoredHighlightWeekendsColor != config.highlightWeekendsColor
+            || mStoredTodayColor != themeColor(ThemeSlot.TODAY_HIGHLIGHT) || mStoredGridColor != themeColor(ThemeSlot.GRID_LINES)
         ) {
             updateViewPager()
         }
@@ -279,6 +288,7 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
 
         binding.apply {
             mainMenu.updateColors()
+            styleSearchBar()
             storeStateVariables()
             updateWidgets()
             updateTextColors(calendarCoordinator)
@@ -344,6 +354,11 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
         mainMenu.toggleHideOnScroll(false)
         mainMenu.setupMenu()
 
+        // re-apply the granular search-bar theme whenever commons rebuilds the search UI
+        mainMenu.onSearchOpenListener = {
+            mainMenu.post { styleSearchBar() }
+        }
+
         mainMenu.onSearchTextChangedListener = { text ->
             searchQueryChanged(text)
         }
@@ -370,6 +385,29 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
             }
             return@setOnMenuItemClickListener true
         }
+    }
+
+    // Apply the granular search-bar theme on top of the commons defaults (must run after updateColors).
+    private fun styleSearchBar() {
+        val menu = binding.mainMenu
+        val radiusPx = 16f * resources.displayMetrics.density
+        val strokePx = (2 * resources.displayMetrics.density).toInt()
+
+        menu.findViewById<View>(org.fossify.commons.R.id.toolbar_container)?.background =
+            GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = radiusPx
+                setColor(themeColor(ThemeSlot.SEARCH_FILL))
+                setStroke(strokePx, themeColor(ThemeSlot.SEARCH_BORDER))
+            }
+
+        menu.findViewById<EditText>(org.fossify.commons.R.id.top_toolbar_search)?.apply {
+            setTextColor(themeColor(ThemeSlot.SEARCH_TEXT))
+            setHintTextColor(themeColor(ThemeSlot.SEARCH_HINT))
+        }
+
+        menu.findViewById<ImageView>(org.fossify.commons.R.id.top_toolbar_search_icon)
+            ?.applyColorFilter(themeColor(ThemeSlot.SEARCH_ICON))
     }
 
     override fun onBackPressedCompat(): Boolean {
@@ -416,6 +454,8 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
             mStoredMidnightSpan = showMidnightSpanningEventsAtTop
             mStoredStartWeekWithCurrentDay = startWeekWithCurrentDay
         }
+        mStoredTodayColor = themeColor(ThemeSlot.TODAY_HIGHLIGHT)
+        mStoredGridColor = themeColor(ThemeSlot.GRID_LINES)
         mStoredDayCode = Formatter.getTodayCode()
     }
 

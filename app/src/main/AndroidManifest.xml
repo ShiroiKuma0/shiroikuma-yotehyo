@@ -200,6 +200,13 @@
         </activity>
 
         <activity
+            android:name=".activities.ThemeActivity"
+            android:configChanges="orientation"
+            android:exported="false"
+            android:label="@string/theme_and_colors"
+            android:parentActivityName=".activities.SettingsActivity" />
+
+        <activity
             android:name=".activities.ManageCalendarsActivity"
             android:configChanges="orientation"
             android:exported="false"
