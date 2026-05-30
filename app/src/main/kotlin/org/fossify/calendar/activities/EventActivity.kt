@@ -61,6 +61,7 @@ import org.fossify.calendar.helpers.CALDAV
 import org.fossify.calendar.helpers.CALENDAR_ID
 import org.fossify.calendar.helpers.CLASS
 import org.fossify.calendar.helpers.CURRENT_TIME_ZONE
+import org.fossify.calendar.helpers.END_TIME_ZONE
 import org.fossify.calendar.helpers.DELETE_ALL_OCCURRENCES
 import org.fossify.calendar.helpers.DELETE_FUTURE_OCCURRENCES
 import org.fossify.calendar.helpers.DELETE_SELECTED_OCCURRENCE
@@ -173,6 +174,7 @@ class EventActivity : SimpleActivity() {
     private val LAT_LON_PATTERN =
         "^[-+]?([1-8]?\\d(\\.\\d+)?|90(\\.0+)?)([,;])\\s*[-+]?(180(\\.0+)?|((1[0-7]\\d)|([1-9]?\\d))(\\.\\d+)?)\$"
     private val SELECT_TIME_ZONE_INTENT = 1
+    private val SELECT_END_TIME_ZONE_INTENT = 2
 
     private var mIsAllDayEvent = false
     private var mReminder1Minutes = REMINDER_OFF
@@ -200,6 +202,7 @@ class EventActivity : SimpleActivity() {
     private var mStatus = Events.STATUS_CONFIRMED
     private var mStoredCalendars = ArrayList<CalendarEntity>()
     private var mOriginalTimeZone = DateTimeZone.getDefault().id
+    private var mOriginalEndTimeZone = DateTimeZone.getDefault().id
     private var mOriginalStartTS = 0L
     private var mOriginalEndTS = 0L
     private var mIsNewEvent = true
@@ -311,6 +314,7 @@ class EventActivity : SimpleActivity() {
             putLong(START_TS, mEventStartDateTime.seconds())
             putLong(END_TS, mEventEndDateTime.seconds())
             putString(TIME_ZONE, mEvent.timeZone)
+            putString(END_TIME_ZONE, mEvent.endTimeZone)
 
             putInt(REMINDER_1_MINUTES, mReminder1Minutes)
             putInt(REMINDER_2_MINUTES, mReminder2Minutes)
@@ -353,6 +357,7 @@ class EventActivity : SimpleActivity() {
             mEventStartDateTime = Formatter.getDateTimeFromTS(getLong(START_TS))
             mEventEndDateTime = Formatter.getDateTimeFromTS(getLong(END_TS))
             mEvent.timeZone = getString(TIME_ZONE) ?: TimeZone.getDefault().id
+            mEvent.endTimeZone = getString(END_TIME_ZONE) ?: ""
 
             mReminder1Minutes = getInt(REMINDER_1_MINUTES)
             mReminder2Minutes = getInt(REMINDER_2_MINUTES)
@@ -401,6 +406,13 @@ class EventActivity : SimpleActivity() {
         ) {
             val timeZone = resultData.getSerializableExtra(TIME_ZONE) as MyTimeZone
             mEvent.timeZone = timeZone.zoneName
+            updateTimeZoneText()
+        } else if (
+            requestCode == SELECT_END_TIME_ZONE_INTENT
+            && resultCode == RESULT_OK && resultData?.hasExtra(TIME_ZONE) == true
+        ) {
+            val timeZone = resultData.getSerializableExtra(TIME_ZONE) as MyTimeZone
+            mEvent.endTimeZone = timeZone.zoneName
             updateTimeZoneText()
         }
         super.onActivityResult(requestCode, resultCode, resultData)
@@ -485,6 +497,7 @@ class EventActivity : SimpleActivity() {
         eventEndDate.setOnClickListener { setupEndDate() }
         eventEndTime.setOnClickListener { setupEndTime() }
         eventTimeZone.setOnClickListener { setupTimeZone() }
+        eventEndTimeZone.setOnClickListener { setupEndTimeZone() }
 
         eventAllDay.setOnCheckedChangeListener { _, isChecked -> toggleAllDay(isChecked) }
         eventRepetition.setOnClickListener { showRepeatIntervalDialog() }
@@ -611,23 +624,26 @@ class EventActivity : SimpleActivity() {
             val newEndTS = mEventEndDateTime.withTimeAtStartOfDay().withHourOfDay(12).seconds()
             return Pair(newStartTS, newEndTS)
         } else {
-            val offset = if (
-                !config.allowChangingTimeZones
-                || mEvent.getTimeZoneString().equals(mOriginalTimeZone, true)
-            ) {
-                0
-            } else {
-                val original = mOriginalTimeZone.ifEmpty { DateTimeZone.getDefault().id }
-                val millis = System.currentTimeMillis()
-                val newOffset = DateTimeZone.forID(mEvent.getTimeZoneString()).getOffset(millis)
-                val oldOffset = DateTimeZone.forID(original).getOffset(millis)
-                (newOffset - oldOffset) / 1000L
-            }
-
-            val newStartTS = mEventStartDateTime.seconds() - offset
-            val newEndTS = mEventEndDateTime.seconds() - offset
+            // Start and end carry independent timezones (e.g. a flight), so reconcile each end's
+            // wall-clock against its own original zone.
+            val startOffset = timeZoneOffsetSeconds(mEvent.getTimeZoneString(), mOriginalTimeZone)
+            val endOffset = timeZoneOffsetSeconds(mEvent.getEndTimeZoneString(), mOriginalEndTimeZone)
+            val newStartTS = mEventStartDateTime.seconds() - startOffset
+            val newEndTS = mEventEndDateTime.seconds() - endOffset
             return Pair(newStartTS, newEndTS)
         }
+    }
+
+    // Seconds to shift a wall-clock by when its zone changed from the original (0 if unchanged or timezones disabled).
+    private fun timeZoneOffsetSeconds(newZone: String, originalZone: String): Long {
+        if (!config.allowChangingTimeZones || newZone.equals(originalZone, true)) {
+            return 0
+        }
+        val original = originalZone.ifEmpty { DateTimeZone.getDefault().id }
+        val millis = System.currentTimeMillis()
+        val newOffset = DateTimeZone.forID(newZone).getOffset(millis)
+        val oldOffset = DateTimeZone.forID(original).getOffset(millis)
+        return (newOffset - oldOffset) / 1000L
     }
 
     private fun getReminders(): ArrayList<Reminder> {
@@ -663,6 +679,7 @@ class EventActivity : SimpleActivity() {
                 binding.eventLocation.text.toString() != mEvent.location ||
                 binding.eventDescription.text.toString() != mEvent.description ||
                 binding.eventTimeZone.text != mEvent.getTimeZoneString() ||
+                binding.eventEndTimeZone.text != mEvent.getEndTimeZoneString() ||
                 reminders != mEvent.getReminders() ||
                 mRepeatInterval != mEvent.repeatInterval ||
                 mRepeatRule != mEvent.repeatRule ||
@@ -714,12 +731,13 @@ class EventActivity : SimpleActivity() {
         window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
         binding.eventToolbar.title = getString(R.string.edit_event)
         mOriginalTimeZone = mEvent.timeZone
+        mOriginalEndTimeZone = mEvent.endTimeZone.ifEmpty { mEvent.timeZone }
         if (config.allowChangingTimeZones) {
             try {
                 mEventStartDateTime = Formatter.getDateTimeFromTS(realStart)
-                    .withZone(DateTimeZone.forID(mOriginalTimeZone))
+                    .withZone(DateTimeZone.forID(mEvent.getTimeZoneString()))
                 mEventEndDateTime = Formatter.getDateTimeFromTS(realStart + duration)
-                    .withZone(DateTimeZone.forID(mOriginalTimeZone))
+                    .withZone(DateTimeZone.forID(mEvent.getEndTimeZoneString()))
             } catch (e: Exception) {
                 showErrorToast(e)
                 mEventStartDateTime = Formatter.getDateTimeFromTS(realStart)
@@ -1518,9 +1536,10 @@ class EventActivity : SimpleActivity() {
 
     private fun showOrHideTimeZone() {
         val allowChangingTimeZones = config.allowChangingTimeZones && !mIsAllDayEvent
-        binding.eventTimeZoneDivider.beVisibleIf(allowChangingTimeZones)
         binding.eventTimeZoneImage.beVisibleIf(allowChangingTimeZones)
         binding.eventTimeZone.beVisibleIf(allowChangingTimeZones)
+        binding.eventEndTimeZoneImage.beVisibleIf(allowChangingTimeZones)
+        binding.eventEndTimeZone.beVisibleIf(allowChangingTimeZones)
     }
 
     private fun shareEvent() {
@@ -1686,6 +1705,8 @@ class EventActivity : SimpleActivity() {
             importId = newImportId
             timeZone =
                 if (mIsAllDayEvent || timeZone.isEmpty()) DateTimeZone.getDefault().id else timeZone
+            endTimeZone =
+                if (mIsAllDayEvent || endTimeZone.isEmpty()) timeZone else endTimeZone
             flags = mEvent.flags.addBitIf(binding.eventAllDay.isChecked, FLAG_ALL_DAY)
             repeatLimit = if (repeatInterval == 0) 0 else mRepeatLimit
             repeatRule = mRepeatRule
@@ -1832,6 +1853,7 @@ class EventActivity : SimpleActivity() {
 
     private fun updateTimeZoneText() {
         binding.eventTimeZone.text = mEvent.getTimeZoneString()
+        binding.eventEndTimeZone.text = mEvent.getEndTimeZoneString()
     }
 
     private fun checkStartEndValidity() {
@@ -2025,6 +2047,14 @@ class EventActivity : SimpleActivity() {
         Intent(this, SelectTimeZoneActivity::class.java).apply {
             putExtra(CURRENT_TIME_ZONE, mEvent.getTimeZoneString())
             startActivityForResult(this, SELECT_TIME_ZONE_INTENT)
+        }
+    }
+
+    private fun setupEndTimeZone() {
+        hideKeyboard()
+        Intent(this, SelectTimeZoneActivity::class.java).apply {
+            putExtra(CURRENT_TIME_ZONE, mEvent.getEndTimeZoneString())
+            startActivityForResult(this, SELECT_END_TIME_ZONE_INTENT)
         }
     }
 
@@ -2404,6 +2434,7 @@ class EventActivity : SimpleActivity() {
         arrayOf(
             eventTimeImage,
             eventTimeZoneImage,
+            eventEndTimeZoneImage,
             eventRepetitionImage,
             eventReminderImage,
             eventCalendarImage,

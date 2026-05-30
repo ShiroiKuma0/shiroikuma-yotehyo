@@ -1,6 +1,8 @@
 package org.fossify.calendar.extensions
 
 import android.icu.text.SimpleDateFormat
+import android.icu.text.TimeZoneNames
+import android.icu.util.TimeZone
 import android.icu.util.ULocale
 import org.fossify.calendar.helpers.EVENT_TIME_FORMAT_JAPANESE
 import java.time.Instant
@@ -40,10 +42,100 @@ fun formatEventTimeRange(startTSSeconds: Long, endTSSeconds: Long, format: Strin
 
 // --- Sino-Japanese clock + duration, mirrored from shiroikuma-denwa ---
 
+// After the title in the day view, when the start or end zone differs from the device zone, the
+// event's own start/end times in the Sino-Japanese format, each prefixed (no space) with its zone
+// code, separated by the Japanese dash and wrapped in full-width parens: （CET午前八時ーHST午前九時）.
+// Returns null when both zones match the device zone. All timestamps are the calendar's epoch-seconds.
+fun eventTimeZoneAnnotation(startTSSeconds: Long, endTSSeconds: Long, startZoneId: String, endZoneId: String): String? {
+    val deviceId = ZoneId.systemDefault().id
+    if (startZoneId == deviceId && endZoneId == deviceId) {
+        return null
+    }
+    val startMillis = startTSSeconds * 1000L
+    val endMillis = endTSSeconds * 1000L
+    val startText = zoneCode(startZoneId, startMillis) + startMillis.toJapaneseClockString(zoneOf(startZoneId))
+    val endText = zoneCode(endZoneId, endMillis) + endMillis.toJapaneseClockString(zoneOf(endZoneId))
+    return "（$startText" + "ー" + "$endText）"
+}
+
+private fun zoneOf(id: String): ZoneId = try {
+    ZoneId.of(id)
+} catch (e: Exception) {
+    ZoneId.systemDefault()
+}
+
+// IANA-style zone abbreviations keyed by ICU metazone id -> (standard, daylight). ICU's English short
+// names return "GMT+1" for most non-US zones, so we resolve the metazone and map it ourselves.
+private val METAZONE_CODES = mapOf(
+    "Europe_Central" to Pair("CET", "CEST"),
+    "Europe_Western" to Pair("WET", "WEST"),
+    "Europe_Eastern" to Pair("EET", "EEST"),
+    "GMT" to Pair("GMT", "BST"),
+    "Moscow" to Pair("MSK", "MSD"),
+    "America_Pacific" to Pair("PST", "PDT"),
+    "America_Mountain" to Pair("MST", "MDT"),
+    "America_Central" to Pair("CST", "CDT"),
+    "America_Eastern" to Pair("EST", "EDT"),
+    "Alaska" to Pair("AKST", "AKDT"),
+    "Atlantic" to Pair("AST", "ADT"),
+    "Hawaii_Aleutian" to Pair("HST", "HDT"),
+    "Japan" to Pair("JST", "JST"),
+    "China" to Pair("CST", "CST"),
+    "Korea" to Pair("KST", "KST"),
+    "Gulf" to Pair("GST", "GST"),
+    "Indochina" to Pair("ICT", "ICT"),
+    "Singapore" to Pair("SGT", "SGT"),
+    "Australia_Eastern" to Pair("AEST", "AEDT"),
+    "Australia_Western" to Pair("AWST", "AWST"),
+    "Australia_Central" to Pair("ACST", "ACDT"),
+    "New_Zealand" to Pair("NZST", "NZDT"),
+    "Brasilia" to Pair("BRT", "BRST"),
+    "Africa_Southern" to Pair("SAST", "SAST"),
+    "Africa_Eastern" to Pair("EAT", "EAT"),
+    "Africa_Western" to Pair("WAT", "WAST"),
+)
+
+// Zones ICU has no metazone for; map their id directly (none of these observe DST).
+private val DIRECT_ZONE_CODES = mapOf(
+    "UTC" to "UTC",
+    "Etc/UTC" to "UTC",
+    "Etc/GMT" to "GMT",
+    "Asia/Kolkata" to "IST",
+    "Asia/Calcutta" to "IST",
+)
+
+private val ICU_TZ_NAMES: TimeZoneNames by lazy { TimeZoneNames.getInstance(ULocale.ENGLISH) }
+
+// DST-aware short zone code for the instant: CET/CEST, HST, PST/PDT, JST, … with a compact GMT
+// offset (e.g. GMT+5:30) for zones not in the table.
+private fun zoneCode(id: String, millis: Long): String {
+    DIRECT_ZONE_CODES[id]?.let { return it }
+    val tz = TimeZone.getTimeZone(id)
+    val daylight = tz.inDaylightTime(Date(millis))
+    val metazone = try {
+        ICU_TZ_NAMES.getMetaZoneID(id, millis)
+    } catch (e: Exception) {
+        null
+    }
+    METAZONE_CODES[metazone]?.let { return if (daylight) it.second else it.first }
+    return gmtOffsetCode(tz.getOffset(millis))
+}
+
+private fun gmtOffsetCode(offsetMillis: Int): String {
+    val totalMinutes = offsetMillis / 60000
+    val sign = if (totalMinutes < 0) "-" else "+"
+    val abs = if (totalMinutes < 0) -totalMinutes else totalMinutes
+    val hours = abs / 60
+    val minutes = abs % 60
+    return if (minutes == 0) "GMT$sign$hours" else "GMT$sign$hours:${"%02d".format(minutes)}"
+}
+
 // Sino-Japanese clock reading: 14:53 -> 午後二時五十三分, 9:30 -> 午前九時半. :00 drops the minute
 // part, :30 becomes 半; noon/midnight get the special words 正午 / 正子.
-fun Long.toJapaneseClockString(): String {
-    val time = Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault())
+fun Long.toJapaneseClockString(): String = toJapaneseClockString(ZoneId.systemDefault())
+
+fun Long.toJapaneseClockString(zone: ZoneId): String {
+    val time = Instant.ofEpochMilli(this).atZone(zone)
     val hour = time.hour
     val minute = time.minute
     when {
