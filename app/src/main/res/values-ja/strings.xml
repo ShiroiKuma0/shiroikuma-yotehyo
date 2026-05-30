@@ -12,6 +12,7 @@
     <string name="theme_menu_text">メニューの文字</string>
     <string name="theme_settings_title">設定のタイトルと矢印</string>
     <string name="theme_view_switcher">ビュー切替（日週月年）</string>
+    <string name="theme_settings_switcher">設定ショートカット（設定）</string>
     <string name="theme_background">背景</string>
     <string name="theme_primary">メイン / アクセント</string>
     <string name="theme_text">文字</string>
@@ -24,6 +25,16 @@
     <string name="theme_today_highlight">今日の強調</string>
     <string name="theme_weekend">週末</string>
     <string name="theme_grid_lines">グリッド線</string>
+    <string name="theme_sub_grid_lines">グリッド線</string>
+    <string name="theme_grid_line_top">上の線</string>
+    <string name="theme_grid_line_middle_upper">中央上の線</string>
+    <string name="theme_grid_line_middle_lower">中央下の線</string>
+    <string name="theme_grid_line_bottom">下の線</string>
+    <string name="theme_grid_line_left">左の境界線</string>
+    <string name="theme_grid_line_center">中央の線</string>
+    <string name="theme_grid_line_right">右の境界線</string>
+    <string name="theme_grid_line_color">線の色</string>
+    <string name="theme_grid_line_thickness">線の太さ</string>
     <string name="theme_event_text">予定の文字</string>
     <string name="theme_today_box_fill">今日のボックスの塗り</string>
     <string name="theme_day_box_header">見出しの背景</string>

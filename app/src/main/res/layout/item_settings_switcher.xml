@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="horizontal"
+    android:paddingStart="6dp"
+    android:paddingEnd="6dp">
+
+    <!-- Left glyph (設) opens the 白い熊 予定表 UI page; right glyph (定) opens regular Settings.
+         No spacing between them so they read as the single word 設定. -->
+    <org.fossify.commons.views.MyTextView
+        android:id="@+id/settings_switcher_ui"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:textSize="18sp"
+        tools:text="設" />
+
+    <org.fossify.commons.views.MyTextView
+        android:id="@+id/settings_switcher_settings"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:textSize="18sp"
+        tools:text="定" />
+
+</LinearLayout>
