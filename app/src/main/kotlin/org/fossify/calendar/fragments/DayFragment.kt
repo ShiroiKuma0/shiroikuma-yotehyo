@@ -13,6 +13,8 @@ import org.fossify.calendar.activities.SimpleActivity
 import org.fossify.calendar.adapters.DayEventsAdapter
 import org.fossify.calendar.databinding.FragmentDayBinding
 import org.fossify.calendar.databinding.TopNavigationBinding
+import org.fossify.calendar.extensions.ThemeSlot
+import org.fossify.calendar.extensions.applyThemeFont
 import org.fossify.calendar.extensions.config
 import org.fossify.calendar.extensions.eventsHelper
 import org.fossify.calendar.extensions.getViewBitmap
@@ -81,6 +83,7 @@ class DayFragment : Fragment() {
                 (activity as MainActivity).showGoToDateDialog()
             }
             setTextColor(context.getProperTextColor())
+            applyThemeFont(ThemeSlot.TEXT)
         }
     }
 

@@ -176,6 +176,9 @@ class EventListAdapter(
             eventItemTime.setTextColor(newTextColor)
             eventItemTitle.setTextColor(newTextColor)
             eventItemDescription.setTextColor(newTextColor)
+            eventItemTitle.applyThemeFont(ThemeSlot.EVENT_TEXT)
+            eventItemTime.applyThemeFont(ThemeSlot.TEXT_SECONDARY)
+            eventItemDescription.applyThemeFont(ThemeSlot.TEXT_SECONDARY)
             eventItemTaskImage.applyColorFilter(newTextColor)
             eventItemTaskImage.beVisibleIf(listEvent.isTask)
 
@@ -194,6 +197,7 @@ class EventListAdapter(
             text = listSectionDay.title
             val dayColor = if (listSectionDay.isToday) todayColor else textColor
             setTextColor(dayColor)
+            applyThemeFont(ThemeSlot.TEXT)
         }
     }
 
@@ -201,6 +205,7 @@ class EventListAdapter(
         EventListSectionMonthBinding.bind(view).eventSectionTitle.apply {
             text = listSectionMonth.title
             setTextColor(properPrimaryColor)
+            applyThemeFont(ThemeSlot.TEXT)
         }
     }
 

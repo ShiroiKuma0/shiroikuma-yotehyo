@@ -1,10 +1,12 @@
 package org.fossify.calendar.activities
 
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import org.fossify.calendar.R
 import org.fossify.calendar.databinding.ActivityThemeBinding
@@ -12,17 +14,24 @@ import org.fossify.calendar.databinding.ItemThemeColorBinding
 import org.fossify.calendar.databinding.ItemThemeSectionBinding
 import org.fossify.calendar.databinding.ItemThemeSliderBinding
 import org.fossify.calendar.databinding.ItemThemeSubsectionBinding
+import org.fossify.calendar.databinding.ItemThemeTextBinding
 import org.fossify.calendar.databinding.ItemThemeValueBinding
+import org.fossify.calendar.dialogs.FontPickerDialog
+import org.fossify.calendar.extensions.FontWeightOption
 import org.fossify.calendar.extensions.ThemeGroup
 import org.fossify.calendar.extensions.ThemeSlot
 import org.fossify.calendar.extensions.config
+import org.fossify.calendar.extensions.fontDisplayName
+import org.fossify.calendar.extensions.importFont
 import org.fossify.calendar.extensions.resetThemeColor
 import org.fossify.calendar.extensions.setThemeColor
+import org.fossify.calendar.extensions.showFontSample
 import org.fossify.calendar.extensions.themeColor
 import org.fossify.calendar.helpers.DAY_BOX_ALIGN_CENTER
 import org.fossify.calendar.helpers.DAY_BOX_ALIGN_END
 import org.fossify.calendar.helpers.DAY_BOX_ALIGN_START
 import org.fossify.calendar.helpers.DAY_BOX_THICKNESS_INHERIT
+import org.fossify.calendar.helpers.MAX_FONT_SIZE_SP
 import org.fossify.calendar.helpers.THEME_UNSET
 import org.fossify.calendar.helpers.WEEKLY_STYLE_DAY_BOXES
 import org.fossify.calendar.helpers.WEEKLY_STYLE_TIME_GRID
@@ -33,14 +42,16 @@ import org.fossify.commons.extensions.beVisibleIf
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.onSeekBarChangeListener
+import org.fossify.commons.extensions.toast
 import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.NavigationIcon
 import org.fossify.commons.models.RadioItem
 
 // The consolidated "白い熊 予定表 UI" screen. Built from a section -> (optional subsection) -> rows
-// hierarchy, mirroring the layout used in shiroikuma-handyrss and shiroikuma-futokxkb: section
-// headers carry a full-width accent underline, subsections a short one, and color rows show a
-// "Default" badge while they follow their inherited default.
+// hierarchy: section headers carry a full-width accent underline, subsections a short one, color
+// rows show a "Default" badge while inherited, and text elements get a font / weight / size block
+// with a live sample beneath. Every colour is picked with an alpha-enabled dialog.
+@Suppress("TooManyFunctions")
 class ThemeActivity : SimpleActivity() {
     private val binding by viewBinding(ActivityThemeBinding::inflate)
     private val previews = HashMap<ThemeSlot, ImageView>()
@@ -49,6 +60,13 @@ class ThemeActivity : SimpleActivity() {
     private var primaryColor = 0
     private var indentStepPx = 0
     private var currentRowIndent = 0
+
+    private var pendingFontSlot: ThemeSlot? = null
+    private var pendingFontBinding: ItemThemeTextBinding? = null
+
+    private val fontImportLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        onFontImported(uri)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -77,55 +95,62 @@ class ThemeActivity : SimpleActivity() {
 
         // Foundation — the base colors that cascade through the whole app.
         addSection(R.string.theme_group_foundation)
-        slotsOf(ThemeGroup.FOUNDATION).forEach { addColorRow(it) }
+        slotsOf(ThemeGroup.FOUNDATION).forEach { addSlot(it) }
 
         // Search bar.
         addSection(R.string.theme_group_search)
-        slotsOf(ThemeGroup.SEARCH).forEach { addColorRow(it) }
+        slotsOf(ThemeGroup.SEARCH).forEach { addSlot(it) }
 
-        // Calendar — grouped into the weekly day-box view and the shared highlights/grid.
+        // Calendar — grouped by surface.
         addSection(R.string.theme_group_calendar)
         addSubsection(R.string.theme_sub_weekly_view)
         addWeeklyViewStyleRow()
+        addSubsection(R.string.theme_sub_events)
+        addSlot(ThemeSlot.EVENT_TEXT)
         addSubsection(R.string.theme_sub_day_boxes)
-        addColorRow(ThemeSlot.DAY_BOX_HEADER)
-        addColorRow(ThemeSlot.DAY_BOX_HEADER_TEXT)
+        addSlot(ThemeSlot.DAY_BOX_HEADER)
+        addSlot(ThemeSlot.DAY_BOX_HEADER_TEXT)
         addHeaderAlignmentRow()
-        addColorRow(ThemeSlot.DAY_BOX_HEADER_BORDER)
+        addSlot(ThemeSlot.DAY_BOX_HEADER_BORDER)
         addThicknessRow(R.string.theme_day_box_header_border_thickness, config.dayBoxHeaderBorderThickness) {
             config.dayBoxHeaderBorderThickness = it
         }
-        addColorRow(ThemeSlot.DAY_BOX_BORDER)
+        addSlot(ThemeSlot.DAY_BOX_BORDER)
         addThicknessRow(R.string.theme_day_box_border_thickness, config.dayBoxBorderThickness) {
             config.dayBoxBorderThickness = it
         }
         addSubsection(R.string.theme_sub_today_boxes)
-        addColorRow(ThemeSlot.TODAY_TEXT)
-        addColorRow(ThemeSlot.TODAY_HEADER_BORDER)
+        addSlot(ThemeSlot.TODAY_BOX_FILL)
+        addSlot(ThemeSlot.TODAY_TEXT)
+        addSlot(ThemeSlot.TODAY_HEADER_BORDER)
         addThicknessRow(R.string.theme_today_header_border_thickness, config.todayHeaderBorderThickness, DAY_BOX_THICKNESS_INHERIT) {
             config.todayHeaderBorderThickness = it
         }
-        addColorRow(ThemeSlot.TODAY_BOX_BORDER)
+        addSlot(ThemeSlot.TODAY_BOX_BORDER)
         addThicknessRow(R.string.theme_today_box_border_thickness, config.todayBoxBorderThickness, DAY_BOX_THICKNESS_INHERIT) {
             config.todayBoxBorderThickness = it
         }
         addSubsection(R.string.theme_sub_weekend_boxes)
-        addColorRow(ThemeSlot.WEEKEND_TEXT)
-        addColorRow(ThemeSlot.WEEKEND_HEADER_BORDER)
+        addSlot(ThemeSlot.WEEKEND_TEXT)
+        addSlot(ThemeSlot.WEEKEND_HEADER_BORDER)
         addThicknessRow(R.string.theme_weekend_header_border_thickness, config.weekendHeaderBorderThickness, DAY_BOX_THICKNESS_INHERIT) {
             config.weekendHeaderBorderThickness = it
         }
-        addColorRow(ThemeSlot.WEEKEND_BOX_BORDER)
+        addSlot(ThemeSlot.WEEKEND_BOX_BORDER)
         addThicknessRow(R.string.theme_weekend_box_border_thickness, config.weekendBoxBorderThickness, DAY_BOX_THICKNESS_INHERIT) {
             config.weekendBoxBorderThickness = it
         }
         addSubsection(R.string.theme_sub_highlights_grid)
-        addColorRow(ThemeSlot.TODAY_HIGHLIGHT)
-        addColorRow(ThemeSlot.WEEKEND)
-        addColorRow(ThemeSlot.GRID_LINES)
+        addSlot(ThemeSlot.TODAY_HIGHLIGHT)
+        addSlot(ThemeSlot.WEEKEND)
+        addSlot(ThemeSlot.GRID_LINES)
     }
 
     private fun slotsOf(group: ThemeGroup) = ThemeSlot.entries.filter { it.group == group }
+
+    private fun addSlot(slot: ThemeSlot) {
+        if (slot.hasFont) addTextSlot(slot) else addColorRow(slot)
+    }
 
     // Left-indent a row by `level` steps so the section -> subsection -> rows hierarchy is visible.
     private fun indentView(view: View, level: Int) {
@@ -162,11 +187,40 @@ class ThemeActivity : SimpleActivity() {
         row.themeColorPreview.background.setTint(themeColor(slot))
         row.themeColorDefault.setTextColor(textColor.adjustAlpha(0.6f))
         row.themeColorDefault.beVisibleIf(followsDefault(slot))
-        row.root.setOnClickListener { openPicker(slot) }
+        row.root.setOnClickListener { openColorPicker(slot) }
         previews[slot] = row.themeColorPreview
         defaultBadges[slot] = row.themeColorDefault
         indentView(row.root, currentRowIndent)
         binding.themeHolder.addView(row.root)
+    }
+
+    private fun addTextSlot(slot: ThemeSlot) {
+        val b = ItemThemeTextBinding.inflate(layoutInflater, binding.themeHolder, false)
+        b.themeTextLabel.text = getString(slot.labelRes)
+        listOf(
+            b.themeTextLabel, b.themeTextFontTitle, b.themeTextFontValue,
+            b.themeTextWeightTitle, b.themeTextWeightValue, b.themeTextSizeTitle, b.themeTextSizeValue
+        ).forEach { it.setTextColor(textColor) }
+
+        b.themeTextColorPreview.background.setTint(themeColor(slot))
+        b.themeTextFontValue.text = fontDisplayName(config.getFontFamily(slot.key))
+        b.themeTextWeightValue.text = getString(FontWeightOption.fromValue(config.getFontWeight(slot.key)).labelRes)
+        b.themeTextSizeSeekbar.max = MAX_FONT_SIZE_SP
+        b.themeTextSizeSeekbar.progress = config.getFontSize(slot.key)
+        b.themeTextSizeValue.text = sizeLabel(config.getFontSize(slot.key))
+        refreshSample(b, slot)
+
+        b.themeTextColorRow.setOnClickListener { openTextColorPicker(slot, b) }
+        b.themeTextFontRow.setOnClickListener { openFontPicker(slot, b) }
+        b.themeTextWeightRow.setOnClickListener { openWeightPicker(slot, b) }
+        b.themeTextSizeSeekbar.onSeekBarChangeListener {
+            config.setFontSize(slot.key, it)
+            b.themeTextSizeValue.text = sizeLabel(it)
+            refreshSample(b, slot)
+        }
+
+        indentView(b.root, currentRowIndent)
+        binding.themeHolder.addView(b.root)
     }
 
     private fun addWeeklyViewStyleRow() {
@@ -186,14 +240,20 @@ class ThemeActivity : SimpleActivity() {
         return !isWriteThrough && config.getThemeOverride(slot.key) == THEME_UNSET
     }
 
-    private fun openPicker(slot: ThemeSlot) {
-        ColorPickerDialog(this, themeColor(slot), addDefaultColorButton = true) { wasPositive, color ->
-            if (wasPositive) {
-                setThemeColor(slot, color)
-            } else {
-                resetThemeColor(slot)
-            }
+    private fun refreshSample(b: ItemThemeTextBinding, slot: ThemeSlot) {
+        b.themeTextSample.showFontSample(
+            config.getFontFamily(slot.key),
+            config.getFontWeight(slot.key),
+            config.getFontSize(slot.key),
+            themeColor(slot)
+        )
+    }
 
+    private fun sizeLabel(sp: Int) = if (sp > 0) "$sp sp" else getString(R.string.theme_size_default)
+
+    private fun openColorPicker(slot: ThemeSlot) {
+        ColorPickerDialog(this, themeColor(slot), addDefaultColorButton = true) { wasPositive, color ->
+            if (wasPositive) setThemeColor(slot, color) else resetThemeColor(slot)
             if (slot.isFoundation) {
                 // foundation cascades into the chrome + every inheriting preview
                 recreate()
@@ -201,6 +261,66 @@ class ThemeActivity : SimpleActivity() {
                 previews[slot]?.background?.setTint(themeColor(slot))
                 defaultBadges[slot]?.beVisibleIf(followsDefault(slot))
             }
+        }
+    }
+
+    private fun openTextColorPicker(slot: ThemeSlot, b: ItemThemeTextBinding) {
+        ColorPickerDialog(this, themeColor(slot), addDefaultColorButton = true) { wasPositive, color ->
+            if (wasPositive) setThemeColor(slot, color) else resetThemeColor(slot)
+            if (slot.isFoundation) {
+                recreate()
+            } else {
+                b.themeTextColorPreview.background.setTint(themeColor(slot))
+                refreshSample(b, slot)
+            }
+        }
+    }
+
+    private fun openFontPicker(slot: ThemeSlot, b: ItemThemeTextBinding) {
+        FontPickerDialog(
+            activity = this,
+            onAddFont = {
+                pendingFontSlot = slot
+                pendingFontBinding = b
+                fontImportLauncher.launch(arrayOf("*/*"))
+            },
+            onPick = { fileName ->
+                config.setFontFamily(slot.key, fileName)
+                b.themeTextFontValue.text = fontDisplayName(fileName)
+                refreshSample(b, slot)
+            }
+        )
+    }
+
+    private fun openWeightPicker(slot: ThemeSlot, b: ItemThemeTextBinding) {
+        val items = ArrayList(FontWeightOption.entries.map { RadioItem(it.value, getString(it.labelRes)) })
+        RadioGroupDialog(this, items, config.getFontWeight(slot.key)) {
+            val weight = it as Int
+            config.setFontWeight(slot.key, weight)
+            b.themeTextWeightValue.text = getString(FontWeightOption.fromValue(weight).labelRes)
+            refreshSample(b, slot)
+        }
+    }
+
+    private fun onFontImported(uri: Uri?) {
+        val slot = pendingFontSlot
+        val b = pendingFontBinding
+        pendingFontSlot = null
+        pendingFontBinding = null
+        if (uri == null || slot == null) {
+            return
+        }
+
+        val fileName = importFont(uri)
+        if (fileName == null) {
+            toast(R.string.font_invalid)
+            return
+        }
+
+        config.setFontFamily(slot.key, fileName)
+        b?.themeTextFontValue?.text = fontDisplayName(fileName)
+        if (b != null) {
+            refreshSample(b, slot)
         }
     }
 

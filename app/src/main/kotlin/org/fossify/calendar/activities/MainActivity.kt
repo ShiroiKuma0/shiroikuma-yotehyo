@@ -36,6 +36,7 @@ import org.fossify.calendar.extensions.launchNewEventIntent
 import org.fossify.calendar.extensions.launchNewTaskIntent
 import org.fossify.calendar.extensions.seconds
 import org.fossify.calendar.extensions.ThemeSlot
+import org.fossify.calendar.extensions.applyThemeFont
 import org.fossify.calendar.extensions.themeColor
 import org.fossify.calendar.extensions.tryImportEventsFromFile
 import org.fossify.calendar.extensions.updateWidgets
@@ -411,6 +412,7 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
         menu.findViewById<EditText>(org.fossify.commons.R.id.top_toolbar_search)?.apply {
             setTextColor(themeColor(ThemeSlot.SEARCH_TEXT))
             setHintTextColor(themeColor(ThemeSlot.SEARCH_HINT))
+            applyThemeFont(ThemeSlot.SEARCH_TEXT)
         }
 
         menu.findViewById<ImageView>(org.fossify.commons.R.id.top_toolbar_search_icon)

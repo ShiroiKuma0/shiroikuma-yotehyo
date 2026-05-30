@@ -127,6 +127,9 @@ class DayEventsAdapter(activity: SimpleActivity, val events: ArrayList<Event>, r
             eventItemTime.setTextColor(newTextColor)
             eventItemTitle.setTextColor(newTextColor)
             eventItemDescription.setTextColor(newTextColor)
+            eventItemTitle.applyThemeFont(ThemeSlot.EVENT_TEXT)
+            eventItemTime.applyThemeFont(ThemeSlot.TEXT_SECONDARY)
+            eventItemDescription.applyThemeFont(ThemeSlot.TEXT_SECONDARY)
             eventItemTaskImage.applyColorFilter(newTextColor)
             eventItemTaskImage.beVisibleIf(event.isTask())
 

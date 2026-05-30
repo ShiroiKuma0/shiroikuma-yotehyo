@@ -41,6 +41,7 @@ import org.fossify.calendar.extensions.intersects
 import org.fossify.calendar.extensions.seconds
 import org.fossify.calendar.extensions.shouldStrikeThrough
 import org.fossify.calendar.extensions.ThemeSlot
+import org.fossify.calendar.extensions.applyThemeFont
 import org.fossify.calendar.extensions.themeColor
 import org.fossify.calendar.helpers.Config
 import org.fossify.calendar.helpers.EDIT_ALL_OCCURRENCES
@@ -302,6 +303,7 @@ class WeekFragment : Fragment(), WeeklyCalendar {
             ).root
             label.text = "$dayLetter\n${curDay.dayOfMonth}"
             label.setTextColor(textColor)
+            label.applyThemeFont(ThemeSlot.TEXT)
             if (todayCode == dayCode) {
                 todayColumnIndex = i
             }
@@ -795,6 +797,7 @@ class WeekFragment : Fragment(), WeeklyCalendar {
 
                         weekEventLabel.apply {
                             setTextColor(textColor)
+                            applyThemeFont(ThemeSlot.EVENT_TEXT)
                             maxLines = if (event.isTask() || event.startTS == event.endTS) {
                                 1
                             } else {
@@ -949,6 +952,7 @@ class WeekFragment : Fragment(), WeeklyCalendar {
 
             weekEventLabel.apply {
                 setTextColor(textColor)
+                applyThemeFont(ThemeSlot.EVENT_TEXT)
                 maxLines = if (event.isTask()) 1 else 2
                 text = event.title
                 checkViewStrikeThrough(event.shouldStrikeThrough())

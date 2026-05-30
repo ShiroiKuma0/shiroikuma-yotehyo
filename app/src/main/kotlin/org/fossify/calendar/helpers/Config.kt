@@ -323,6 +323,28 @@ class Config(context: Context) : BaseConfig(context) {
         bumpThemeRevision()
     }
 
+    // Per-element fonts: family (filename, "" = default), weight (0 = default), size (sp, 0 = default).
+    fun getFontFamily(slotKey: String): String = prefs.getString(FONT_FAMILY_PREFIX + slotKey, "")!!
+
+    fun setFontFamily(slotKey: String, value: String) {
+        prefs.edit().putString(FONT_FAMILY_PREFIX + slotKey, value).apply()
+        bumpThemeRevision()
+    }
+
+    fun getFontWeight(slotKey: String): Int = prefs.getInt(FONT_WEIGHT_PREFIX + slotKey, 0)
+
+    fun setFontWeight(slotKey: String, value: Int) {
+        prefs.edit().putInt(FONT_WEIGHT_PREFIX + slotKey, value).apply()
+        bumpThemeRevision()
+    }
+
+    fun getFontSize(slotKey: String): Int = prefs.getInt(FONT_SIZE_PREFIX + slotKey, 0)
+
+    fun setFontSize(slotKey: String, value: Int) {
+        prefs.edit().putInt(FONT_SIZE_PREFIX + slotKey, value).apply()
+        bumpThemeRevision()
+    }
+
     // Day-box week view: header text alignment (DAY_BOX_ALIGN_*).
     var dayBoxHeaderAlignment: Int
         get() = prefs.getInt(DAY_BOX_HEADER_ALIGNMENT, DAY_BOX_ALIGN_END)

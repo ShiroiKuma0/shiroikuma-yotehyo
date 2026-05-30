@@ -53,6 +53,8 @@ class WeekFragmentsHolder : MyFragmentHolder(), WeekFragmentListener {
         binding.root.background = ColorDrawable(requireContext().getProperBackgroundColor())
         binding.weekViewMonthLabel.setTextColor(textColor)
         binding.weekViewWeekNumber.setTextColor(textColor)
+        binding.weekViewMonthLabel.applyThemeFont(ThemeSlot.TEXT)
+        binding.weekViewWeekNumber.applyThemeFont(ThemeSlot.TEXT)
 
         val itemHeight = requireContext().getWeeklyViewItemHeight().toInt()
         binding.weekViewHoursHolder.setPadding(0, 0, 0, itemHeight)
@@ -138,6 +140,7 @@ class WeekFragmentsHolder : MyFragmentHolder(), WeekFragmentListener {
             WeeklyViewHourTextviewBinding.inflate(layoutInflater).root.apply {
                 text = formattedHours
                 setTextColor(textColor)
+                applyThemeFont(ThemeSlot.TEXT)
                 height = itemHeight
                 binding.weekViewHoursHolder.addView(this)
             }

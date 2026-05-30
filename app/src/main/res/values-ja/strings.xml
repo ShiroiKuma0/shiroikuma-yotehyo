@@ -19,6 +19,8 @@
     <string name="theme_today_highlight">今日の強調</string>
     <string name="theme_weekend">週末</string>
     <string name="theme_grid_lines">グリッド線</string>
+    <string name="theme_event_text">予定の文字</string>
+    <string name="theme_today_box_fill">今日のボックスの塗り</string>
     <string name="theme_day_box_header">見出しの背景</string>
     <string name="theme_day_box_header_text">見出しの文字</string>
     <string name="theme_day_box_border">ボックスの枠線</string>
@@ -42,7 +44,26 @@
     <string name="theme_weekend_box_border">週末のボックスの枠線</string>
     <string name="theme_weekend_box_border_thickness">週末のボックスの枠線の太さ</string>
     <string name="theme_default_value">標準</string>
+    <!-- Per-element fonts -->
+    <string name="theme_font">フォント</string>
+    <string name="theme_weight">太さ</string>
+    <string name="theme_size">サイズ</string>
+    <string name="theme_size_default">既定</string>
+    <string name="theme_add_font">フォントを追加…</string>
+    <string name="font_system_default">システム標準</string>
+    <string name="font_monospace">等幅</string>
+    <string name="font_invalid">.ttf または .otf フォントファイルを選択してください</string>
+    <string name="font_sample_text">AaIiMmOoQqWw 012 白い熊相撲道 áÁčČďĎéÉěĚíÍňŇóÓřŘšŠťŤúÚůŮýÝžŽ</string>
+    <string name="font_weight_default">既定</string>
+    <string name="font_weight_thin">極細 (100)</string>
+    <string name="font_weight_light">細字 (300)</string>
+    <string name="font_weight_regular">標準 (400)</string>
+    <string name="font_weight_medium">中字 (500)</string>
+    <string name="font_weight_semibold">半太字 (600)</string>
+    <string name="font_weight_bold">太字 (700)</string>
+    <string name="font_weight_black">極太 (900)</string>
     <string name="theme_sub_weekly_view">週ビュー</string>
+    <string name="theme_sub_events">予定</string>
     <string name="theme_sub_day_boxes">日ボックス</string>
     <string name="theme_sub_today_boxes">今日のボックス</string>
     <string name="theme_sub_weekend_boxes">週末のボックス</string>
