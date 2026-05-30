@@ -114,11 +114,12 @@ private fun Context.themeDefault(slot: ThemeSlot): Int = when (slot) {
     ThemeSlot.DAY_BOX_BORDER -> themeColor(ThemeSlot.GRID_LINES)
     ThemeSlot.DAY_BOX_HEADER_BORDER -> themeColor(ThemeSlot.DAY_BOX_BORDER)
 
-    // Today / weekend day-box slots inherit the general defaults until overridden.
-    ThemeSlot.TODAY_TEXT -> themeColor(ThemeSlot.TODAY_HIGHLIGHT).getContrastColor()
+    // Today / weekend day-box slots inherit the general defaults until overridden. Their text follows
+    // the day-box header text (color + font, see fontParent) so they match unless given their own.
+    ThemeSlot.TODAY_TEXT -> themeColor(ThemeSlot.DAY_BOX_HEADER_TEXT)
     ThemeSlot.TODAY_HEADER_BORDER -> themeColor(ThemeSlot.DAY_BOX_HEADER_BORDER)
     ThemeSlot.TODAY_BOX_BORDER -> themeColor(ThemeSlot.DAY_BOX_BORDER)
-    ThemeSlot.WEEKEND_TEXT -> themeColor(ThemeSlot.WEEKEND).getContrastColor()
+    ThemeSlot.WEEKEND_TEXT -> themeColor(ThemeSlot.DAY_BOX_HEADER_TEXT)
     ThemeSlot.WEEKEND_HEADER_BORDER -> themeColor(ThemeSlot.DAY_BOX_HEADER_BORDER)
     ThemeSlot.WEEKEND_BOX_BORDER -> themeColor(ThemeSlot.DAY_BOX_BORDER)
 }

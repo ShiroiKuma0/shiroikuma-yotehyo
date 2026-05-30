@@ -26,13 +26,12 @@ import org.fossify.calendar.helpers.DAY_BOX_ALIGN_START
 import org.fossify.calendar.helpers.EVENT_ID
 import org.fossify.calendar.helpers.EVENT_OCCURRENCE_TS
 import org.fossify.calendar.helpers.Formatter
+import org.fossify.calendar.helpers.formatDayBoxHeader
 import org.fossify.calendar.helpers.IS_TASK_COMPLETED
-import org.fossify.calendar.helpers.THEME_UNSET
 import org.fossify.calendar.helpers.WEEK_START_TIMESTAMP
 import org.fossify.calendar.helpers.getActivityToOpen
 import org.fossify.calendar.models.Event
 import org.fossify.commons.extensions.adjustAlpha
-import org.fossify.commons.extensions.getContrastColor
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.helpers.MEDIUM_ALPHA
 import org.joda.time.DateTime
@@ -114,8 +113,9 @@ class WeekGridFragment : Fragment() {
                 isWeekend -> ThemeSlot.WEEKEND_TEXT
                 else -> ThemeSlot.DAY_BOX_HEADER_TEXT
             }
-            val textOverride = ctx.config.getThemeOverride(textSlot.key)
-            val headerTextColor = if (textOverride != THEME_UNSET) textOverride else headerColor.getContrastColor()
+            // Color resolves through the slot system: today/weekend text inherits the day-box header
+            // text (its default) until given an explicit override of its own.
+            val headerTextColor = ctx.themeColor(textSlot)
             val headerBorderColor = when {
                 isToday -> ctx.themeColor(ThemeSlot.TODAY_HEADER_BORDER)
                 isWeekend -> ctx.themeColor(ThemeSlot.WEEKEND_HEADER_BORDER)
@@ -133,8 +133,7 @@ class WeekGridFragment : Fragment() {
                 isToday, isWeekend, ctx.config.todayHeaderBorderThickness, ctx.config.weekendHeaderBorderThickness, generalHeaderBorderDp
             ) * density).toInt()
 
-            cell.weekGridDayHeader.text =
-                "${dayDateTime.toString("EEE")}, ${Formatter.getDateFromCode(ctx, dayCode, shortMonth = true)}"
+            cell.weekGridDayHeader.text = formatDayBoxHeader(dayDateTime.millis, ctx.config.dayBoxHeaderDateFormat)
             cell.weekGridDayHeader.background = GradientDrawable().apply {
                 setColor(headerColor)
                 if (headerBorderPx > 0) {

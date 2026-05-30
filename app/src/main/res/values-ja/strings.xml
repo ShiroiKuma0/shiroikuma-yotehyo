@@ -37,6 +37,12 @@
     <string name="theme_align_left">左</string>
     <string name="theme_align_center">中央</string>
     <string name="theme_align_right">右</string>
+    <string name="theme_date_header_format">見出しの日付形式</string>
+    <string name="theme_date_format_japanese">日本語（漢数字）</string>
+    <string name="theme_date_format_japanese_era">和暦（元号つき）</string>
+    <string name="theme_date_format_custom">カスタム形式…</string>
+    <string name="theme_date_format_pattern_hint">日付パターン</string>
+    <string name="theme_date_format_legend">パターン文字: d 日、M 月、y 年、E 曜日、G 元号。文字を繰り返すと長い形式になります（EEEE = 曜日の正式名）。その他の文字はそのまま表示されます。</string>
     <string name="theme_today_text">今日の文字</string>
     <string name="theme_today_header_border">今日の見出しの枠線</string>
     <string name="theme_today_header_border_thickness">今日の見出しの枠線の太さ</string>
