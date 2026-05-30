@@ -90,8 +90,8 @@ class WeekGridFragment : Fragment() {
         } or Gravity.CENTER_VERTICAL
 
         val density = ctx.resources.displayMetrics.density
-        val boxBorderPx = (ctx.config.dayBoxBorderThickness * density).toInt()
-        val headerBorderPx = (ctx.config.dayBoxHeaderBorderThickness * density).toInt()
+        val generalBoxBorderDp = ctx.config.dayBoxBorderThickness
+        val generalHeaderBorderDp = ctx.config.dayBoxHeaderBorderThickness
 
         for (i in 0 until 7) {
             val dayDateTime = weekStartDateTime.plusDays(i)
@@ -125,6 +125,12 @@ class WeekGridFragment : Fragment() {
                 isWeekend -> ctx.themeColor(ThemeSlot.WEEKEND_BOX_BORDER)
                 else -> ctx.themeColor(ThemeSlot.DAY_BOX_BORDER)
             }
+            val boxBorderPx = (resolveThickness(
+                isToday, isWeekend, ctx.config.todayBoxBorderThickness, ctx.config.weekendBoxBorderThickness, generalBoxBorderDp
+            ) * density).toInt()
+            val headerBorderPx = (resolveThickness(
+                isToday, isWeekend, ctx.config.todayHeaderBorderThickness, ctx.config.weekendHeaderBorderThickness, generalHeaderBorderDp
+            ) * density).toInt()
 
             cell.weekGridDayHeader.text =
                 "${dayDateTime.toString("EEE")}, ${Formatter.getDateFromCode(ctx, dayCode, shortMonth = true)}"
@@ -147,6 +153,13 @@ class WeekGridFragment : Fragment() {
             cell.weekGridDayEvents.removeAllViews()
             cell.weekGridDayBox.setOnClickListener { requireContext().launchNewEventIntent(dayCode) }
         }
+    }
+
+    // Today/weekend thickness overrides the general value unless it is the inherit sentinel (< 0).
+    private fun resolveThickness(isToday: Boolean, isWeekend: Boolean, todayDp: Int, weekendDp: Int, generalDp: Int) = when {
+        isToday -> if (todayDp >= 0) todayDp else generalDp
+        isWeekend -> if (weekendDp >= 0) weekendDp else generalDp
+        else -> generalDp
     }
 
     private fun fetchEvents() {

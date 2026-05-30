@@ -33,10 +33,14 @@
     <string name="theme_align_right">Right</string>
     <string name="theme_today_text">Today text</string>
     <string name="theme_today_header_border">Today header border</string>
+    <string name="theme_today_header_border_thickness">Today header border thickness</string>
     <string name="theme_today_box_border">Today box border</string>
+    <string name="theme_today_box_border_thickness">Today box border thickness</string>
     <string name="theme_weekend_text">Weekend text</string>
     <string name="theme_weekend_header_border">Weekend header border</string>
+    <string name="theme_weekend_header_border_thickness">Weekend header border thickness</string>
     <string name="theme_weekend_box_border">Weekend box border</string>
+    <string name="theme_weekend_box_border_thickness">Weekend box border thickness</string>
     <string name="theme_default_value">Default</string>
     <string name="theme_sub_weekly_view">Weekly view</string>
     <string name="theme_sub_day_boxes">Day boxes</string>
