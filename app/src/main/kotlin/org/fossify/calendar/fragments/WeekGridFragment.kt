@@ -1,0 +1,176 @@
+package org.fossify.calendar.fragments
+
+import android.content.Intent
+import android.graphics.Paint
+import android.graphics.drawable.ColorDrawable
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.LinearLayout
+import androidx.fragment.app.Fragment
+import org.fossify.calendar.databinding.FragmentWeekGridBinding
+import org.fossify.calendar.databinding.WeekGridDayBinding
+import org.fossify.calendar.databinding.WeekGridEventBinding
+import org.fossify.calendar.extensions.ThemeSlot
+import org.fossify.calendar.extensions.config
+import org.fossify.calendar.extensions.eventsHelper
+import org.fossify.calendar.extensions.launchNewEventIntent
+import org.fossify.calendar.extensions.themeColor
+import org.fossify.calendar.helpers.EVENT_ID
+import org.fossify.calendar.helpers.EVENT_OCCURRENCE_TS
+import org.fossify.calendar.helpers.Formatter
+import org.fossify.calendar.helpers.IS_TASK_COMPLETED
+import org.fossify.calendar.helpers.WEEK_START_TIMESTAMP
+import org.fossify.calendar.helpers.getActivityToOpen
+import org.fossify.calendar.models.Event
+import org.fossify.commons.extensions.adjustAlpha
+import org.fossify.commons.extensions.getContrastColor
+import org.fossify.commons.extensions.getProperBackgroundColor
+import org.fossify.commons.extensions.getProperTextColor
+import org.fossify.commons.helpers.MEDIUM_ALPHA
+import org.joda.time.DateTime
+import org.joda.time.DateTimeConstants
+
+// One week rendered as the Pimlical-style "day box" grid: days 0-4 get full-height boxes,
+// the last two days share the bottom-right cell (split). Each box is a header bar (date) plus a
+// vertical list of that day's events as text lines.
+class WeekGridFragment : Fragment() {
+    private lateinit var binding: FragmentWeekGridBinding
+    private var weekStartTS = 0L
+    private var weekStartDateTime = DateTime()
+    private var dayCells = listOf<WeekGridDayBinding>()
+    private var mWasDestroyed = false
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        weekStartTS = requireArguments().getLong(WEEK_START_TIMESTAMP)
+        weekStartDateTime = Formatter.getDateTimeFromTS(weekStartTS)
+    }
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        binding = FragmentWeekGridBinding.inflate(inflater, container, false)
+        dayCells = listOf(
+            binding.weekGridCell0, binding.weekGridCell1, binding.weekGridCell2, binding.weekGridCell3,
+            binding.weekGridCell4, binding.weekGridCell5, binding.weekGridCell6
+        )
+        binding.weekGridRoot.background = ColorDrawable(requireContext().themeColor(ThemeSlot.GRID_LINES))
+        setupDayBoxes()
+        fetchEvents()
+        return binding.root
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        mWasDestroyed = true
+    }
+
+    fun refreshEvents() {
+        if (!mWasDestroyed && isAdded && context != null) {
+            setupDayBoxes()
+            fetchEvents()
+        }
+    }
+
+    private fun setupDayBoxes() {
+        val ctx = requireContext()
+        val highlightWeekends = ctx.config.highlightWeekends
+        val todayCode = Formatter.getTodayCode()
+        val backgroundColor = ctx.getProperBackgroundColor()
+
+        for (i in 0 until 7) {
+            val dayDateTime = weekStartDateTime.plusDays(i)
+            val dayCode = Formatter.getDayCodeFromDateTime(dayDateTime)
+            val isToday = dayCode == todayCode
+            val dayOfWeek = dayDateTime.dayOfWeek
+            val isWeekend = dayOfWeek == DateTimeConstants.SATURDAY || dayOfWeek == DateTimeConstants.SUNDAY
+            val cell = dayCells[i]
+
+            val headerColor = when {
+                isToday -> ctx.themeColor(ThemeSlot.TODAY_HIGHLIGHT)
+                isWeekend && highlightWeekends -> ctx.themeColor(ThemeSlot.WEEKEND)
+                else -> ctx.themeColor(ThemeSlot.DAY_BOX_HEADER)
+            }
+
+            cell.weekGridDayHeader.text =
+                "${dayDateTime.toString("EEE")}, ${Formatter.getDateFromCode(ctx, dayCode, shortMonth = true)}"
+            cell.weekGridDayHeader.setBackgroundColor(headerColor)
+            cell.weekGridDayHeader.setTextColor(headerColor.getContrastColor())
+
+            cell.weekGridDayBox.setBackgroundColor(
+                if (isToday) ctx.themeColor(ThemeSlot.TODAY_HIGHLIGHT).adjustAlpha(0.12f) else backgroundColor
+            )
+            cell.weekGridDayEvents.removeAllViews()
+            cell.weekGridDayBox.setOnClickListener { requireContext().launchNewEventIntent(dayCode) }
+        }
+    }
+
+    private fun fetchEvents() {
+        val ctx = context ?: return
+        val weekEndTS = Formatter.getDayEndTS(Formatter.getDayCodeFromDateTime(weekStartDateTime.plusDays(6)))
+        ctx.eventsHelper.getEvents(weekStartTS, weekEndTS) { events ->
+            activity?.runOnUiThread {
+                if (!mWasDestroyed && isAdded && context != null) {
+                    fillDays(events)
+                }
+            }
+        }
+    }
+
+    private fun fillDays(events: List<Event>) {
+        val ctx = context ?: return
+        val dimPastEvents = ctx.config.dimPastEvents
+        val dimCompletedTasks = ctx.config.dimCompletedTasks
+
+        for (i in 0 until 7) {
+            val dayDateTime = weekStartDateTime.plusDays(i)
+            val dayCode = Formatter.getDayCodeFromDateTime(dayDateTime)
+            val dayStart = Formatter.getDayStartTS(dayCode)
+            val dayEnd = Formatter.getDayEndTS(dayCode)
+            val container = dayCells[i].weekGridDayEvents
+            container.removeAllViews()
+
+            events.asSequence()
+                .filter { it.startTS <= dayEnd && it.endTS >= dayStart }
+                .sortedWith(compareBy({ !it.getIsAllDay() }, { it.startTS }, { it.title }))
+                .forEach { addEventLine(container, it, dimPastEvents, dimCompletedTasks) }
+        }
+    }
+
+    private fun addEventLine(container: LinearLayout, event: Event, dimPastEvents: Boolean, dimCompletedTasks: Boolean) {
+        val ctx = requireContext()
+        val line = WeekGridEventBinding.inflate(layoutInflater, container, false)
+        val label = if (event.getIsAllDay()) {
+            event.title
+        } else {
+            "${Formatter.getTime(ctx, Formatter.getDateTimeFromTS(event.startTS))} ${event.title}"
+        }
+
+        var color = if (event.color != 0) event.color else ctx.getProperTextColor()
+        val shouldDim = if (event.isTask()) {
+            dimCompletedTasks && event.isTaskCompleted()
+        } else {
+            dimPastEvents && event.isPastEvent
+        }
+        if (shouldDim) {
+            color = color.adjustAlpha(MEDIUM_ALPHA)
+        }
+
+        line.root.text = label
+        line.root.setTextColor(color)
+        if (event.isTaskCompleted()) {
+            line.root.paintFlags = line.root.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+        }
+        line.root.setOnClickListener { openEvent(event) }
+        container.addView(line.root)
+    }
+
+    private fun openEvent(event: Event) {
+        Intent(requireContext(), getActivityToOpen(event.isTask())).apply {
+            putExtra(EVENT_ID, event.id)
+            putExtra(EVENT_OCCURRENCE_TS, event.startTS)
+            putExtra(IS_TASK_COMPLETED, event.isTaskCompleted())
+            startActivity(this)
+        }
+    }
+}

@@ -19,6 +19,12 @@
     <string name="theme_today_highlight">今日の強調</string>
     <string name="theme_weekend">週末</string>
     <string name="theme_grid_lines">グリッド線</string>
+    <string name="theme_day_box_header">日ボックスの見出し</string>
+    <!-- Day-box (Pimlical-style) week view -->
+    <string name="weekly_grid_view">週グリッド（日ボックス）</string>
+    <string name="weekly_view_style">週ビューのスタイル</string>
+    <string name="weekly_style_time_grid">時間グリッド</string>
+    <string name="weekly_style_day_boxes">日ボックス</string>
     <string name="change_view">ビューの変更</string>
     <string name="daily_view">日</string>
     <string name="weekly_view">週</string>

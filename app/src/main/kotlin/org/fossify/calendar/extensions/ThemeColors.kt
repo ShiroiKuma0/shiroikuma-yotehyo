@@ -49,6 +49,7 @@ enum class ThemeSlot(
     TODAY_HIGHLIGHT("theme_today_highlight", ThemeGroup.CALENDAR, R.string.theme_today_highlight),
     WEEKEND("theme_weekend", ThemeGroup.CALENDAR, R.string.theme_weekend),
     GRID_LINES("theme_grid_lines", ThemeGroup.CALENDAR, R.string.theme_grid_lines),
+    DAY_BOX_HEADER("theme_day_box_header", ThemeGroup.CALENDAR, R.string.theme_day_box_header),
 }
 
 /** The effective color for a slot: the user's override if set, otherwise its inherited default. */
@@ -76,6 +77,8 @@ private fun Context.themeDefault(slot: ThemeSlot): Int = when (slot) {
     ThemeSlot.TODAY_HIGHLIGHT -> themeColor(ThemeSlot.PRIMARY)
     ThemeSlot.WEEKEND -> config.highlightWeekendsColor
     ThemeSlot.GRID_LINES -> themeColor(ThemeSlot.TEXT).adjustAlpha(LOWER_ALPHA)
+    // Day-box week view header bars default to the accent (today/weekend get their own slots).
+    ThemeSlot.DAY_BOX_HEADER -> themeColor(ThemeSlot.PRIMARY)
 }
 
 /** Set an explicit override for a slot. Write-through slots persist to the stock commons/config colors. */
