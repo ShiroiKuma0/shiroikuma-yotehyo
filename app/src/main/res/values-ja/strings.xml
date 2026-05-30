@@ -20,6 +20,9 @@
     <string name="theme_weekend">週末</string>
     <string name="theme_grid_lines">グリッド線</string>
     <string name="theme_day_box_header">日ボックスの見出し</string>
+    <string name="theme_default_value">標準</string>
+    <string name="theme_sub_weekly_view">週ビュー</string>
+    <string name="theme_sub_highlights_grid">強調とグリッド</string>
     <!-- Day-box (Pimlical-style) week view -->
     <string name="weekly_grid_view">週グリッド（日ボックス）</string>
     <string name="weekly_view_style">週ビューのスタイル</string>

@@ -65,8 +65,6 @@ import org.fossify.calendar.helpers.START_WEEK_WITH_CURRENT_DAY
 import org.fossify.calendar.helpers.USE_PREVIOUS_EVENT_REMINDERS
 import org.fossify.calendar.helpers.VIBRATE
 import org.fossify.calendar.helpers.WEEKLY_GRID_VIEW
-import org.fossify.calendar.helpers.WEEKLY_STYLE_DAY_BOXES
-import org.fossify.calendar.helpers.WEEKLY_STYLE_TIME_GRID
 import org.fossify.calendar.helpers.WEEKLY_VIEW
 import org.fossify.calendar.helpers.WEEK_NUMBERS
 import org.fossify.calendar.helpers.YEARLY_VIEW
@@ -182,7 +180,6 @@ class SettingsActivity : SimpleActivity() {
 
     private fun setupSettingItems() {
         setupThemeAndColors()
-        setupPrimaryColor()
         setupCustomizeColors()
         setupCustomizeNotifications()
         setupUseEnglish()
@@ -200,7 +197,6 @@ class SettingsActivity : SimpleActivity() {
         setupWeekNumbers()
         setupShowGrid()
         setupWeeklyStart()
-        setupWeeklyViewStyle()
         setupMidnightSpanEvents()
         setupAllowCustomizeDayCount()
         setupStartWeekWithCurrentDay()
@@ -308,24 +304,10 @@ class SettingsActivity : SimpleActivity() {
         }
     }
 
+    // The whole "白い熊 予定表 UI" section header is the entry point into the consolidated UI page.
     private fun setupThemeAndColors() {
-        binding.settingsThemeAndColorsHolder.setOnClickListener {
+        binding.settingsShiroikumaUiLabel.setOnClickListener {
             startActivity(Intent(this, ThemeActivity::class.java))
-        }
-    }
-
-    private fun setupPrimaryColor() {
-        binding.settingsPrimaryColorPreview.background.setTint(getProperPrimaryColor())
-        binding.settingsPrimaryColorHolder.setOnClickListener {
-            ColorPickerDialog(this, getProperPrimaryColor()) { wasPositive, color ->
-                if (wasPositive) {
-                    // A custom primary color is incompatible with Material You, so leave the system
-                    // theme – otherwise getProperPrimaryColor() keeps returning the dynamic color.
-                    config.isSystemThemeEnabled = false
-                    config.primaryColor = color
-                    recreate()
-                }
-            }
         }
     }
 
@@ -612,33 +594,6 @@ class SettingsActivity : SimpleActivity() {
             }
         }
     }
-
-    private fun setupWeeklyViewStyle() = binding.apply {
-        settingsWeeklyViewStyle.text = getWeeklyViewStyleText()
-        settingsWeeklyViewStyleHolder.setOnClickListener {
-            val items = arrayListOf(
-                RadioItem(WEEKLY_STYLE_TIME_GRID, getString(R.string.weekly_style_time_grid)),
-                RadioItem(WEEKLY_STYLE_DAY_BOXES, getString(R.string.weekly_style_day_boxes))
-            )
-
-            RadioGroupDialog(
-                activity = this@SettingsActivity,
-                items = items,
-                checkedItemId = config.weeklyViewStyle
-            ) {
-                config.weeklyViewStyle = it as Int
-                settingsWeeklyViewStyle.text = getWeeklyViewStyleText()
-            }
-        }
-    }
-
-    private fun getWeeklyViewStyleText() = getString(
-        if (config.weeklyViewStyle == WEEKLY_STYLE_DAY_BOXES) {
-            R.string.weekly_style_day_boxes
-        } else {
-            R.string.weekly_style_time_grid
-        }
-    )
 
     private fun setupMidnightSpanEvents() = binding.apply {
         settingsMidnightSpanEvent.isChecked = config.showMidnightSpanningEventsAtTop
