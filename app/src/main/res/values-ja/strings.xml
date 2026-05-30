@@ -11,6 +11,7 @@
     <string name="theme_toolbar_icons">上部バーのアイコン</string>
     <string name="theme_menu_text">メニューの文字</string>
     <string name="theme_settings_title">設定のタイトルと矢印</string>
+    <string name="theme_view_switcher">ビュー切替（日週月年）</string>
     <string name="theme_background">背景</string>
     <string name="theme_primary">メイン / アクセント</string>
     <string name="theme_text">文字</string>

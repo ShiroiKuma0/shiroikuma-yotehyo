@@ -9,6 +9,26 @@
         android:title="@string/go_to_today"
         app:showAsAction="always" />
     <item
+        android:id="@+id/switch_to_day"
+        android:title="@string/daily_view"
+        app:actionLayout="@layout/item_view_switcher"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/switch_to_week"
+        android:title="@string/weekly_grid_view"
+        app:actionLayout="@layout/item_view_switcher"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/switch_to_month"
+        android:title="@string/monthly_view"
+        app:actionLayout="@layout/item_view_switcher"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/switch_to_year"
+        android:title="@string/yearly_view"
+        app:actionLayout="@layout/item_view_switcher"
+        app:showAsAction="always" />
+    <item
         android:id="@+id/change_view"
         android:icon="@drawable/ic_change_view_vector"
         android:title="@string/change_view"

@@ -11,6 +11,7 @@
     <string name="theme_toolbar_icons">Top bar icons</string>
     <string name="theme_menu_text">Menu text</string>
     <string name="theme_settings_title">Settings title &amp; arrow</string>
+    <string name="theme_view_switcher">View switcher (日週月年)</string>
     <string name="theme_background">Background</string>
     <string name="theme_primary">Primary / accent</string>
     <string name="theme_text">Text</string>
