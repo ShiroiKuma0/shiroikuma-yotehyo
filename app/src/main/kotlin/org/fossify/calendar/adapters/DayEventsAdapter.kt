@@ -89,7 +89,12 @@ class DayEventsAdapter(activity: SimpleActivity, val events: ArrayList<Event>, r
         EventListItemBinding.bind(view).apply {
             eventItemHolder.isSelected = selectedKeys.contains(event.id?.toInt())
             eventItemHolder.background.applyColorFilter(textColor)
-            eventItemTitle.text = event.title
+            val tzAnnotation = if (event.getIsAllDay()) {
+                null
+            } else {
+                eventTimeZoneAnnotation(event.startTS, event.endTS, event.getTimeZoneString(), event.getEndTimeZoneString())
+            }
+            eventItemTitle.text = if (tzAnnotation != null) "${event.title}$tzAnnotation" else event.title
             eventItemTitle.checkViewStrikeThrough(event.shouldStrikeThrough())
             val timeFormat = activity.config.eventTimeFormat
             eventItemTime.text = if (event.getIsAllDay()) allDayString else formatEventClock(event.startTS, timeFormat)

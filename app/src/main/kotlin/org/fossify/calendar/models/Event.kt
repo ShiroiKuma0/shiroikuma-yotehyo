@@ -67,6 +67,7 @@ data class Event(
     @ColumnInfo(name = "color") var color: Int = 0,
     @ColumnInfo(name = "type") var type: Int = TYPE_EVENT,
     @ColumnInfo(name = "status") var status: Int = CalendarContract.Events.STATUS_CONFIRMED,
+    @ColumnInfo(name = "end_time_zone") var endTimeZone: String = "",
 ) : Serializable {
 
     companion object {
@@ -259,6 +260,17 @@ data class Event(
             timeZone
         } else {
             DateTimeZone.getDefault().id
+        }
+    }
+
+    // The end-of-event timezone (e.g. a flight's arrival zone). Falls back to the start timezone
+    // (which itself falls back to the device zone) so existing single-timezone events are unchanged.
+    fun getEndTimeZoneString(): String {
+        return if (endTimeZone.isNotEmpty() && getAllTimeZones().map { it.zoneName }
+                .contains(endTimeZone)) {
+            endTimeZone
+        } else {
+            getTimeZoneString()
         }
     }
 
