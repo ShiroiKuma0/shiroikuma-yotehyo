@@ -294,6 +294,14 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(SHOW_BOX_GRID_WEEKLY, true)
         set(showBoxGridWeekly) = prefs.edit().putBoolean(SHOW_BOX_GRID_WEEKLY, showBoxGridWeekly).apply()
 
+    // Date format for the box-grid week view headers: a preset sentinel (japanese / japanese_era) or a literal ICU pattern.
+    var dayBoxHeaderDateFormat: String
+        get() = prefs.getString(DAY_BOX_HEADER_DATE_FORMAT, DAY_BOX_HEADER_FORMAT_JAPANESE)!!
+        set(dayBoxHeaderDateFormat) {
+            prefs.edit().putString(DAY_BOX_HEADER_DATE_FORMAT, dayBoxHeaderDateFormat).apply()
+            bumpThemeRevision() // re-render the box-grid headers when returning to the calendar
+        }
+
     var highlightWeekends: Boolean
         get() = prefs.getBoolean(HIGHLIGHT_WEEKENDS, false)
         set(highlightWeekends) = prefs.edit().putBoolean(HIGHLIGHT_WEEKENDS, highlightWeekends)

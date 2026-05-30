@@ -146,6 +146,11 @@ const val WEEKLY_VIEW_ITEM_HEIGHT_MULTIPLIER = "weekly_view_item_height_multipli
 const val WEEKLY_VIEW_DAYS = "weekly_view_days"
 const val SHOW_TIME_GRID_WEEKLY = "show_time_grid_weekly"
 const val SHOW_BOX_GRID_WEEKLY = "show_box_grid_weekly"
+const val DAY_BOX_HEADER_DATE_FORMAT = "day_box_header_date_format"
+
+// Day-box header date-format presets. Any other stored value is treated as a literal ICU date pattern.
+const val DAY_BOX_HEADER_FORMAT_JAPANESE = "japanese"
+const val DAY_BOX_HEADER_FORMAT_JAPANESE_ERA = "japanese_era"
 const val DAY_BOX_HEADER_ALIGNMENT = "day_box_header_alignment"
 const val DAY_BOX_BORDER_THICKNESS = "day_box_border_thickness"
 const val DAY_BOX_HEADER_BORDER_THICKNESS = "day_box_header_border_thickness"

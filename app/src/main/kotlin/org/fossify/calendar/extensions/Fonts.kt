@@ -92,15 +92,40 @@ fun Context.themeTypeface(family: String, weight: Int, baseStyle: Int = Typeface
     }
 }
 
-/** The configured typeface (family + weight) for a slot. */
+// The today/weekend header text inherit the day-box header text's font (family / weight / size)
+// per field until they are given their own — matching the inherited text color (see themeDefault).
+private fun ThemeSlot.fontParent(): ThemeSlot? = when (this) {
+    ThemeSlot.TODAY_TEXT, ThemeSlot.WEEKEND_TEXT -> ThemeSlot.DAY_BOX_HEADER_TEXT
+    else -> null
+}
+
+/** The effective font family for a slot: its own if set, else its parent's, else the system default. */
+fun Context.effectiveFontFamily(slot: ThemeSlot): String {
+    val own = config.getFontFamily(slot.key)
+    return if (own.isNotEmpty()) own else slot.fontParent()?.let { config.getFontFamily(it.key) } ?: ""
+}
+
+/** The effective font weight for a slot: its own if set, else its parent's, else 0 (family default). */
+fun Context.effectiveFontWeight(slot: ThemeSlot): Int {
+    val own = config.getFontWeight(slot.key)
+    return if (own > 0) own else slot.fontParent()?.let { config.getFontWeight(it.key) } ?: 0
+}
+
+/** The effective font size (sp) for a slot: its own if set, else its parent's, else 0 (no override). */
+fun Context.effectiveFontSize(slot: ThemeSlot): Int {
+    val own = config.getFontSize(slot.key)
+    return if (own > 0) own else slot.fontParent()?.let { config.getFontSize(it.key) } ?: 0
+}
+
+/** The configured typeface (family + weight) for a slot, with parent inheritance. */
 fun Context.themeTypeface(slot: ThemeSlot, baseStyle: Int = Typeface.NORMAL): Typeface =
-    themeTypeface(config.getFontFamily(slot.key), config.getFontWeight(slot.key), baseStyle)
+    themeTypeface(effectiveFontFamily(slot), effectiveFontWeight(slot), baseStyle)
 
 /** Apply a text slot's configured family + weight + size to a real text view (size only overrides if set). */
 fun TextView.applyThemeFont(slot: ThemeSlot, baseStyle: Int = Typeface.NORMAL) {
     val ctx = context
     typeface = ctx.themeTypeface(slot, baseStyle)
-    val sizeSp = ctx.config.getFontSize(slot.key)
+    val sizeSp = ctx.effectiveFontSize(slot)
     if (sizeSp > 0) {
         setTextSize(TypedValue.COMPLEX_UNIT_SP, sizeSp.toFloat())
     }

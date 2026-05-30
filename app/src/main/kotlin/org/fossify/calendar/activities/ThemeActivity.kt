@@ -10,6 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import org.fossify.calendar.R
 import org.fossify.calendar.databinding.ActivityThemeBinding
+import org.fossify.calendar.databinding.DialogDayBoxDateFormatBinding
 import org.fossify.calendar.databinding.ItemThemeColorBinding
 import org.fossify.calendar.databinding.ItemThemeSectionBinding
 import org.fossify.calendar.databinding.ItemThemeSliderBinding
@@ -23,6 +24,9 @@ import org.fossify.calendar.extensions.FontWeightOption
 import org.fossify.calendar.extensions.ThemeGroup
 import org.fossify.calendar.extensions.ThemeSlot
 import org.fossify.calendar.extensions.config
+import org.fossify.calendar.extensions.effectiveFontFamily
+import org.fossify.calendar.extensions.effectiveFontSize
+import org.fossify.calendar.extensions.effectiveFontWeight
 import org.fossify.calendar.extensions.fontDisplayName
 import org.fossify.calendar.extensions.importFont
 import org.fossify.calendar.extensions.resetThemeColor
@@ -32,16 +36,22 @@ import org.fossify.calendar.extensions.themeColor
 import org.fossify.calendar.helpers.DAY_BOX_ALIGN_CENTER
 import org.fossify.calendar.helpers.DAY_BOX_ALIGN_END
 import org.fossify.calendar.helpers.DAY_BOX_ALIGN_START
+import org.fossify.calendar.helpers.DAY_BOX_HEADER_FORMAT_JAPANESE
+import org.fossify.calendar.helpers.DAY_BOX_HEADER_FORMAT_JAPANESE_ERA
 import org.fossify.calendar.helpers.DAY_BOX_THICKNESS_INHERIT
 import org.fossify.calendar.helpers.MAX_FONT_SIZE_SP
 import org.fossify.calendar.helpers.THEME_UNSET
+import org.fossify.calendar.helpers.formatDayBoxHeader
 import org.fossify.commons.dialogs.RadioGroupDialog
 import org.fossify.commons.extensions.adjustAlpha
 import org.fossify.commons.extensions.beVisibleIf
+import org.fossify.commons.extensions.getAlertDialogBuilder
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.onSeekBarChangeListener
+import org.fossify.commons.extensions.onTextChangeListener
+import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.commons.extensions.toast
 import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.NavigationIcon
@@ -121,6 +131,7 @@ class ThemeActivity : SimpleActivity() {
         addSlot(ThemeSlot.DAY_BOX_HEADER)
         addSlot(ThemeSlot.DAY_BOX_HEADER_TEXT)
         addHeaderAlignmentRow()
+        addDateHeaderFormatRow()
         addSlot(ThemeSlot.DAY_BOX_HEADER_BORDER)
         addThicknessRow(R.string.theme_day_box_header_border_thickness, config.dayBoxHeaderBorderThickness) {
             config.dayBoxHeaderBorderThickness = it
@@ -263,9 +274,9 @@ class ThemeActivity : SimpleActivity() {
 
     private fun refreshSample(b: ItemThemeTextBinding, slot: ThemeSlot) {
         b.themeTextSample.showFontSample(
-            config.getFontFamily(slot.key),
-            config.getFontWeight(slot.key),
-            config.getFontSize(slot.key),
+            effectiveFontFamily(slot),
+            effectiveFontWeight(slot),
+            effectiveFontSize(slot),
             themeColor(slot)
         )
     }
@@ -376,6 +387,77 @@ class ThemeActivity : SimpleActivity() {
             else -> R.string.theme_align_right
         }
     )
+
+    private fun addDateHeaderFormatRow() {
+        val row = ItemThemeValueBinding.inflate(layoutInflater, binding.themeHolder, false)
+        row.themeValueLabel.text = getString(R.string.theme_date_header_format)
+        row.themeValueLabel.setTextColor(textColor)
+        row.themeValueValue.setTextColor(textColor.adjustAlpha(0.6f))
+        row.themeValueValue.text = dateFormatSample()
+        row.root.setOnClickListener { openDateHeaderFormatPicker(row.themeValueValue) }
+        indentView(row.root, currentRowIndent)
+        binding.themeHolder.addView(row.root)
+    }
+
+    private fun dateFormatSample() = formatDayBoxHeader(System.currentTimeMillis(), config.dayBoxHeaderDateFormat)
+
+    private fun openDateHeaderFormatPicker(valueView: TextView) {
+        val now = System.currentTimeMillis()
+        val customId = 2
+        val current = when (config.dayBoxHeaderDateFormat) {
+            DAY_BOX_HEADER_FORMAT_JAPANESE -> 0
+            DAY_BOX_HEADER_FORMAT_JAPANESE_ERA -> 1
+            else -> customId
+        }
+        val items = arrayListOf(
+            RadioItem(0, "${getString(R.string.theme_date_format_japanese)} — ${formatDayBoxHeader(now, DAY_BOX_HEADER_FORMAT_JAPANESE)}"),
+            RadioItem(1, "${getString(R.string.theme_date_format_japanese_era)} — ${formatDayBoxHeader(now, DAY_BOX_HEADER_FORMAT_JAPANESE_ERA)}"),
+            RadioItem(customId, getString(R.string.theme_date_format_custom))
+        )
+        RadioGroupDialog(this, items, current) {
+            when (it as Int) {
+                0 -> {
+                    config.dayBoxHeaderDateFormat = DAY_BOX_HEADER_FORMAT_JAPANESE
+                    valueView.text = dateFormatSample()
+                }
+
+                1 -> {
+                    config.dayBoxHeaderDateFormat = DAY_BOX_HEADER_FORMAT_JAPANESE_ERA
+                    valueView.text = dateFormatSample()
+                }
+
+                else -> openCustomDateFormatDialog(valueView)
+            }
+        }
+    }
+
+    private fun openCustomDateFormatDialog(valueView: TextView) {
+        val dialogBinding = DialogDayBoxDateFormatBinding.inflate(layoutInflater)
+        val stored = config.dayBoxHeaderDateFormat
+        val initial = if (stored == DAY_BOX_HEADER_FORMAT_JAPANESE || stored == DAY_BOX_HEADER_FORMAT_JAPANESE_ERA) {
+            "MMM d, EEE"
+        } else {
+            stored
+        }
+        dialogBinding.dateFormatPattern.setText(initial)
+        dialogBinding.dateFormatSample.text = formatDayBoxHeader(System.currentTimeMillis(), initial)
+        dialogBinding.dateFormatPattern.onTextChangeListener { text ->
+            dialogBinding.dateFormatSample.text = formatDayBoxHeader(System.currentTimeMillis(), text)
+        }
+
+        getAlertDialogBuilder()
+            .setPositiveButton(org.fossify.commons.R.string.ok) { _, _ ->
+                val pattern = dialogBinding.dateFormatPattern.text.toString().trim()
+                if (pattern.isNotEmpty()) {
+                    config.dayBoxHeaderDateFormat = pattern
+                    valueView.text = dateFormatSample()
+                }
+            }
+            .setNegativeButton(org.fossify.commons.R.string.cancel, null)
+            .apply {
+                setupDialogStuff(dialogBinding.root, this, R.string.theme_date_header_format)
+            }
+    }
 
     private fun addThicknessRow(@StringRes labelRes: Int, current: Int, min: Int = 0, max: Int = 12, onChange: (Int) -> Unit) {
         val row = ItemThemeSliderBinding.inflate(layoutInflater, binding.themeHolder, false)
