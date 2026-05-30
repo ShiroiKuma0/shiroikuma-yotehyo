@@ -5,6 +5,7 @@ import android.provider.CalendarContract.Attendees
 import androidx.collection.LongSparseArray
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Ignore
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import org.fossify.calendar.extensions.seconds
@@ -69,6 +70,24 @@ data class Event(
     @ColumnInfo(name = "status") var status: Int = CalendarContract.Events.STATUS_CONFIRMED,
     @ColumnInfo(name = "end_time_zone") var endTimeZone: String = "",
 ) : Serializable {
+
+    // Resolved at fetch time from the event's category (event type), like `color`. Not persisted.
+    // Text colour is `color`; these add the optional background + per-element font. THEME_UNSET / "" / 0 = unset.
+    @Ignore
+    var categoryBackgroundColor: Int = Int.MIN_VALUE
+
+    @Ignore
+    var categoryFontFamily: String = ""
+
+    @Ignore
+    var categoryFontWeight: Int = 0
+
+    @Ignore
+    var categoryFontSize: Int = 0
+
+    // True once the assigned category carries styling beyond its colour, so views can restyle the event.
+    fun hasCategoryStyle() = categoryBackgroundColor != Int.MIN_VALUE ||
+        categoryFontFamily.isNotEmpty() || categoryFontWeight > 0 || categoryFontSize > 0
 
     companion object {
         private const val serialVersionUID = -32456795132345616L

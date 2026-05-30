@@ -56,6 +56,8 @@
     <string name="theme_date_format_pattern_hint">Date pattern</string>
     <string name="theme_date_format_legend">Pattern letters: d day, M month, y year, E weekday, G era. Repeat a letter for longer forms (EEEE = full weekday name). Any other characters appear literally.</string>
     <string name="theme_event_time_format">Event time format</string>
+    <string name="theme_category_background">Background colour</string>
+    <string name="category_add_font_hint">Import new fonts from the 白い熊 予定表 UI settings page.</string>
     <string name="theme_event_time_japanese">Japanese (午前…)</string>
     <string name="theme_time_pattern_hint">Time pattern</string>
     <string name="theme_time_format_legend">Pattern letters: H 24-hour, h 12-hour, m minute, a AM/PM. Example: HH:mm. Any other characters appear literally.</string>

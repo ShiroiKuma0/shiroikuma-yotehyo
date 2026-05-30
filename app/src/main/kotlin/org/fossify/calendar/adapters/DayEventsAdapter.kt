@@ -10,6 +10,7 @@ import org.fossify.calendar.databinding.EventListItemBinding
 import org.fossify.calendar.dialogs.DeleteEventDialog
 import org.fossify.calendar.extensions.*
 import org.fossify.calendar.helpers.Formatter
+import org.fossify.calendar.helpers.THEME_UNSET
 import org.fossify.calendar.models.Event
 import org.fossify.commons.adapters.MyRecyclerViewAdapter
 import org.fossify.commons.extensions.adjustAlpha
@@ -88,7 +89,14 @@ class DayEventsAdapter(activity: SimpleActivity, val events: ArrayList<Event>, r
     private fun setupView(view: View, event: Event) {
         EventListItemBinding.bind(view).apply {
             eventItemHolder.isSelected = selectedKeys.contains(event.id?.toInt())
-            eventItemHolder.background.applyColorFilter(textColor)
+            // Category background fills the row when set (selection still shows via the foreground);
+            // otherwise restore the default stroke. Reset on every bind so recycled rows stay correct.
+            if (event.categoryBackgroundColor != THEME_UNSET) {
+                eventItemHolder.setBackgroundColor(event.categoryBackgroundColor)
+            } else {
+                eventItemHolder.setBackgroundResource(org.fossify.commons.R.drawable.section_holder_stroke)
+                eventItemHolder.background.applyColorFilter(textColor)
+            }
             val tzAnnotation = if (event.getIsAllDay()) {
                 null
             } else {
@@ -138,6 +146,11 @@ class DayEventsAdapter(activity: SimpleActivity, val events: ArrayList<Event>, r
             eventItemTitle.applyThemeFont(ThemeSlot.EVENT_TEXT)
             eventItemTime.applyThemeFont(ThemeSlot.TEXT_SECONDARY)
             eventItemDescription.applyThemeFont(ThemeSlot.TEXT_SECONDARY)
+            // The event title takes its category (event type) colour, and the category font when set.
+            eventItemTitle.setTextColor(if (adjustAlpha) event.color.adjustAlpha(MEDIUM_ALPHA) else event.color)
+            if (event.categoryFontFamily.isNotEmpty() || event.categoryFontWeight > 0 || event.categoryFontSize > 0) {
+                eventItemTitle.applyCategoryFont(event.categoryFontFamily, event.categoryFontWeight, event.categoryFontSize)
+            }
             eventItemTaskImage.applyColorFilter(newTextColor)
             eventItemTaskImage.beVisibleIf(event.isTask())
 

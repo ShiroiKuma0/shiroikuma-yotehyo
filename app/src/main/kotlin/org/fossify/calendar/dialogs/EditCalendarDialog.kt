@@ -5,11 +5,16 @@ import android.widget.ImageView
 import androidx.appcompat.app.AlertDialog
 import org.fossify.calendar.R
 import org.fossify.calendar.databinding.DialogCalendarBinding
+import org.fossify.calendar.extensions.FontWeightOption
 import org.fossify.calendar.extensions.calDAVHelper
 import org.fossify.calendar.extensions.eventsHelper
+import org.fossify.calendar.extensions.fontDisplayName
+import org.fossify.calendar.extensions.showFontSample
 import org.fossify.calendar.helpers.OTHER_EVENT
+import org.fossify.calendar.helpers.THEME_UNSET
 import org.fossify.calendar.models.CalendarEntity
 import org.fossify.commons.dialogs.ColorPickerDialog
+import org.fossify.commons.dialogs.RadioGroupDialog
 import org.fossify.commons.extensions.getAlertDialogBuilder
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperPrimaryColor
@@ -20,6 +25,7 @@ import org.fossify.commons.extensions.toast
 import org.fossify.commons.extensions.value
 import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.ensureBackgroundThread
+import org.fossify.commons.models.RadioItem
 
 class EditCalendarDialog(
     val activity: Activity,
@@ -36,6 +42,7 @@ class EditCalendarDialog(
 
         binding.apply {
             setupColor(typeColor)
+            setupBackgroundColor(typeBackgroundColor)
             typeTitle.setText(calendar!!.title)
             typeColor.setOnClickListener {
                 if (calendar?.caldavCalendarId == 0) {
@@ -46,6 +53,7 @@ class EditCalendarDialog(
                         if (wasPositivePressed) {
                             calendar!!.color = color
                             setupColor(typeColor)
+                            refreshSample()
                         }
                     }
                 } else {
@@ -59,9 +67,59 @@ class EditCalendarDialog(
                     ) {
                         calendar!!.color = it
                         setupColor(typeColor)
+                        refreshSample()
                     }
                 }
             }
+
+            typeBackgroundColor.setOnClickListener {
+                val current = if (calendar!!.backgroundColor == THEME_UNSET) {
+                    activity.getProperBackgroundColor()
+                } else {
+                    calendar!!.backgroundColor
+                }
+                AlphaColorPickerDialog(activity, current, addDefaultColorButton = true) { wasPositive, color ->
+                    calendar!!.backgroundColor = if (wasPositive) color else THEME_UNSET
+                    setupBackgroundColor(typeBackgroundColor)
+                    refreshSample()
+                }
+            }
+
+            typeFontRow.setOnClickListener {
+                FontPickerDialog(
+                    activity = activity,
+                    onAddFont = { activity.toast(R.string.category_add_font_hint) },
+                    onPick = { fileName ->
+                        calendar!!.fontFamily = fileName
+                        typeFontValue.text = activity.fontDisplayName(fileName)
+                        refreshSample()
+                    }
+                )
+            }
+
+            typeWeightRow.setOnClickListener {
+                val items = ArrayList(FontWeightOption.entries.map { RadioItem(it.value, activity.getString(it.labelRes)) })
+                RadioGroupDialog(activity, items, calendar!!.fontWeight) {
+                    calendar!!.fontWeight = it as Int
+                    typeWeightValue.text = activity.getString(FontWeightOption.fromValue(calendar!!.fontWeight).labelRes)
+                    refreshSample()
+                }
+            }
+
+            typeSizeRow.setOnClickListener {
+                val sizes = listOf(0, 10, 12, 14, 16, 18, 20, 24, 28, 32)
+                val items = ArrayList(sizes.map { RadioItem(it, sizeLabel(it)) })
+                RadioGroupDialog(activity, items, calendar!!.fontSize) {
+                    calendar!!.fontSize = it as Int
+                    typeSizeValue.text = sizeLabel(calendar!!.fontSize)
+                    refreshSample()
+                }
+            }
+
+            typeFontValue.text = activity.fontDisplayName(calendar!!.fontFamily)
+            typeWeightValue.text = activity.getString(FontWeightOption.fromValue(calendar!!.fontWeight).labelRes)
+            typeSizeValue.text = sizeLabel(calendar!!.fontSize)
+            refreshSample()
         }
 
         activity.getAlertDialogBuilder()
@@ -85,6 +143,32 @@ class EditCalendarDialog(
 
     private fun setupColor(view: ImageView) {
         view.setFillWithStroke(calendar!!.color, activity.getProperBackgroundColor())
+    }
+
+    private fun setupBackgroundColor(view: ImageView) {
+        val shown = if (calendar!!.backgroundColor == THEME_UNSET) {
+            activity.getProperBackgroundColor()
+        } else {
+            calendar!!.backgroundColor
+        }
+        view.setFillWithStroke(shown, activity.getProperBackgroundColor())
+    }
+
+    private fun sizeLabel(sp: Int) = if (sp > 0) "$sp sp" else activity.getString(R.string.theme_size_default)
+
+    // Preview the category's text in its own colour + font on its background.
+    private fun refreshSample() {
+        binding.typeSample.showFontSample(
+            calendar!!.fontFamily,
+            calendar!!.fontWeight,
+            calendar!!.fontSize,
+            calendar!!.color
+        )
+        if (calendar!!.backgroundColor != THEME_UNSET) {
+            binding.typeSample.setBackgroundColor(calendar!!.backgroundColor)
+        } else {
+            binding.typeSample.background = null
+        }
     }
 
     private fun calendarConfirmed(title: String, dialog: AlertDialog) {

@@ -135,7 +135,13 @@ class EventListAdapter(
     private fun setupListEvent(view: View, listEvent: ListEvent) {
         EventListItemBinding.bind(view).apply {
             eventItemHolder.isSelected = selectedKeys.contains(listEvent.hashCode())
-            eventItemHolder.background.applyColorFilter(textColor)
+            // Category background fills the row when set; otherwise restore the default stroke.
+            if (listEvent.categoryBackgroundColor != THEME_UNSET) {
+                eventItemHolder.setBackgroundColor(listEvent.categoryBackgroundColor)
+            } else {
+                eventItemHolder.setBackgroundResource(org.fossify.commons.R.drawable.section_holder_stroke)
+                eventItemHolder.background.applyColorFilter(textColor)
+            }
             eventItemTitle.text = listEvent.title
             eventItemTitle.checkViewStrikeThrough(listEvent.shouldStrikeThrough())
             eventItemTime.text = if (listEvent.isAllDay) allDayString else Formatter.getTimeFromTS(activity, listEvent.startTS)
@@ -179,6 +185,11 @@ class EventListAdapter(
             eventItemTitle.applyThemeFont(ThemeSlot.EVENT_TEXT)
             eventItemTime.applyThemeFont(ThemeSlot.TEXT_SECONDARY)
             eventItemDescription.applyThemeFont(ThemeSlot.TEXT_SECONDARY)
+            // The event title takes its category (event type) colour, and the category font when set.
+            eventItemTitle.setTextColor(listEvent.color)
+            if (listEvent.categoryFontFamily.isNotEmpty() || listEvent.categoryFontWeight > 0 || listEvent.categoryFontSize > 0) {
+                eventItemTitle.applyCategoryFont(listEvent.categoryFontFamily, listEvent.categoryFontWeight, listEvent.categoryFontSize)
+            }
             eventItemTaskImage.applyColorFilter(newTextColor)
             eventItemTaskImage.beVisibleIf(listEvent.isTask)
 

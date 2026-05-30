@@ -518,6 +518,7 @@ class EventsHelper(val context: Context) {
             .toMutableList() as ArrayList<Event>
 
         val calendarColors = getCalendarColors()
+        val calendarsById = getCalendarsSync().associateBy { it.id }
 
         events.forEach {
             if (it.isTask()) {
@@ -542,6 +543,14 @@ class EventsHelper(val context: Context) {
 
             if (it.color == 0) {
                 it.color = calendarColors.get(it.calendarId) ?: context.getProperPrimaryColor()
+            }
+
+            // Carry the category (event type) styling onto the event for the calendar views.
+            calendarsById[it.calendarId]?.let { category ->
+                it.categoryBackgroundColor = category.backgroundColor
+                it.categoryFontFamily = category.fontFamily
+                it.categoryFontWeight = category.fontWeight
+                it.categoryFontSize = category.fontSize
             }
         }
 
