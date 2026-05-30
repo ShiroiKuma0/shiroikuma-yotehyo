@@ -219,6 +219,15 @@ class ThemeActivity : SimpleActivity() {
             refreshSample(b, slot)
         }
 
+        // The font / weight / size / sample belong to this element, so sit one full step deeper
+        // than its own colour row.
+        listOf<View>(b.themeTextFontRow, b.themeTextWeightRow, b.themeTextSizeRow, b.themeTextSample).forEach { sub ->
+            (sub.layoutParams as? ViewGroup.MarginLayoutParams)?.let {
+                it.marginStart = indentStepPx
+                sub.layoutParams = it
+            }
+        }
+
         indentView(b.root, currentRowIndent)
         binding.themeHolder.addView(b.root)
     }
