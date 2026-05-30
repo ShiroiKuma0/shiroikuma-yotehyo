@@ -17,7 +17,6 @@
             layout="@layout/week_grid_day"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_margin="1dp"
             android:layout_weight="1" />
 
         <include
@@ -25,7 +24,6 @@
             layout="@layout/week_grid_day"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_margin="1dp"
             android:layout_weight="1" />
     </LinearLayout>
 
@@ -41,7 +39,6 @@
             layout="@layout/week_grid_day"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_margin="1dp"
             android:layout_weight="1" />
 
         <include
@@ -49,7 +46,6 @@
             layout="@layout/week_grid_day"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_margin="1dp"
             android:layout_weight="1" />
     </LinearLayout>
 
@@ -65,7 +61,6 @@
             layout="@layout/week_grid_day"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_margin="1dp"
             android:layout_weight="1" />
 
         <LinearLayout
@@ -79,7 +74,6 @@
                 layout="@layout/week_grid_day"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_margin="1dp"
                 android:layout_weight="1" />
 
             <include
@@ -87,7 +81,6 @@
                 layout="@layout/week_grid_day"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_margin="1dp"
                 android:layout_weight="1" />
         </LinearLayout>
     </LinearLayout>

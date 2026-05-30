@@ -3,7 +3,9 @@ package org.fossify.calendar.fragments
 import android.content.Intent
 import android.graphics.Paint
 import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,10 +19,13 @@ import org.fossify.calendar.extensions.config
 import org.fossify.calendar.extensions.eventsHelper
 import org.fossify.calendar.extensions.launchNewEventIntent
 import org.fossify.calendar.extensions.themeColor
+import org.fossify.calendar.helpers.DAY_BOX_ALIGN_CENTER
+import org.fossify.calendar.helpers.DAY_BOX_ALIGN_START
 import org.fossify.calendar.helpers.EVENT_ID
 import org.fossify.calendar.helpers.EVENT_OCCURRENCE_TS
 import org.fossify.calendar.helpers.Formatter
 import org.fossify.calendar.helpers.IS_TASK_COMPLETED
+import org.fossify.calendar.helpers.THEME_UNSET
 import org.fossify.calendar.helpers.WEEK_START_TIMESTAMP
 import org.fossify.calendar.helpers.getActivityToOpen
 import org.fossify.calendar.models.Event
@@ -54,7 +59,7 @@ class WeekGridFragment : Fragment() {
             binding.weekGridCell0, binding.weekGridCell1, binding.weekGridCell2, binding.weekGridCell3,
             binding.weekGridCell4, binding.weekGridCell5, binding.weekGridCell6
         )
-        binding.weekGridRoot.background = ColorDrawable(requireContext().themeColor(ThemeSlot.GRID_LINES))
+        binding.weekGridRoot.background = ColorDrawable(requireContext().getProperBackgroundColor())
         setupDayBoxes()
         fetchEvents()
         return binding.root
@@ -78,6 +83,22 @@ class WeekGridFragment : Fragment() {
         val todayCode = Formatter.getTodayCode()
         val backgroundColor = ctx.getProperBackgroundColor()
 
+        // An explicit header-text override applies to every box; otherwise each box's text is the
+        // readable contrast of its own header background (keeps today/weekend headers legible).
+        val headerTextOverride = ctx.config.getThemeOverride(ThemeSlot.DAY_BOX_HEADER_TEXT.key)
+        val customHeaderText = if (headerTextOverride != THEME_UNSET) headerTextOverride else null
+        val headerGravity = when (ctx.config.dayBoxHeaderAlignment) {
+            DAY_BOX_ALIGN_START -> Gravity.START
+            DAY_BOX_ALIGN_CENTER -> Gravity.CENTER_HORIZONTAL
+            else -> Gravity.END
+        } or Gravity.CENTER_VERTICAL
+
+        val density = ctx.resources.displayMetrics.density
+        val boxBorderPx = (ctx.config.dayBoxBorderThickness * density).toInt()
+        val headerBorderPx = (ctx.config.dayBoxHeaderBorderThickness * density).toInt()
+        val boxBorderColor = ctx.themeColor(ThemeSlot.DAY_BOX_BORDER)
+        val headerBorderColor = ctx.themeColor(ThemeSlot.DAY_BOX_HEADER_BORDER)
+
         for (i in 0 until 7) {
             val dayDateTime = weekStartDateTime.plusDays(i)
             val dayCode = Formatter.getDayCodeFromDateTime(dayDateTime)
@@ -94,12 +115,22 @@ class WeekGridFragment : Fragment() {
 
             cell.weekGridDayHeader.text =
                 "${dayDateTime.toString("EEE")}, ${Formatter.getDateFromCode(ctx, dayCode, shortMonth = true)}"
-            cell.weekGridDayHeader.setBackgroundColor(headerColor)
-            cell.weekGridDayHeader.setTextColor(headerColor.getContrastColor())
+            cell.weekGridDayHeader.background = GradientDrawable().apply {
+                setColor(headerColor)
+                if (headerBorderPx > 0) {
+                    setStroke(headerBorderPx, headerBorderColor)
+                }
+            }
+            cell.weekGridDayHeader.setTextColor(customHeaderText ?: headerColor.getContrastColor())
+            cell.weekGridDayHeader.gravity = headerGravity
 
-            cell.weekGridDayBox.setBackgroundColor(
-                if (isToday) ctx.themeColor(ThemeSlot.TODAY_HIGHLIGHT).adjustAlpha(0.12f) else backgroundColor
-            )
+            val boxFill = if (isToday) ctx.themeColor(ThemeSlot.TODAY_HIGHLIGHT).adjustAlpha(0.12f) else backgroundColor
+            cell.weekGridDayBox.background = GradientDrawable().apply {
+                setColor(boxFill)
+                if (boxBorderPx > 0) {
+                    setStroke(boxBorderPx, boxBorderColor)
+                }
+            }
             cell.weekGridDayEvents.removeAllViews()
             cell.weekGridDayBox.setOnClickListener { requireContext().launchNewEventIntent(dayCode) }
         }
