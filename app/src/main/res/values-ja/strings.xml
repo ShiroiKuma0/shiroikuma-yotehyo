@@ -55,6 +55,10 @@
     <string name="theme_date_format_custom">カスタム形式…</string>
     <string name="theme_date_format_pattern_hint">日付パターン</string>
     <string name="theme_date_format_legend">パターン文字: d 日、M 月、y 年、E 曜日、G 元号。文字を繰り返すと長い形式になります（EEEE = 曜日の正式名）。その他の文字はそのまま表示されます。</string>
+    <string name="theme_event_time_format">予定の時刻形式</string>
+    <string name="theme_event_time_japanese">和風（午前…）</string>
+    <string name="theme_time_pattern_hint">時刻パターン</string>
+    <string name="theme_time_format_legend">パターン文字: H 24時間、h 12時間、m 分、a 午前/午後。例: HH:mm。その他の文字はそのまま表示されます。</string>
     <string name="theme_today_text">今日の文字</string>
     <string name="theme_today_header_border">今日の見出しの枠線</string>
     <string name="theme_today_header_border_thickness">今日の見出しの枠線の太さ</string>

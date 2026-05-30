@@ -91,7 +91,8 @@ class DayEventsAdapter(activity: SimpleActivity, val events: ArrayList<Event>, r
             eventItemHolder.background.applyColorFilter(textColor)
             eventItemTitle.text = event.title
             eventItemTitle.checkViewStrikeThrough(event.shouldStrikeThrough())
-            eventItemTime.text = if (event.getIsAllDay()) allDayString else Formatter.getTimeFromTS(activity, event.startTS)
+            val timeFormat = activity.config.eventTimeFormat
+            eventItemTime.text = if (event.getIsAllDay()) allDayString else formatEventClock(event.startTS, timeFormat)
             if (event.startTS != event.endTS) {
                 val startDayCode = Formatter.getDayCodeFromTS(event.startTS)
                 val endDayCode = Formatter.getDayCodeFromTS(event.endTS)
@@ -99,9 +100,11 @@ class DayEventsAdapter(activity: SimpleActivity, val events: ArrayList<Event>, r
                 val endDate = Formatter.getDayTitle(activity, endDayCode, false)
                 val startDayString = if (startDayCode != dayCode) " ($startDate)" else ""
                 if (!event.getIsAllDay()) {
-                    val endTimeString = Formatter.getTimeFromTS(activity, event.endTS)
+                    val endTimeString = formatEventClock(event.endTS, timeFormat)
                     val endDayString = if (endDayCode != dayCode) " ($endDate)" else ""
-                    eventItemTime.text = "${eventItemTime.text}$startDayString - $endTimeString$endDayString"
+                    val separator = eventTimeSeparator(timeFormat)
+                    val duration = eventDurationSuffix(event.startTS, event.endTS, timeFormat)
+                    eventItemTime.text = "${eventItemTime.text}$startDayString$separator$endTimeString$endDayString$duration"
                 } else {
                     val endDayString = if (endDayCode != dayCode) " - ($endDate)" else ""
                     eventItemTime.text = "${eventItemTime.text}$startDayString$endDayString"

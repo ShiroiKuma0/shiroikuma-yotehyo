@@ -55,6 +55,10 @@
     <string name="theme_date_format_custom">Custom format…</string>
     <string name="theme_date_format_pattern_hint">Date pattern</string>
     <string name="theme_date_format_legend">Pattern letters: d day, M month, y year, E weekday, G era. Repeat a letter for longer forms (EEEE = full weekday name). Any other characters appear literally.</string>
+    <string name="theme_event_time_format">Event time format</string>
+    <string name="theme_event_time_japanese">Japanese (午前…)</string>
+    <string name="theme_time_pattern_hint">Time pattern</string>
+    <string name="theme_time_format_legend">Pattern letters: H 24-hour, h 12-hour, m minute, a AM/PM. Example: HH:mm. Any other characters appear literally.</string>
     <string name="theme_today_text">Today text</string>
     <string name="theme_today_header_border">Today header border</string>
     <string name="theme_today_header_border_thickness">Today header border thickness</string>
