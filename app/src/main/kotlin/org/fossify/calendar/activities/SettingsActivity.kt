@@ -64,6 +64,9 @@ import org.fossify.calendar.helpers.START_WEEKLY_AT
 import org.fossify.calendar.helpers.START_WEEK_WITH_CURRENT_DAY
 import org.fossify.calendar.helpers.USE_PREVIOUS_EVENT_REMINDERS
 import org.fossify.calendar.helpers.VIBRATE
+import org.fossify.calendar.helpers.WEEKLY_GRID_VIEW
+import org.fossify.calendar.helpers.WEEKLY_STYLE_DAY_BOXES
+import org.fossify.calendar.helpers.WEEKLY_STYLE_TIME_GRID
 import org.fossify.calendar.helpers.WEEKLY_VIEW
 import org.fossify.calendar.helpers.WEEK_NUMBERS
 import org.fossify.calendar.helpers.YEARLY_VIEW
@@ -197,6 +200,7 @@ class SettingsActivity : SimpleActivity() {
         setupWeekNumbers()
         setupShowGrid()
         setupWeeklyStart()
+        setupWeeklyViewStyle()
         setupMidnightSpanEvents()
         setupAllowCustomizeDayCount()
         setupStartWeekWithCurrentDay()
@@ -609,6 +613,33 @@ class SettingsActivity : SimpleActivity() {
         }
     }
 
+    private fun setupWeeklyViewStyle() = binding.apply {
+        settingsWeeklyViewStyle.text = getWeeklyViewStyleText()
+        settingsWeeklyViewStyleHolder.setOnClickListener {
+            val items = arrayListOf(
+                RadioItem(WEEKLY_STYLE_TIME_GRID, getString(R.string.weekly_style_time_grid)),
+                RadioItem(WEEKLY_STYLE_DAY_BOXES, getString(R.string.weekly_style_day_boxes))
+            )
+
+            RadioGroupDialog(
+                activity = this@SettingsActivity,
+                items = items,
+                checkedItemId = config.weeklyViewStyle
+            ) {
+                config.weeklyViewStyle = it as Int
+                settingsWeeklyViewStyle.text = getWeeklyViewStyleText()
+            }
+        }
+    }
+
+    private fun getWeeklyViewStyleText() = getString(
+        if (config.weeklyViewStyle == WEEKLY_STYLE_DAY_BOXES) {
+            R.string.weekly_style_day_boxes
+        } else {
+            R.string.weekly_style_time_grid
+        }
+    )
+
     private fun setupMidnightSpanEvents() = binding.apply {
         settingsMidnightSpanEvent.isChecked = config.showMidnightSpanningEventsAtTop
         settingsMidnightSpanEventsHolder.setOnClickListener {
@@ -879,6 +910,7 @@ class SettingsActivity : SimpleActivity() {
             val items = arrayListOf(
                 RadioItem(DAILY_VIEW, getString(R.string.daily_view)),
                 RadioItem(WEEKLY_VIEW, getString(R.string.weekly_view)),
+                RadioItem(WEEKLY_GRID_VIEW, getString(R.string.weekly_grid_view)),
                 RadioItem(MONTHLY_VIEW, getString(R.string.monthly_view)),
                 RadioItem(MONTHLY_DAILY_VIEW, getString(R.string.monthly_daily_view)),
                 RadioItem(YEARLY_VIEW, getString(R.string.yearly_view)),
@@ -902,6 +934,7 @@ class SettingsActivity : SimpleActivity() {
         when (config.listWidgetViewToOpen) {
             DAILY_VIEW -> R.string.daily_view
             WEEKLY_VIEW -> R.string.weekly_view
+            WEEKLY_GRID_VIEW -> R.string.weekly_grid_view
             MONTHLY_VIEW -> R.string.monthly_view
             MONTHLY_DAILY_VIEW -> R.string.monthly_daily_view
             YEARLY_VIEW -> R.string.yearly_view

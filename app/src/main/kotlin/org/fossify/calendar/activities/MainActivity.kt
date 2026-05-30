@@ -45,6 +45,7 @@ import org.fossify.calendar.fragments.MonthDayFragmentsHolder
 import org.fossify.calendar.fragments.MonthFragmentsHolder
 import org.fossify.calendar.fragments.MyFragmentHolder
 import org.fossify.calendar.fragments.WeekFragmentsHolder
+import org.fossify.calendar.fragments.WeekGridFragmentsHolder
 import org.fossify.calendar.fragments.YearFragmentsHolder
 import org.fossify.calendar.helpers.ANNIVERSARY_EVENT
 import org.fossify.calendar.helpers.BIRTHDAY_EVENT
@@ -78,6 +79,8 @@ import org.fossify.calendar.helpers.SOURCE_CONTACT_BIRTHDAY
 import org.fossify.calendar.helpers.UPDATE_BOTTOM
 import org.fossify.calendar.helpers.UPDATE_TOP
 import org.fossify.calendar.helpers.VIEW_TO_OPEN
+import org.fossify.calendar.helpers.WEEKLY_GRID_VIEW
+import org.fossify.calendar.helpers.WEEKLY_STYLE_DAY_BOXES
 import org.fossify.calendar.helpers.WEEKLY_VIEW
 import org.fossify.calendar.helpers.WEEK_START_DATE_TIME
 import org.fossify.calendar.helpers.YEAR
@@ -170,6 +173,7 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
     private var mStoredHighlightWeekendsColor = 0
     private var mStoredTodayColor = 0
     private var mStoredGridColor = 0
+    private var mStoredWeeklyViewStyle = 0
 
     // search results have endless scrolling, so reaching the top/bottom fetches further results
     private var minFetchedSearchTS = 0L
@@ -190,7 +194,7 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
         )
 
         checkWhatsNewDialog()
-        binding.calendarFab.beVisibleIf(config.storedView != YEARLY_VIEW && config.storedView != WEEKLY_VIEW)
+        binding.calendarFab.beVisibleIf(config.storedView != YEARLY_VIEW && config.storedView != WEEKLY_VIEW && config.storedView != WEEKLY_GRID_VIEW)
         binding.calendarFab.setOnClickListener {
             if (config.allowCreatingTasks) {
                 if (binding.fabExtendedOverlay.isVisible()) {
@@ -278,9 +282,10 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
             }
         }
 
-        if (config.storedView == WEEKLY_VIEW) {
+        if (config.storedView == WEEKLY_VIEW || config.storedView == WEEKLY_GRID_VIEW) {
             if (mStoredFirstDayOfWeek != config.firstDayOfWeek || mStoredUse24HourFormat != config.use24HourFormat
                 || mStoredMidnightSpan != config.showMidnightSpanningEventsAtTop || mStoredStartWeekWithCurrentDay != config.startWeekWithCurrentDay
+                || mStoredWeeklyViewStyle != config.weeklyViewStyle
             ) {
                 updateViewPager()
             }
@@ -453,6 +458,7 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
             mStoredHighlightWeekendsColor = highlightWeekendsColor
             mStoredMidnightSpan = showMidnightSpanningEventsAtTop
             mStoredStartWeekWithCurrentDay = startWeekWithCurrentDay
+            mStoredWeeklyViewStyle = weeklyViewStyle
         }
         mStoredTodayColor = themeColor(ThemeSlot.TODAY_HIGHLIGHT)
         mStoredGridColor = themeColor(ThemeSlot.GRID_LINES)
@@ -642,6 +648,7 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
         val items = arrayListOf(
             RadioItem(DAILY_VIEW, getString(R.string.daily_view)),
             RadioItem(WEEKLY_VIEW, getString(R.string.weekly_view)),
+            RadioItem(WEEKLY_GRID_VIEW, getString(R.string.weekly_grid_view)),
             RadioItem(MONTHLY_VIEW, getString(R.string.monthly_view)),
             RadioItem(MONTHLY_DAILY_VIEW, getString(R.string.monthly_daily_view)),
             RadioItem(YEARLY_VIEW, getString(R.string.yearly_view)),
@@ -1127,7 +1134,7 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
     }
 
     private fun updateView(view: Int) {
-        binding.calendarFab.beVisibleIf(view != YEARLY_VIEW && view != WEEKLY_VIEW)
+        binding.calendarFab.beVisibleIf(view != YEARLY_VIEW && view != WEEKLY_VIEW && view != WEEKLY_GRID_VIEW)
         val dateCode = getDateCodeToDisplay(view)
         config.storedView = view
         checkSwipeRefreshAvailability()
@@ -1147,10 +1154,8 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
 
         val fragmentDate = fragment.getCurrentDate()
         val viewOrder = arrayListOf(DAILY_VIEW, WEEKLY_VIEW, MONTHLY_VIEW, YEARLY_VIEW)
-        val currentViewIndex =
-            viewOrder.indexOf(if (currentView == MONTHLY_DAILY_VIEW) MONTHLY_VIEW else currentView)
-        val newViewIndex =
-            viewOrder.indexOf(if (newView == MONTHLY_DAILY_VIEW) MONTHLY_VIEW else newView)
+        val currentViewIndex = viewOrder.indexOf(normalizeViewForOrder(currentView))
+        val newViewIndex = viewOrder.indexOf(normalizeViewForOrder(newView))
 
         return if (fragmentDate != null && currentViewIndex <= newViewIndex) {
             getDateCodeFormatForView(newView, fragmentDate)
@@ -1159,9 +1164,15 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
         }
     }
 
+    private fun normalizeViewForOrder(view: Int) = when (view) {
+        MONTHLY_DAILY_VIEW -> MONTHLY_VIEW
+        WEEKLY_GRID_VIEW -> WEEKLY_VIEW
+        else -> view
+    }
+
     private fun getDateCodeFormatForView(view: Int, date: DateTime): String {
         return when (view) {
-            WEEKLY_VIEW -> getFirstDayOfWeek(date)
+            WEEKLY_VIEW, WEEKLY_GRID_VIEW -> getFirstDayOfWeek(date)
             YEARLY_VIEW -> date.toString()
             else -> Formatter.getDayCodeFromDateTime(date)
         }
@@ -1174,7 +1185,7 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
 
         when (config.storedView) {
             DAILY_VIEW -> bundle.putString(DAY_CODE, fixedDayCode ?: Formatter.getTodayCode())
-            WEEKLY_VIEW -> bundle.putString(
+            WEEKLY_VIEW, WEEKLY_GRID_VIEW -> bundle.putString(
                 WEEK_START_DATE_TIME,
                 fixedDayCode ?: getFirstDayOfWeek(DateTime())
             )
@@ -1195,7 +1206,7 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
     }
 
     private fun fixDayCode(dayCode: String? = null): String? = when {
-        config.storedView == WEEKLY_VIEW && (dayCode?.length == DAYCODE_PATTERN.length) -> {
+        (config.storedView == WEEKLY_VIEW || config.storedView == WEEKLY_GRID_VIEW) && (dayCode?.length == DAYCODE_PATTERN.length) -> {
             getFirstDayOfWeek(Formatter.getLocalDateTimeFromCode(dayCode))
         }
 
@@ -1316,6 +1327,13 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
         MONTHLY_DAILY_VIEW -> MonthDayFragmentsHolder()
         YEARLY_VIEW -> YearFragmentsHolder()
         EVENTS_LIST_VIEW -> EventListFragment()
+        WEEKLY_GRID_VIEW -> WeekGridFragmentsHolder()
+        WEEKLY_VIEW -> if (config.weeklyViewStyle == WEEKLY_STYLE_DAY_BOXES) {
+            WeekGridFragmentsHolder()
+        } else {
+            WeekFragmentsHolder()
+        }
+
         else -> WeekFragmentsHolder()
     }
 
@@ -1335,7 +1353,7 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
 
         binding.calendarFab.beGoneIf(
             supportFragmentManager.backStackEntryCount == 0 &&
-                    (config.storedView == YEARLY_VIEW || config.storedView == WEEKLY_VIEW)
+                    (config.storedView == YEARLY_VIEW || config.storedView == WEEKLY_VIEW || config.storedView == WEEKLY_GRID_VIEW)
         )
         if (supportFragmentManager.backStackEntryCount > 0) {
             showBackNavigationArrow()
@@ -1608,7 +1626,7 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
 
     private fun checkSwipeRefreshAvailability() {
         binding.swipeRefreshLayout.isEnabled =
-            config.caldavSync && config.pullToRefresh && config.storedView != WEEKLY_VIEW
+            config.caldavSync && config.pullToRefresh && config.storedView != WEEKLY_VIEW && config.storedView != WEEKLY_GRID_VIEW
         if (!binding.swipeRefreshLayout.isEnabled) {
             binding.swipeRefreshLayout.isRefreshing = false
         }

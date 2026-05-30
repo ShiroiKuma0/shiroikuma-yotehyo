@@ -19,6 +19,12 @@
     <string name="theme_today_highlight">Today highlight</string>
     <string name="theme_weekend">Weekend</string>
     <string name="theme_grid_lines">Grid lines</string>
+    <string name="theme_day_box_header">Day-box header</string>
+    <!-- Day-box (Pimlical-style) week view -->
+    <string name="weekly_grid_view">Weekly grid (day boxes)</string>
+    <string name="weekly_view_style">Weekly view style</string>
+    <string name="weekly_style_time_grid">Time grid</string>
+    <string name="weekly_style_day_boxes">Day boxes</string>
     <string name="change_view">Change view</string>
     <string name="daily_view">Daily view</string>
     <string name="weekly_view">Weekly view</string>
