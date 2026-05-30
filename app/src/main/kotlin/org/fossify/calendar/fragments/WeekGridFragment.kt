@@ -12,6 +12,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.fragment.app.Fragment
+import org.fossify.calendar.R
+import org.fossify.calendar.activities.MainActivity
 import org.fossify.calendar.databinding.FragmentWeekGridBinding
 import org.fossify.calendar.databinding.WeekGridDayBinding
 import org.fossify.calendar.databinding.WeekGridEventBinding
@@ -20,6 +22,7 @@ import org.fossify.calendar.extensions.applyThemeFont
 import org.fossify.calendar.extensions.config
 import org.fossify.calendar.extensions.eventsHelper
 import org.fossify.calendar.extensions.launchNewEventIntent
+import org.fossify.calendar.extensions.launchNewTaskIntent
 import org.fossify.calendar.extensions.themeColor
 import org.fossify.calendar.helpers.DAY_BOX_ALIGN_CENTER
 import org.fossify.calendar.helpers.DAY_BOX_ALIGN_START
@@ -28,12 +31,16 @@ import org.fossify.calendar.helpers.EVENT_OCCURRENCE_TS
 import org.fossify.calendar.helpers.Formatter
 import org.fossify.calendar.helpers.formatDayBoxHeader
 import org.fossify.calendar.helpers.IS_TASK_COMPLETED
+import org.fossify.calendar.helpers.TYPE_EVENT
+import org.fossify.calendar.helpers.TYPE_TASK
 import org.fossify.calendar.helpers.WEEK_START_TIMESTAMP
 import org.fossify.calendar.helpers.getActivityToOpen
 import org.fossify.calendar.models.Event
+import org.fossify.commons.dialogs.RadioGroupDialog
 import org.fossify.commons.extensions.adjustAlpha
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.helpers.MEDIUM_ALPHA
+import org.fossify.commons.models.RadioItem
 import org.joda.time.DateTime
 import org.joda.time.DateTimeConstants
 
@@ -152,14 +159,22 @@ class WeekGridFragment : Fragment() {
                 }
             }
             cell.weekGridDayEvents.removeAllViews()
-            // Long-press anywhere in the box (header or events area) to add a new event;
-            // tapping an event line opens it. The events area fills the box (fillViewport) and
-            // gets its own listener, since the ScrollView would otherwise swallow the long-press.
+            // Tap the box / header / empty space -> open this day's day view (back returns here).
+            // Long-press the header or empty space -> add a new event/task. (Per-event tap/long-press
+            // is wired in addEventLine.) The events area fills the box (fillViewport) and carries its
+            // own listeners, since the ScrollView would otherwise swallow them.
+            val openDay = View.OnClickListener {
+                (activity as? MainActivity)?.openDayFromMonthly(dayDateTime)
+            }
             val addEventOnLongPress = View.OnLongClickListener {
-                requireContext().launchNewEventIntent(dayCode)
+                addEventOrTask(dayCode)
                 true
             }
+            cell.weekGridDayBox.setOnClickListener(openDay)
             cell.weekGridDayBox.setOnLongClickListener(addEventOnLongPress)
+            cell.weekGridDayHeader.setOnClickListener(openDay)
+            cell.weekGridDayHeader.setOnLongClickListener(addEventOnLongPress)
+            cell.weekGridDayEvents.setOnClickListener(openDay)
             cell.weekGridDayEvents.setOnLongClickListener(addEventOnLongPress)
         }
         binding.weekGridLines.invalidate()
@@ -200,11 +215,11 @@ class WeekGridFragment : Fragment() {
             events.asSequence()
                 .filter { it.startTS <= dayEnd && it.endTS >= dayStart }
                 .sortedWith(compareBy({ !it.getIsAllDay() }, { it.startTS }, { it.title }))
-                .forEach { addEventLine(container, it, dimPastEvents, dimCompletedTasks) }
+                .forEach { addEventLine(container, it, dayDateTime, dimPastEvents, dimCompletedTasks) }
         }
     }
 
-    private fun addEventLine(container: LinearLayout, event: Event, dimPastEvents: Boolean, dimCompletedTasks: Boolean) {
+    private fun addEventLine(container: LinearLayout, event: Event, dayDateTime: DateTime, dimPastEvents: Boolean, dimCompletedTasks: Boolean) {
         val ctx = requireContext()
         val line = WeekGridEventBinding.inflate(layoutInflater, container, false)
         val label = if (event.getIsAllDay()) {
@@ -229,8 +244,30 @@ class WeekGridFragment : Fragment() {
         if (event.isTaskCompleted()) {
             line.root.paintFlags = line.root.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
         }
-        line.root.setOnClickListener { openEvent(event) }
+        // Tap an event -> this day's day view (same as tapping the box); long-press -> its details.
+        line.root.setOnClickListener { (activity as? MainActivity)?.openDayFromMonthly(dayDateTime) }
+        line.root.setOnLongClickListener {
+            openEvent(event)
+            true
+        }
         container.addView(line.root)
+    }
+
+    // Match the regular week view's add flow: offer the Event/Task chooser when tasks are enabled,
+    // otherwise go straight to a new event.
+    private fun addEventOrTask(dayCode: String) {
+        val ctx = requireContext()
+        if (ctx.config.allowCreatingTasks) {
+            val items = arrayListOf(
+                RadioItem(TYPE_EVENT, getString(R.string.event)),
+                RadioItem(TYPE_TASK, getString(R.string.task))
+            )
+            RadioGroupDialog(requireActivity(), items) {
+                if (it as Int == TYPE_TASK) ctx.launchNewTaskIntent(dayCode) else ctx.launchNewEventIntent(dayCode)
+            }
+        } else {
+            ctx.launchNewEventIntent(dayCode)
+        }
     }
 
     private fun openEvent(event: Event) {
