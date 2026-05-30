@@ -25,6 +25,12 @@ class CurrentTimeIndicatorView(context: Context, attrs: AttributeSet, defStyle: 
 
     constructor(context: Context, attrs: AttributeSet) : this(context, attrs, 0)
 
+    /** shiroikuma: the marker takes the fork's "today" role instead of the text colour. */
+    fun setColor(color: Int) {
+        paint.color = color
+        invalidate()
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val centerY = height / 2f

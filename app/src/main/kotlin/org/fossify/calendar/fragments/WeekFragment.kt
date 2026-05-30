@@ -39,6 +39,8 @@ import org.fossify.calendar.extensions.getWeeklyViewItemHeight
 import org.fossify.calendar.extensions.intersects
 import org.fossify.calendar.extensions.seconds
 import org.fossify.calendar.extensions.shouldStrikeThrough
+import org.fossify.calendar.extensions.ThemeSlot
+import org.fossify.calendar.extensions.themeColor
 import org.fossify.calendar.helpers.Config
 import org.fossify.calendar.helpers.EDIT_ALL_OCCURRENCES
 import org.fossify.calendar.helpers.EDIT_FUTURE_OCCURRENCES
@@ -106,6 +108,7 @@ class WeekFragment : Fragment(), WeeklyCalendar {
     private var rowHeight = 0f
     private var todayColumnIndex = -1
     private var primaryColor = 0
+    private var todayColor = 0
     private var lastHash = 0
     private var prevScaleSpanY = 0f
     private var scaleCenterPercent = 0f
@@ -153,6 +156,7 @@ class WeekFragment : Fragment(), WeeklyCalendar {
         dimCompletedTasks = config.dimCompletedTasks
         highlightWeekends = config.highlightWeekends
         primaryColor = requireContext().getProperPrimaryColor()
+        todayColor = requireContext().themeColor(ThemeSlot.TODAY_HIGHLIGHT)
         allDayRows.add(HashSet())
     }
 
@@ -286,7 +290,7 @@ class WeekFragment : Fragment(), WeeklyCalendar {
             val dayLetter = dayLetters[curDay.dayOfWeek - 1]
 
             val textColor = when {
-                !isPrintVersion && todayCode == dayCode -> primaryColor
+                !isPrintVersion && todayCode == dayCode -> todayColor
                 highlightWeekends && isWeekend(curDay.dayOfWeek) -> config.highlightWeekendsColor
                 isPrintVersion -> resources.getColor(org.fossify.commons.R.color.theme_light_text_color)
                 else -> requireContext().getProperTextColor()
@@ -884,6 +888,7 @@ class WeekFragment : Fragment(), WeeklyCalendar {
         }
 
         currentTimeView = WeekNowMarkerBinding.inflate(layoutInflater).root.apply {
+            setColor(todayColor)
             binding.weekEventsHolder.addView(this)
             val todayColumn = dayColumns[todayColumnIndex]
             val dotSize = res.getDimension(R.dimen.weekly_view_now_dot_size)

@@ -178,6 +178,8 @@ class SettingsActivity : SimpleActivity() {
     }
 
     private fun setupSettingItems() {
+        setupThemeAndColors()
+        setupPrimaryColor()
         setupCustomizeColors()
         setupCustomizeNotifications()
         setupUseEnglish()
@@ -231,6 +233,7 @@ class SettingsActivity : SimpleActivity() {
         setupImportSettings()
 
         arrayOf(
+            binding.settingsShiroikumaUiLabel,
             binding.settingsColorCustomizationSectionLabel,
             binding.settingsGeneralSettingsLabel,
             binding.settingsRemindersLabel,
@@ -298,6 +301,27 @@ class SettingsActivity : SimpleActivity() {
     private fun setupCustomizeColors() {
         binding.settingsColorCustomizationHolder.setOnClickListener {
             startCustomizationActivity()
+        }
+    }
+
+    private fun setupThemeAndColors() {
+        binding.settingsThemeAndColorsHolder.setOnClickListener {
+            startActivity(Intent(this, ThemeActivity::class.java))
+        }
+    }
+
+    private fun setupPrimaryColor() {
+        binding.settingsPrimaryColorPreview.background.setTint(getProperPrimaryColor())
+        binding.settingsPrimaryColorHolder.setOnClickListener {
+            ColorPickerDialog(this, getProperPrimaryColor()) { wasPositive, color ->
+                if (wasPositive) {
+                    // A custom primary color is incompatible with Material You, so leave the system
+                    // theme – otherwise getProperPrimaryColor() keeps returning the dynamic color.
+                    config.isSystemThemeEnabled = false
+                    config.primaryColor = color
+                    recreate()
+                }
+            }
         }
     }
 
