@@ -54,6 +54,14 @@ enum class ThemeSlot(
     DAY_BOX_HEADER_TEXT("theme_day_box_header_text", ThemeGroup.CALENDAR, R.string.theme_day_box_header_text),
     DAY_BOX_HEADER_BORDER("theme_day_box_header_border", ThemeGroup.CALENDAR, R.string.theme_day_box_header_border),
     DAY_BOX_BORDER("theme_day_box_border", ThemeGroup.CALENDAR, R.string.theme_day_box_border),
+
+    // Today / weekend day-box overrides (inherit the general day-box slots by default)
+    TODAY_TEXT("theme_today_text", ThemeGroup.CALENDAR, R.string.theme_today_text),
+    TODAY_HEADER_BORDER("theme_today_header_border", ThemeGroup.CALENDAR, R.string.theme_today_header_border),
+    TODAY_BOX_BORDER("theme_today_box_border", ThemeGroup.CALENDAR, R.string.theme_today_box_border),
+    WEEKEND_TEXT("theme_weekend_text", ThemeGroup.CALENDAR, R.string.theme_weekend_text),
+    WEEKEND_HEADER_BORDER("theme_weekend_header_border", ThemeGroup.CALENDAR, R.string.theme_weekend_header_border),
+    WEEKEND_BOX_BORDER("theme_weekend_box_border", ThemeGroup.CALENDAR, R.string.theme_weekend_box_border),
 }
 
 /** The effective color for a slot: the user's override if set, otherwise its inherited default. */
@@ -87,6 +95,14 @@ private fun Context.themeDefault(slot: ThemeSlot): Int = when (slot) {
     ThemeSlot.DAY_BOX_HEADER_TEXT -> themeColor(ThemeSlot.DAY_BOX_HEADER).getContrastColor()
     ThemeSlot.DAY_BOX_BORDER -> themeColor(ThemeSlot.GRID_LINES)
     ThemeSlot.DAY_BOX_HEADER_BORDER -> themeColor(ThemeSlot.DAY_BOX_BORDER)
+
+    // Today / weekend day-box slots inherit the general defaults until overridden.
+    ThemeSlot.TODAY_TEXT -> themeColor(ThemeSlot.TODAY_HIGHLIGHT).getContrastColor()
+    ThemeSlot.TODAY_HEADER_BORDER -> themeColor(ThemeSlot.DAY_BOX_HEADER_BORDER)
+    ThemeSlot.TODAY_BOX_BORDER -> themeColor(ThemeSlot.DAY_BOX_BORDER)
+    ThemeSlot.WEEKEND_TEXT -> themeColor(ThemeSlot.WEEKEND).getContrastColor()
+    ThemeSlot.WEEKEND_HEADER_BORDER -> themeColor(ThemeSlot.DAY_BOX_HEADER_BORDER)
+    ThemeSlot.WEEKEND_BOX_BORDER -> themeColor(ThemeSlot.DAY_BOX_BORDER)
 }
 
 /** Set an explicit override for a slot. Write-through slots persist to the stock commons/config colors. */

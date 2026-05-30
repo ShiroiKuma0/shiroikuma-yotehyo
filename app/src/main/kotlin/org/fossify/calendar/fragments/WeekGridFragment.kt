@@ -83,10 +83,6 @@ class WeekGridFragment : Fragment() {
         val todayCode = Formatter.getTodayCode()
         val backgroundColor = ctx.getProperBackgroundColor()
 
-        // An explicit header-text override applies to every box; otherwise each box's text is the
-        // readable contrast of its own header background (keeps today/weekend headers legible).
-        val headerTextOverride = ctx.config.getThemeOverride(ThemeSlot.DAY_BOX_HEADER_TEXT.key)
-        val customHeaderText = if (headerTextOverride != THEME_UNSET) headerTextOverride else null
         val headerGravity = when (ctx.config.dayBoxHeaderAlignment) {
             DAY_BOX_ALIGN_START -> Gravity.START
             DAY_BOX_ALIGN_CENTER -> Gravity.CENTER_HORIZONTAL
@@ -96,21 +92,38 @@ class WeekGridFragment : Fragment() {
         val density = ctx.resources.displayMetrics.density
         val boxBorderPx = (ctx.config.dayBoxBorderThickness * density).toInt()
         val headerBorderPx = (ctx.config.dayBoxHeaderBorderThickness * density).toInt()
-        val boxBorderColor = ctx.themeColor(ThemeSlot.DAY_BOX_BORDER)
-        val headerBorderColor = ctx.themeColor(ThemeSlot.DAY_BOX_HEADER_BORDER)
 
         for (i in 0 until 7) {
             val dayDateTime = weekStartDateTime.plusDays(i)
             val dayCode = Formatter.getDayCodeFromDateTime(dayDateTime)
             val isToday = dayCode == todayCode
             val dayOfWeek = dayDateTime.dayOfWeek
-            val isWeekend = dayOfWeek == DateTimeConstants.SATURDAY || dayOfWeek == DateTimeConstants.SUNDAY
+            val isWeekend = (dayOfWeek == DateTimeConstants.SATURDAY || dayOfWeek == DateTimeConstants.SUNDAY) && highlightWeekends
             val cell = dayCells[i]
 
+            // Each box type (today / styled-weekend / normal) resolves its own header bg, text,
+            // header border and box border slots; the today/weekend slots inherit the general ones.
             val headerColor = when {
                 isToday -> ctx.themeColor(ThemeSlot.TODAY_HIGHLIGHT)
-                isWeekend && highlightWeekends -> ctx.themeColor(ThemeSlot.WEEKEND)
+                isWeekend -> ctx.themeColor(ThemeSlot.WEEKEND)
                 else -> ctx.themeColor(ThemeSlot.DAY_BOX_HEADER)
+            }
+            val textSlot = when {
+                isToday -> ThemeSlot.TODAY_TEXT
+                isWeekend -> ThemeSlot.WEEKEND_TEXT
+                else -> ThemeSlot.DAY_BOX_HEADER_TEXT
+            }
+            val textOverride = ctx.config.getThemeOverride(textSlot.key)
+            val headerTextColor = if (textOverride != THEME_UNSET) textOverride else headerColor.getContrastColor()
+            val headerBorderColor = when {
+                isToday -> ctx.themeColor(ThemeSlot.TODAY_HEADER_BORDER)
+                isWeekend -> ctx.themeColor(ThemeSlot.WEEKEND_HEADER_BORDER)
+                else -> ctx.themeColor(ThemeSlot.DAY_BOX_HEADER_BORDER)
+            }
+            val boxBorderColor = when {
+                isToday -> ctx.themeColor(ThemeSlot.TODAY_BOX_BORDER)
+                isWeekend -> ctx.themeColor(ThemeSlot.WEEKEND_BOX_BORDER)
+                else -> ctx.themeColor(ThemeSlot.DAY_BOX_BORDER)
             }
 
             cell.weekGridDayHeader.text =
@@ -121,7 +134,7 @@ class WeekGridFragment : Fragment() {
                     setStroke(headerBorderPx, headerBorderColor)
                 }
             }
-            cell.weekGridDayHeader.setTextColor(customHeaderText ?: headerColor.getContrastColor())
+            cell.weekGridDayHeader.setTextColor(headerTextColor)
             cell.weekGridDayHeader.gravity = headerGravity
 
             val boxFill = if (isToday) ctx.themeColor(ThemeSlot.TODAY_HIGHLIGHT).adjustAlpha(0.12f) else backgroundColor
