@@ -34,6 +34,11 @@
         android:title="@string/change_view"
         app:showAsAction="always" />
     <item
+        android:id="@+id/settings_switcher"
+        android:title="@string/settings"
+        app:actionLayout="@layout/item_settings_switcher"
+        app:showAsAction="always" />
+    <item
         android:id="@+id/filter"
         android:icon="@drawable/ic_filter_vector"
         android:title="@string/filter_events_by_type"

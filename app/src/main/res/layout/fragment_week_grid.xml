@@ -1,88 +1,102 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/week_grid_root"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
-    <!-- Row 1: days 0 | 1 -->
     <LinearLayout
+        android:id="@+id/week_grid_root"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="horizontal">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        <include
-            android:id="@+id/week_grid_cell_0"
-            layout="@layout/week_grid_day"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1" />
-
-        <include
-            android:id="@+id/week_grid_cell_1"
-            layout="@layout/week_grid_day"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1" />
-    </LinearLayout>
-
-    <!-- Row 2: days 2 | 3 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="horizontal">
-
-        <include
-            android:id="@+id/week_grid_cell_2"
-            layout="@layout/week_grid_day"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1" />
-
-        <include
-            android:id="@+id/week_grid_cell_3"
-            layout="@layout/week_grid_day"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1" />
-    </LinearLayout>
-
-    <!-- Row 3: day 4 | (day 5 over day 6) -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="horizontal">
-
-        <include
-            android:id="@+id/week_grid_cell_4"
-            layout="@layout/week_grid_day"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1" />
-
+        <!-- Row 1: days 0 | 1 -->
         <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
             android:layout_weight="1"
-            android:orientation="vertical">
+            android:orientation="horizontal">
 
             <include
-                android:id="@+id/week_grid_cell_5"
+                android:id="@+id/week_grid_cell_0"
                 layout="@layout/week_grid_day"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
                 android:layout_weight="1" />
 
             <include
-                android:id="@+id/week_grid_cell_6"
+                android:id="@+id/week_grid_cell_1"
                 layout="@layout/week_grid_day"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
                 android:layout_weight="1" />
         </LinearLayout>
+
+        <!-- Row 2: days 2 | 3 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal">
+
+            <include
+                android:id="@+id/week_grid_cell_2"
+                layout="@layout/week_grid_day"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
+
+            <include
+                android:id="@+id/week_grid_cell_3"
+                layout="@layout/week_grid_day"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
+        </LinearLayout>
+
+        <!-- Row 3: day 4 | (day 5 over day 6) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal">
+
+            <include
+                android:id="@+id/week_grid_cell_4"
+                layout="@layout/week_grid_day"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <include
+                    android:id="@+id/week_grid_cell_5"
+                    layout="@layout/week_grid_day"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <include
+                    android:id="@+id/week_grid_cell_6"
+                    layout="@layout/week_grid_day"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+            </LinearLayout>
+        </LinearLayout>
+
     </LinearLayout>
 
-</LinearLayout>
+    <!-- Overlay grid lines drawn on top of the boxes; non-clickable so taps reach the boxes. -->
+    <org.fossify.calendar.views.WeekGridLinesView
+        android:id="@+id/week_grid_lines"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clickable="false"
+        android:focusable="false" />
+
+</FrameLayout>

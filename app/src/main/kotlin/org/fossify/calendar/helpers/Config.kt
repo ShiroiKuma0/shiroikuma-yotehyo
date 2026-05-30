@@ -302,6 +302,29 @@ class Config(context: Context) : BaseConfig(context) {
             bumpThemeRevision() // re-render the box-grid headers when returning to the calendar
         }
 
+    // Per-line overlay grid lines for the box-grid week view (keyed by WeekGridLine.key).
+    // Each line: enabled (default off), color (THEME_UNSET = follow the shared Grid lines color), thickness (dp).
+    fun isGridLineEnabled(key: String) = prefs.getBoolean("week_grid_line_${key}_enabled", false)
+
+    fun setGridLineEnabled(key: String, enabled: Boolean) {
+        prefs.edit().putBoolean("week_grid_line_${key}_enabled", enabled).apply()
+        bumpThemeRevision()
+    }
+
+    fun getGridLineColor(key: String) = prefs.getInt("week_grid_line_${key}_color", THEME_UNSET)
+
+    fun setGridLineColor(key: String, color: Int) {
+        prefs.edit().putInt("week_grid_line_${key}_color", color).apply()
+        bumpThemeRevision()
+    }
+
+    fun getGridLineThickness(key: String) = prefs.getInt("week_grid_line_${key}_thickness", 1)
+
+    fun setGridLineThickness(key: String, thickness: Int) {
+        prefs.edit().putInt("week_grid_line_${key}_thickness", thickness).apply()
+        bumpThemeRevision()
+    }
+
     var highlightWeekends: Boolean
         get() = prefs.getBoolean(HIGHLIGHT_WEEKENDS, false)
         set(highlightWeekends) = prefs.edit().putBoolean(HIGHLIGHT_WEEKENDS, highlightWeekends)

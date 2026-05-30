@@ -162,6 +162,7 @@ class WeekGridFragment : Fragment() {
             cell.weekGridDayBox.setOnLongClickListener(addEventOnLongPress)
             cell.weekGridDayEvents.setOnLongClickListener(addEventOnLongPress)
         }
+        binding.weekGridLines.invalidate()
     }
 
     // Today/weekend thickness overrides the general value unless it is the inherit sentinel (< 0).

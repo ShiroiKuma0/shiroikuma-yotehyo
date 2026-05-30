@@ -23,11 +23,13 @@ import org.fossify.calendar.dialogs.FontPickerDialog
 import org.fossify.calendar.extensions.FontWeightOption
 import org.fossify.calendar.extensions.ThemeGroup
 import org.fossify.calendar.extensions.ThemeSlot
+import org.fossify.calendar.extensions.WeekGridLine
 import org.fossify.calendar.extensions.config
 import org.fossify.calendar.extensions.effectiveFontFamily
 import org.fossify.calendar.extensions.effectiveFontSize
 import org.fossify.calendar.extensions.effectiveFontWeight
 import org.fossify.calendar.extensions.fontDisplayName
+import org.fossify.calendar.extensions.gridLineColor
 import org.fossify.calendar.extensions.importFont
 import org.fossify.calendar.extensions.resetThemeColor
 import org.fossify.calendar.extensions.setThemeColor
@@ -141,6 +143,7 @@ class ThemeActivity : SimpleActivity() {
             config.dayBoxBorderThickness = it
         }
         addSubsection(R.string.theme_sub_today_boxes)
+        addSlot(ThemeSlot.TODAY_HIGHLIGHT)
         addSlot(ThemeSlot.TODAY_BOX_FILL)
         addSlot(ThemeSlot.TODAY_TEXT)
         addSlot(ThemeSlot.TODAY_HEADER_BORDER)
@@ -152,6 +155,7 @@ class ThemeActivity : SimpleActivity() {
             config.todayBoxBorderThickness = it
         }
         addSubsection(R.string.theme_sub_weekend_boxes)
+        addSlot(ThemeSlot.WEEKEND)
         addSlot(ThemeSlot.WEEKEND_TEXT)
         addSlot(ThemeSlot.WEEKEND_HEADER_BORDER)
         addThicknessRow(R.string.theme_weekend_header_border_thickness, config.weekendHeaderBorderThickness, DAY_BOX_THICKNESS_INHERIT) {
@@ -161,10 +165,41 @@ class ThemeActivity : SimpleActivity() {
         addThicknessRow(R.string.theme_weekend_box_border_thickness, config.weekendBoxBorderThickness, DAY_BOX_THICKNESS_INHERIT) {
             config.weekendBoxBorderThickness = it
         }
-        addSubsection(R.string.theme_sub_highlights_grid)
-        addSlot(ThemeSlot.TODAY_HIGHLIGHT)
-        addSlot(ThemeSlot.WEEKEND)
+        addSubsection(R.string.theme_sub_grid_lines)
         addSlot(ThemeSlot.GRID_LINES)
+        WeekGridLine.entries.forEach { addGridLineRows(it) }
+    }
+
+    // Per box-grid grid line: its toggle, then (indented) its colour and thickness. Colour follows
+    // the shared Grid lines colour until overridden; thickness is in dp.
+    private fun addGridLineRows(line: WeekGridLine) {
+        addToggleRow(line.labelRes, config.isGridLineEnabled(line.key)) {
+            config.setGridLineEnabled(line.key, it)
+        }
+        currentRowIndent++
+        addGridLineColorRow(line)
+        addThicknessRow(R.string.theme_grid_line_thickness, config.getGridLineThickness(line.key), min = 1) {
+            config.setGridLineThickness(line.key, it)
+        }
+        currentRowIndent--
+    }
+
+    private fun addGridLineColorRow(line: WeekGridLine) {
+        val row = ItemThemeColorBinding.inflate(layoutInflater, binding.themeHolder, false)
+        row.themeColorLabel.text = getString(R.string.theme_grid_line_color)
+        row.themeColorLabel.setTextColor(textColor)
+        row.themeColorPreview.background.setTint(gridLineColor(line))
+        row.themeColorDefault.setTextColor(textColor.adjustAlpha(0.6f))
+        row.themeColorDefault.beVisibleIf(config.getGridLineColor(line.key) == THEME_UNSET)
+        row.root.setOnClickListener {
+            AlphaColorPickerDialog(this, gridLineColor(line), addDefaultColorButton = true) { wasPositive, color ->
+                config.setGridLineColor(line.key, if (wasPositive) color else THEME_UNSET)
+                row.themeColorPreview.background.setTint(gridLineColor(line))
+                row.themeColorDefault.beVisibleIf(config.getGridLineColor(line.key) == THEME_UNSET)
+            }
+        }
+        indentView(row.root, currentRowIndent)
+        binding.themeHolder.addView(row.root)
     }
 
     private fun slotsOf(group: ThemeGroup) = ThemeSlot.entries.filter { it.group == group }

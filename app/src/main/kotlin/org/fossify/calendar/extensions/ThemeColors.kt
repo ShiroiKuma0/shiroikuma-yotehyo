@@ -54,6 +54,7 @@ enum class ThemeSlot(
     MENU_TEXT("theme_menu_text", ThemeGroup.CHROME, R.string.theme_menu_text),
     SETTINGS_TITLE("theme_settings_title", ThemeGroup.CHROME, R.string.theme_settings_title),
     VIEW_SWITCHER("theme_view_switcher", ThemeGroup.CHROME, R.string.theme_view_switcher, hasFont = true),
+    SETTINGS_SWITCHER("theme_settings_switcher", ThemeGroup.CHROME, R.string.theme_settings_switcher, hasFont = true),
 
     // Calendar surfaces
     EVENT_TEXT("theme_event_text", ThemeGroup.CALENDAR, R.string.theme_event_text, hasFont = true),
@@ -100,6 +101,7 @@ private fun Context.themeDefault(slot: ThemeSlot): Int = when (slot) {
     ThemeSlot.MENU_TEXT -> themeColor(ThemeSlot.TEXT)
     ThemeSlot.SETTINGS_TITLE -> themeColor(ThemeSlot.PRIMARY).getContrastColor()
     ThemeSlot.VIEW_SWITCHER -> themeColor(ThemeSlot.TOOLBAR_ICONS)
+    ThemeSlot.SETTINGS_SWITCHER -> themeColor(ThemeSlot.TOOLBAR_ICONS)
 
     // Calendar: today markers follow the accent; weekend reuses the stock weekend color;
     // grid lines inherit the text color at the same low alpha the views already use.

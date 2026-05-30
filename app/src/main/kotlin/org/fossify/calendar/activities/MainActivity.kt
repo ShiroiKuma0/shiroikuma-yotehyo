@@ -459,6 +459,30 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
             view.applyThemeFont(ThemeSlot.VIEW_SWITCHER)
             view.setOnClickListener { switchToView(targetView) }
         }
+        styleSettingsSwitcher()
+    }
+
+    // The 設定 shortcut (two adjacent glyphs) right of the grid icon: 設 opens the 白い熊 予定表 UI
+    // page, 定 opens the regular Settings. Both share the SETTINGS_SWITCHER colour + font.
+    private fun styleSettingsSwitcher() {
+        val color = themeColor(ThemeSlot.SETTINGS_SWITCHER)
+        val actionView = binding.mainMenu.requireToolbar().menu.findItem(R.id.settings_switcher)?.actionView ?: return
+        val glyphs = listOf(
+            Triple(R.id.settings_switcher_ui, "設", { launchUiPage() }),
+            Triple(R.id.settings_switcher_settings, "定", { launchSettings() }),
+        )
+        glyphs.forEach { (viewId, label, onClick) ->
+            val view = actionView.findViewById<TextView>(viewId) ?: return@forEach
+            view.text = label
+            view.setTextColor(color)
+            view.applyThemeFont(ThemeSlot.SETTINGS_SWITCHER)
+            view.setOnClickListener { onClick() }
+        }
+    }
+
+    private fun launchUiPage() {
+        hideKeyboard()
+        startActivity(Intent(applicationContext, ThemeActivity::class.java))
     }
 
     private fun switchToView(view: Int) {

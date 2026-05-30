@@ -12,6 +12,7 @@
     <string name="theme_menu_text">Menu text</string>
     <string name="theme_settings_title">Settings title &amp; arrow</string>
     <string name="theme_view_switcher">View switcher (日週月年)</string>
+    <string name="theme_settings_switcher">Settings shortcut (設定)</string>
     <string name="theme_background">Background</string>
     <string name="theme_primary">Primary / accent</string>
     <string name="theme_text">Text</string>
@@ -24,6 +25,16 @@
     <string name="theme_today_highlight">Today highlight</string>
     <string name="theme_weekend">Weekend</string>
     <string name="theme_grid_lines">Grid lines</string>
+    <string name="theme_sub_grid_lines">Grid lines</string>
+    <string name="theme_grid_line_top">Top line</string>
+    <string name="theme_grid_line_middle_upper">Upper middle line</string>
+    <string name="theme_grid_line_middle_lower">Lower middle line</string>
+    <string name="theme_grid_line_bottom">Bottom line</string>
+    <string name="theme_grid_line_left">Left border</string>
+    <string name="theme_grid_line_center">Center line</string>
+    <string name="theme_grid_line_right">Right border</string>
+    <string name="theme_grid_line_color">Line color</string>
+    <string name="theme_grid_line_thickness">Line thickness</string>
     <string name="theme_event_text">Event text</string>
     <string name="theme_today_box_fill">Today box fill</string>
     <string name="theme_day_box_header">Header background</string>
