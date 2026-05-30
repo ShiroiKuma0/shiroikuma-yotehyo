@@ -20,6 +20,7 @@ import org.fossify.calendar.extensions.themeColor
 import org.fossify.calendar.helpers.DAY_BOX_ALIGN_CENTER
 import org.fossify.calendar.helpers.DAY_BOX_ALIGN_END
 import org.fossify.calendar.helpers.DAY_BOX_ALIGN_START
+import org.fossify.calendar.helpers.DAY_BOX_THICKNESS_INHERIT
 import org.fossify.calendar.helpers.THEME_UNSET
 import org.fossify.calendar.helpers.WEEKLY_STYLE_DAY_BOXES
 import org.fossify.calendar.helpers.WEEKLY_STYLE_TIME_GRID
@@ -95,11 +96,23 @@ class ThemeActivity : SimpleActivity() {
         addSubsection(R.string.theme_sub_today_boxes)
         addColorRow(ThemeSlot.TODAY_TEXT)
         addColorRow(ThemeSlot.TODAY_HEADER_BORDER)
+        addThicknessRow(R.string.theme_today_header_border_thickness, config.todayHeaderBorderThickness, DAY_BOX_THICKNESS_INHERIT) {
+            config.todayHeaderBorderThickness = it
+        }
         addColorRow(ThemeSlot.TODAY_BOX_BORDER)
+        addThicknessRow(R.string.theme_today_box_border_thickness, config.todayBoxBorderThickness, DAY_BOX_THICKNESS_INHERIT) {
+            config.todayBoxBorderThickness = it
+        }
         addSubsection(R.string.theme_sub_weekend_boxes)
         addColorRow(ThemeSlot.WEEKEND_TEXT)
         addColorRow(ThemeSlot.WEEKEND_HEADER_BORDER)
+        addThicknessRow(R.string.theme_weekend_header_border_thickness, config.weekendHeaderBorderThickness, DAY_BOX_THICKNESS_INHERIT) {
+            config.weekendHeaderBorderThickness = it
+        }
         addColorRow(ThemeSlot.WEEKEND_BOX_BORDER)
+        addThicknessRow(R.string.theme_weekend_box_border_thickness, config.weekendBoxBorderThickness, DAY_BOX_THICKNESS_INHERIT) {
+            config.weekendBoxBorderThickness = it
+        }
         addSubsection(R.string.theme_sub_highlights_grid)
         addColorRow(ThemeSlot.TODAY_HIGHLIGHT)
         addColorRow(ThemeSlot.WEEKEND)
@@ -220,12 +233,13 @@ class ThemeActivity : SimpleActivity() {
         }
     )
 
-    private fun addThicknessRow(@StringRes labelRes: Int, current: Int, max: Int = 12, onChange: (Int) -> Unit) {
+    private fun addThicknessRow(@StringRes labelRes: Int, current: Int, min: Int = 0, max: Int = 12, onChange: (Int) -> Unit) {
         val row = ItemThemeSliderBinding.inflate(layoutInflater, binding.themeHolder, false)
         row.themeSliderLabel.text = getString(labelRes)
         row.themeSliderLabel.setTextColor(textColor)
         row.themeSliderValue.setTextColor(textColor.adjustAlpha(0.6f))
         row.themeSliderValue.text = thicknessText(current)
+        row.themeSliderSeekbar.min = min
         row.themeSliderSeekbar.max = max
         row.themeSliderSeekbar.progress = current
         row.themeSliderSeekbar.onSeekBarChangeListener {
@@ -235,9 +249,10 @@ class ThemeActivity : SimpleActivity() {
         binding.themeHolder.addView(row.root)
     }
 
-    private fun thicknessText(dp: Int) = if (dp <= 0) {
-        getString(R.string.theme_thickness_none)
-    } else {
-        getString(R.string.theme_thickness_value, dp)
+    // < 0 = inherit the general thickness, 0 = no border, otherwise the dp value.
+    private fun thicknessText(dp: Int) = when {
+        dp < 0 -> getString(R.string.theme_default_value)
+        dp == 0 -> getString(R.string.theme_thickness_none)
+        else -> getString(R.string.theme_thickness_value, dp)
     }
 }

@@ -346,6 +346,35 @@ class Config(context: Context) : BaseConfig(context) {
             bumpThemeRevision()
         }
 
+    // Today / weekend border thickness in dp; DAY_BOX_THICKNESS_INHERIT means follow the general value.
+    var todayBoxBorderThickness: Int
+        get() = prefs.getInt(TODAY_BOX_BORDER_THICKNESS, DAY_BOX_THICKNESS_INHERIT)
+        set(value) {
+            prefs.edit().putInt(TODAY_BOX_BORDER_THICKNESS, value).apply()
+            bumpThemeRevision()
+        }
+
+    var todayHeaderBorderThickness: Int
+        get() = prefs.getInt(TODAY_HEADER_BORDER_THICKNESS, DAY_BOX_THICKNESS_INHERIT)
+        set(value) {
+            prefs.edit().putInt(TODAY_HEADER_BORDER_THICKNESS, value).apply()
+            bumpThemeRevision()
+        }
+
+    var weekendBoxBorderThickness: Int
+        get() = prefs.getInt(WEEKEND_BOX_BORDER_THICKNESS, DAY_BOX_THICKNESS_INHERIT)
+        set(value) {
+            prefs.edit().putInt(WEEKEND_BOX_BORDER_THICKNESS, value).apply()
+            bumpThemeRevision()
+        }
+
+    var weekendHeaderBorderThickness: Int
+        get() = prefs.getInt(WEEKEND_HEADER_BORDER_THICKNESS, DAY_BOX_THICKNESS_INHERIT)
+        set(value) {
+            prefs.edit().putInt(WEEKEND_HEADER_BORDER_THICKNESS, value).apply()
+            bumpThemeRevision()
+        }
+
     var lastUsedEventSpan: Int
         get() = prefs.getInt(LAST_USED_EVENT_SPAN, YEAR_SECONDS)
         set(lastUsedEventSpan) = prefs.edit().putInt(LAST_USED_EVENT_SPAN, lastUsedEventSpan)

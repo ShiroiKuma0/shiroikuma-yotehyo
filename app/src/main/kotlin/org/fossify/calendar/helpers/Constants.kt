@@ -62,6 +62,9 @@ const val DAY_BOX_ALIGN_START = 0
 const val DAY_BOX_ALIGN_CENTER = 1
 const val DAY_BOX_ALIGN_END = 2
 
+// A today/weekend border-thickness of this value means "inherit the general day-box thickness".
+const val DAY_BOX_THICKNESS_INHERIT = -1
+
 const val REMINDER_OFF = -1
 const val REMINDER_DEFAULT_VALUE = "$REMINDER_OFF,$REMINDER_OFF,$REMINDER_OFF"
 
@@ -149,6 +152,10 @@ const val WEEKLY_VIEW_STYLE = "weekly_view_style"
 const val DAY_BOX_HEADER_ALIGNMENT = "day_box_header_alignment"
 const val DAY_BOX_BORDER_THICKNESS = "day_box_border_thickness"
 const val DAY_BOX_HEADER_BORDER_THICKNESS = "day_box_header_border_thickness"
+const val TODAY_BOX_BORDER_THICKNESS = "today_box_border_thickness"
+const val TODAY_HEADER_BORDER_THICKNESS = "today_header_border_thickness"
+const val WEEKEND_BOX_BORDER_THICKNESS = "weekend_box_border_thickness"
+const val WEEKEND_HEADER_BORDER_THICKNESS = "weekend_header_border_thickness"
 const val HIGHLIGHT_WEEKENDS = "highlight_weekends"
 const val HIGHLIGHT_WEEKENDS_COLOR = "highlight_weekends_color"
 const val LAST_USED_EVENT_SPAN = "last_used_event_span"

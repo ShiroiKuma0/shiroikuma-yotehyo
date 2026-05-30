@@ -33,10 +33,14 @@
     <string name="theme_align_right">右</string>
     <string name="theme_today_text">今日の文字</string>
     <string name="theme_today_header_border">今日の見出しの枠線</string>
+    <string name="theme_today_header_border_thickness">今日の見出しの枠線の太さ</string>
     <string name="theme_today_box_border">今日のボックスの枠線</string>
+    <string name="theme_today_box_border_thickness">今日のボックスの枠線の太さ</string>
     <string name="theme_weekend_text">週末の文字</string>
     <string name="theme_weekend_header_border">週末の見出しの枠線</string>
+    <string name="theme_weekend_header_border_thickness">週末の見出しの枠線の太さ</string>
     <string name="theme_weekend_box_border">週末のボックスの枠線</string>
+    <string name="theme_weekend_box_border_thickness">週末のボックスの枠線の太さ</string>
     <string name="theme_default_value">標準</string>
     <string name="theme_sub_weekly_view">週ビュー</string>
     <string name="theme_sub_day_boxes">日ボックス</string>
