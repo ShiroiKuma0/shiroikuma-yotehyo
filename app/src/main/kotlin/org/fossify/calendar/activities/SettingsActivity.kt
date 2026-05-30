@@ -175,6 +175,7 @@ class SettingsActivity : SimpleActivity() {
     override fun onResume() {
         super.onResume()
         setupTopAppBar(topAppBar = binding.settingsAppbar, navigationIcon = NavigationIcon.Arrow)
+        applyTopBarForeground(binding.settingsAppbar)
         setupSettingItems()
     }
 

@@ -33,6 +33,7 @@ class ManageCalendarsActivity : SimpleActivity(), DeleteCalendarsListener {
     override fun onResume() {
         super.onResume()
         setupTopAppBar(binding.manageCalendarsAppbar, NavigationIcon.Arrow)
+        applyTopBarForeground(binding.manageCalendarsAppbar)
     }
 
     private fun showEditCalendarDialog(calendar: CalendarEntity? = null) {

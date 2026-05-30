@@ -81,6 +81,7 @@ class ThemeActivity : SimpleActivity() {
     override fun onResume() {
         super.onResume()
         setupTopAppBar(topAppBar = binding.themeAppbar, navigationIcon = NavigationIcon.Arrow)
+        applyTopBarForeground(binding.themeAppbar)
         buildRows()
     }
 
@@ -100,6 +101,10 @@ class ThemeActivity : SimpleActivity() {
         // Search bar.
         addSection(R.string.theme_group_search)
         slotsOf(ThemeGroup.SEARCH).forEach { addSlot(it) }
+
+        // Top bar action/overflow icons, overflow-menu text, and the Settings toolbar foreground.
+        addSection(R.string.theme_group_chrome)
+        slotsOf(ThemeGroup.CHROME).forEach { addSlot(it) }
 
         // Calendar — grouped by surface.
         addSection(R.string.theme_group_calendar)

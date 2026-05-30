@@ -6,7 +6,11 @@
     <string name="theme_and_colors">Theme &amp; colors</string>
     <string name="theme_group_foundation">Foundation</string>
     <string name="theme_group_search">Search bar</string>
+    <string name="theme_group_chrome">Top bar &amp; menu</string>
     <string name="theme_group_calendar">Calendar</string>
+    <string name="theme_toolbar_icons">Top bar icons</string>
+    <string name="theme_menu_text">Menu text</string>
+    <string name="theme_settings_title">Settings title &amp; arrow</string>
     <string name="theme_background">Background</string>
     <string name="theme_primary">Primary / accent</string>
     <string name="theme_text">Text</string>

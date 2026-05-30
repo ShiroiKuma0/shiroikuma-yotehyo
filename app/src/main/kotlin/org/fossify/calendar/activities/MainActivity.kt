@@ -12,6 +12,9 @@ import android.os.Handler
 import android.provider.ContactsContract.CommonDataKinds
 import android.provider.ContactsContract.Contacts
 import android.provider.ContactsContract.Data
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
 import android.view.MenuItem
 import android.view.View
 import android.widget.EditText
@@ -417,6 +420,26 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
 
         menu.findViewById<ImageView>(org.fossify.commons.R.id.top_toolbar_search_icon)
             ?.applyColorFilter(themeColor(ThemeSlot.SEARCH_ICON))
+
+        styleTopBarMenu()
+    }
+
+    // Tint the top bar's action + overflow icons, and colour the overflow-menu item text.
+    private fun styleTopBarMenu() {
+        val iconColor = themeColor(ThemeSlot.TOOLBAR_ICONS)
+        val menuTextColor = themeColor(ThemeSlot.MENU_TEXT)
+        val toolbar = binding.mainMenu.requireToolbar()
+        toolbar.overflowIcon?.applyColorFilter(iconColor)
+        val toolbarMenu = toolbar.menu
+        for (i in 0 until toolbarMenu.size()) {
+            val item = toolbarMenu.getItem(i)
+            item.icon?.applyColorFilter(iconColor)
+            item.title?.let { title ->
+                item.title = SpannableString(title).apply {
+                    setSpan(ForegroundColorSpan(menuTextColor), 0, length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                }
+            }
+        }
     }
 
     override fun onBackPressedCompat(): Boolean {
