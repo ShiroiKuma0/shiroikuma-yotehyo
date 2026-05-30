@@ -15,6 +15,7 @@ import org.fossify.calendar.databinding.ItemThemeSectionBinding
 import org.fossify.calendar.databinding.ItemThemeSliderBinding
 import org.fossify.calendar.databinding.ItemThemeSubsectionBinding
 import org.fossify.calendar.databinding.ItemThemeTextBinding
+import org.fossify.calendar.databinding.ItemThemeToggleBinding
 import org.fossify.calendar.databinding.ItemThemeValueBinding
 import org.fossify.calendar.dialogs.AlphaColorPickerDialog
 import org.fossify.calendar.dialogs.FontPickerDialog
@@ -34,11 +35,10 @@ import org.fossify.calendar.helpers.DAY_BOX_ALIGN_START
 import org.fossify.calendar.helpers.DAY_BOX_THICKNESS_INHERIT
 import org.fossify.calendar.helpers.MAX_FONT_SIZE_SP
 import org.fossify.calendar.helpers.THEME_UNSET
-import org.fossify.calendar.helpers.WEEKLY_STYLE_DAY_BOXES
-import org.fossify.calendar.helpers.WEEKLY_STYLE_TIME_GRID
 import org.fossify.commons.dialogs.RadioGroupDialog
 import org.fossify.commons.extensions.adjustAlpha
 import org.fossify.commons.extensions.beVisibleIf
+import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.onSeekBarChangeListener
@@ -109,7 +109,12 @@ class ThemeActivity : SimpleActivity() {
         // Calendar — grouped by surface.
         addSection(R.string.theme_group_calendar)
         addSubsection(R.string.theme_sub_weekly_view)
-        addWeeklyViewStyleRow()
+        addToggleRow(R.string.theme_show_time_grid_weekly, config.showTimeGridWeekly) {
+            config.showTimeGridWeekly = it
+        }
+        addToggleRow(R.string.theme_show_box_grid_weekly, config.showBoxGridWeekly) {
+            config.showBoxGridWeekly = it
+        }
         addSubsection(R.string.theme_sub_events)
         addSlot(ThemeSlot.EVENT_TEXT)
         addSubsection(R.string.theme_sub_day_boxes)
@@ -237,13 +242,15 @@ class ThemeActivity : SimpleActivity() {
         binding.themeHolder.addView(b.root)
     }
 
-    private fun addWeeklyViewStyleRow() {
-        val row = ItemThemeValueBinding.inflate(layoutInflater, binding.themeHolder, false)
-        row.themeValueLabel.text = getString(R.string.weekly_view_style)
-        row.themeValueLabel.setTextColor(textColor)
-        row.themeValueValue.setTextColor(textColor.adjustAlpha(0.6f))
-        row.themeValueValue.text = weeklyStyleText()
-        row.root.setOnClickListener { openWeeklyStylePicker(row.themeValueValue) }
+    private fun addToggleRow(@StringRes labelRes: Int, isChecked: Boolean, onToggle: (Boolean) -> Unit) {
+        val row = ItemThemeToggleBinding.inflate(layoutInflater, binding.themeHolder, false)
+        row.themeToggleSwitch.text = getString(labelRes)
+        row.themeToggleSwitch.setColors(textColor, primaryColor, getProperBackgroundColor())
+        row.themeToggleSwitch.isChecked = isChecked
+        row.themeToggleHolder.setOnClickListener {
+            row.themeToggleSwitch.toggle()
+            onToggle(row.themeToggleSwitch.isChecked)
+        }
         indentView(row.root, currentRowIndent)
         binding.themeHolder.addView(row.root)
     }
@@ -338,24 +345,6 @@ class ThemeActivity : SimpleActivity() {
         }
     }
 
-    private fun openWeeklyStylePicker(valueView: TextView) {
-        val items = arrayListOf(
-            RadioItem(WEEKLY_STYLE_TIME_GRID, getString(R.string.weekly_style_time_grid)),
-            RadioItem(WEEKLY_STYLE_DAY_BOXES, getString(R.string.weekly_style_day_boxes))
-        )
-        RadioGroupDialog(this, items, config.weeklyViewStyle) {
-            config.weeklyViewStyle = it as Int
-            valueView.text = weeklyStyleText()
-        }
-    }
-
-    private fun weeklyStyleText() = getString(
-        if (config.weeklyViewStyle == WEEKLY_STYLE_DAY_BOXES) {
-            R.string.weekly_style_day_boxes
-        } else {
-            R.string.weekly_style_time_grid
-        }
-    )
 
     private fun addHeaderAlignmentRow() {
         val row = ItemThemeValueBinding.inflate(layoutInflater, binding.themeHolder, false)

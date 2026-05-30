@@ -153,7 +153,15 @@ class WeekGridFragment : Fragment() {
                 }
             }
             cell.weekGridDayEvents.removeAllViews()
-            cell.weekGridDayBox.setOnClickListener { requireContext().launchNewEventIntent(dayCode) }
+            // Long-press anywhere in the box (header or events area) to add a new event;
+            // tapping an event line opens it. The events area fills the box (fillViewport) and
+            // gets its own listener, since the ScrollView would otherwise swallow the long-press.
+            val addEventOnLongPress = View.OnLongClickListener {
+                requireContext().launchNewEventIntent(dayCode)
+                true
+            }
+            cell.weekGridDayBox.setOnLongClickListener(addEventOnLongPress)
+            cell.weekGridDayEvents.setOnLongClickListener(addEventOnLongPress)
         }
     }
 

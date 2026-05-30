@@ -75,9 +75,8 @@
     <string name="theme_sub_highlights_grid">強調とグリッド</string>
     <!-- Day-box (Pimlical-style) week view -->
     <string name="weekly_grid_view">週グリッド（日ボックス）</string>
-    <string name="weekly_view_style">週ビューのスタイル</string>
-    <string name="weekly_style_time_grid">時間グリッド</string>
-    <string name="weekly_style_day_boxes">日ボックス</string>
+    <string name="theme_show_time_grid_weekly">時間グリッドの週ビュー</string>
+    <string name="theme_show_box_grid_weekly">ボックスグリッドの週ビュー</string>
     <string name="change_view">ビューの変更</string>
     <string name="daily_view">日</string>
     <string name="weekly_view">週</string>
