@@ -21,6 +21,7 @@ import org.fossify.calendar.extensions.ThemeSlot
 import org.fossify.calendar.extensions.applyThemeFont
 import org.fossify.calendar.extensions.config
 import org.fossify.calendar.extensions.eventsHelper
+import org.fossify.calendar.extensions.formatEventClock
 import org.fossify.calendar.extensions.launchNewEventIntent
 import org.fossify.calendar.extensions.launchNewTaskIntent
 import org.fossify.calendar.extensions.themeColor
@@ -225,7 +226,7 @@ class WeekGridFragment : Fragment() {
         val label = if (event.getIsAllDay()) {
             event.title
         } else {
-            "${Formatter.getTime(ctx, Formatter.getDateTimeFromTS(event.startTS))} ${event.title}"
+            "${formatEventClock(event.startTS, ctx.config.eventTimeFormat)} ${event.title}"
         }
 
         var color = if (event.color != 0) event.color else ctx.themeColor(ThemeSlot.EVENT_TEXT)

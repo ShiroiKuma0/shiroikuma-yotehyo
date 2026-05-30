@@ -29,6 +29,7 @@ import org.fossify.calendar.extensions.effectiveFontFamily
 import org.fossify.calendar.extensions.effectiveFontSize
 import org.fossify.calendar.extensions.effectiveFontWeight
 import org.fossify.calendar.extensions.fontDisplayName
+import org.fossify.calendar.extensions.formatEventTimeRange
 import org.fossify.calendar.extensions.gridLineColor
 import org.fossify.calendar.extensions.importFont
 import org.fossify.calendar.extensions.resetThemeColor
@@ -40,6 +41,7 @@ import org.fossify.calendar.helpers.DAY_BOX_ALIGN_END
 import org.fossify.calendar.helpers.DAY_BOX_ALIGN_START
 import org.fossify.calendar.helpers.DAY_BOX_HEADER_FORMAT_JAPANESE
 import org.fossify.calendar.helpers.DAY_BOX_HEADER_FORMAT_JAPANESE_ERA
+import org.fossify.calendar.helpers.EVENT_TIME_FORMAT_JAPANESE
 import org.fossify.calendar.helpers.DAY_BOX_THICKNESS_INHERIT
 import org.fossify.calendar.helpers.MAX_FONT_SIZE_SP
 import org.fossify.calendar.helpers.THEME_UNSET
@@ -129,6 +131,7 @@ class ThemeActivity : SimpleActivity() {
         }
         addSubsection(R.string.theme_sub_events)
         addSlot(ThemeSlot.EVENT_TEXT)
+        addEventTimeFormatRow()
         addSubsection(R.string.theme_sub_day_boxes)
         addSlot(ThemeSlot.DAY_BOX_HEADER)
         addSlot(ThemeSlot.DAY_BOX_HEADER_TEXT)
@@ -491,6 +494,73 @@ class ThemeActivity : SimpleActivity() {
             .setNegativeButton(org.fossify.commons.R.string.cancel, null)
             .apply {
                 setupDialogStuff(dialogBinding.root, this, R.string.theme_date_header_format)
+            }
+    }
+
+    private fun addEventTimeFormatRow() {
+        val row = ItemThemeValueBinding.inflate(layoutInflater, binding.themeHolder, false)
+        row.themeValueLabel.text = getString(R.string.theme_event_time_format)
+        row.themeValueLabel.setTextColor(textColor)
+        row.themeValueValue.setTextColor(textColor.adjustAlpha(0.6f))
+        row.themeValueValue.text = eventTimeSample()
+        row.root.setOnClickListener { openEventTimeFormatPicker(row.themeValueValue) }
+        indentView(row.root, currentRowIndent)
+        binding.themeHolder.addView(row.root)
+    }
+
+    // A representative 08:00→09:00 range so the user sees the chosen style at a glance.
+    private fun eventTimeSample(format: String = config.eventTimeFormat) =
+        formatEventTimeRange(sampleSeconds(8), sampleSeconds(9), format)
+
+    private fun sampleSeconds(hour: Int): Long {
+        val cal = java.util.Calendar.getInstance()
+        cal.set(java.util.Calendar.HOUR_OF_DAY, hour)
+        cal.set(java.util.Calendar.MINUTE, 0)
+        cal.set(java.util.Calendar.SECOND, 0)
+        cal.set(java.util.Calendar.MILLISECOND, 0)
+        return cal.timeInMillis / 1000L
+    }
+
+    private fun openEventTimeFormatPicker(valueView: TextView) {
+        val customId = 1
+        val current = if (config.eventTimeFormat == EVENT_TIME_FORMAT_JAPANESE) 0 else customId
+        val items = arrayListOf(
+            RadioItem(0, "${getString(R.string.theme_event_time_japanese)} — ${eventTimeSample(EVENT_TIME_FORMAT_JAPANESE)}"),
+            RadioItem(customId, getString(R.string.theme_date_format_custom))
+        )
+        RadioGroupDialog(this, items, current) {
+            if (it as Int == 0) {
+                config.eventTimeFormat = EVENT_TIME_FORMAT_JAPANESE
+                valueView.text = eventTimeSample()
+            } else {
+                openCustomEventTimeDialog(valueView)
+            }
+        }
+    }
+
+    private fun openCustomEventTimeDialog(valueView: TextView) {
+        val dialogBinding = DialogDayBoxDateFormatBinding.inflate(layoutInflater)
+        val stored = config.eventTimeFormat
+        val initial = if (stored == EVENT_TIME_FORMAT_JAPANESE) "HH:mm" else stored
+        dialogBinding.dateFormatPatternHint.hint = getString(R.string.theme_time_pattern_hint)
+        dialogBinding.dateFormatLegend.text = getString(R.string.theme_time_format_legend)
+        dialogBinding.dateFormatPattern.setText(initial)
+        dialogBinding.dateFormatSample.text = eventTimeSample(initial)
+        dialogBinding.dateFormatPattern.onTextChangeListener { text ->
+            dialogBinding.dateFormatSample.text = eventTimeSample(text)
+        }
+
+        getAlertDialogBuilder()
+            .setPositiveButton(org.fossify.commons.R.string.ok) { _, _ ->
+                val pattern = dialogBinding.dateFormatPattern.text.toString().trim()
+                if (pattern.isNotEmpty()) {
+                    config.eventTimeFormat = pattern
+                    valueView.text = eventTimeSample()
+                }
+            }
+            .setNegativeButton(org.fossify.commons.R.string.cancel, null)
+            .apply {
+                setupDialogStuff(dialogBinding.root, this, R.string.theme_event_time_format)
             }
     }
 

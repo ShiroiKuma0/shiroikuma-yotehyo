@@ -151,6 +151,11 @@ const val DAY_BOX_HEADER_DATE_FORMAT = "day_box_header_date_format"
 // Day-box header date-format presets. Any other stored value is treated as a literal ICU date pattern.
 const val DAY_BOX_HEADER_FORMAT_JAPANESE = "japanese"
 const val DAY_BOX_HEADER_FORMAT_JAPANESE_ERA = "japanese_era"
+
+// Event time format (week/day views). The default uses the Sino-Japanese clock (午前八時);
+// any other stored value is a literal ICU time pattern (e.g. "HH:mm").
+const val EVENT_TIME_FORMAT = "event_time_format"
+const val EVENT_TIME_FORMAT_JAPANESE = "japanese"
 const val DAY_BOX_HEADER_ALIGNMENT = "day_box_header_alignment"
 const val DAY_BOX_BORDER_THICKNESS = "day_box_border_thickness"
 const val DAY_BOX_HEADER_BORDER_THICKNESS = "day_box_header_border_thickness"

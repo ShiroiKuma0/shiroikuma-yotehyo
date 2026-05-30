@@ -302,6 +302,14 @@ class Config(context: Context) : BaseConfig(context) {
             bumpThemeRevision() // re-render the box-grid headers when returning to the calendar
         }
 
+    // Event time display for the week/day views: a preset sentinel (japanese) or a literal ICU time pattern.
+    var eventTimeFormat: String
+        get() = prefs.getString(EVENT_TIME_FORMAT, EVENT_TIME_FORMAT_JAPANESE)!!
+        set(eventTimeFormat) {
+            prefs.edit().putString(EVENT_TIME_FORMAT, eventTimeFormat).apply()
+            bumpThemeRevision() // re-render the event times when returning to the calendar
+        }
+
     // Per-line overlay grid lines for the box-grid week view (keyed by WeekGridLine.key).
     // Each line: enabled (default off), color (THEME_UNSET = follow the shared Grid lines color), thickness (dp).
     fun isGridLineEnabled(key: String) = prefs.getBoolean("week_grid_line_${key}_enabled", false)
