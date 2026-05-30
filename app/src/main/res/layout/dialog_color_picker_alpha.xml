@@ -11,10 +11,29 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
+        <HorizontalScrollView
+            android:id="@+id/color_picker_recent_scroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_marginStart="@dimen/activity_margin"
+            android:layout_marginTop="@dimen/activity_margin"
+            android:layout_marginEnd="@dimen/activity_margin"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/color_picker_recent_colors"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+
+        </HorizontalScrollView>
+
         <RelativeLayout
             android:id="@+id/color_picker_top_holder"
             android:layout_width="match_parent"
             android:layout_height="@dimen/colorpicker_size_with_padding"
+            android:layout_below="@+id/color_picker_recent_scroll"
             android:gravity="center_horizontal">
 
             <org.fossify.commons.views.ColorPickerSquare

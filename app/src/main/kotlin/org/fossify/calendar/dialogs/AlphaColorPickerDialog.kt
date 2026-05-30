@@ -4,13 +4,19 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.graphics.Color
 import android.view.MotionEvent
+import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.SeekBar
 import androidx.appcompat.app.AlertDialog
 import java.util.Locale
 import org.fossify.calendar.databinding.DialogColorPickerAlphaBinding
+import org.fossify.commons.extensions.baseConfig
+import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.getAlertDialogBuilder
+import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.onGlobalLayout
 import org.fossify.commons.extensions.onTextChangeListener
+import org.fossify.commons.extensions.setFillWithStroke
 import org.fossify.commons.extensions.setupDialogStuff
 
 private const val ALPHA_MAX = 255
@@ -20,6 +26,7 @@ private const val HUE_EPSILON = 0.001f
 private const val RGB_MASK = 0xFFFFFF
 private const val ALPHA_SHIFT = 24
 private const val HSV_SIZE = 3
+private const val RECENT_COLORS_NUMBER = 5
 
 // A commons-style HSV colour picker with an added alpha/transparency slider; returns an ARGB int.
 @SuppressLint("ClickableViewAccessibility")
@@ -79,8 +86,13 @@ class AlphaColorPickerDialog(
             updateNewColor()
         }
 
+        setupRecentColors()
+
         val builder = activity.getAlertDialogBuilder()
-            .setPositiveButton(org.fossify.commons.R.string.ok) { _, _ -> callback(true, currentColor()) }
+            .setPositiveButton(org.fossify.commons.R.string.ok) { _, _ ->
+                addRecentColor(currentColor())
+                callback(true, currentColor())
+            }
             .setNegativeButton(org.fossify.commons.R.string.cancel, null)
         if (addDefaultColorButton) {
             builder.setNeutralButton(org.fossify.commons.R.string.default_color) { _, _ -> callback(false, color) }
@@ -91,6 +103,49 @@ class AlphaColorPickerDialog(
                 dialog = alertDialog
             }
         }
+    }
+
+    // Recently used colours (shared with every other commons colour picker) as clickable dots above the canvas.
+    private fun setupRecentColors() {
+        val recents = activity.baseConfig.colorPickerRecentColors
+        if (recents.isEmpty()) {
+            binding.colorPickerRecentScroll.beGone()
+            return
+        }
+
+        val swatchSize = activity.resources.getDimensionPixelSize(org.fossify.commons.R.dimen.colorpicker_hue_width)
+        val gap = activity.resources.getDimensionPixelSize(org.fossify.commons.R.dimen.activity_margin)
+        val backgroundColor = activity.getProperBackgroundColor()
+        recents.forEach { recentColor ->
+            val swatch = ImageView(activity)
+            swatch.layoutParams = LinearLayout.LayoutParams(swatchSize, swatchSize).apply { marginEnd = gap }
+            swatch.setFillWithStroke(recentColor, backgroundColor)
+            swatch.setOnClickListener { applyColor(recentColor) }
+            binding.colorPickerRecentColors.addView(swatch)
+        }
+    }
+
+    // Move the whole picker (square + hue + alpha + hex + preview) to a chosen recent colour.
+    private fun applyColor(newColor: Int) {
+        Color.colorToHSV(newColor, currentColorHsv)
+        currentAlpha = Color.alpha(newColor)
+        binding.colorPickerSquare.setHue(currentColorHsv[0])
+        binding.colorPickerAlphaSeekbar.progress = currentAlpha
+        binding.colorPickerAlphaValue.text = currentAlpha.toString()
+        moveHueCursor()
+        moveColorCursor()
+        setHexField(currentHex())
+        updateNewColor()
+    }
+
+    private fun addRecentColor(newColor: Int) {
+        val recents = activity.baseConfig.colorPickerRecentColors
+        recents.remove(newColor)
+        recents.addFirst(newColor)
+        while (recents.size > RECENT_COLORS_NUMBER) {
+            recents.removeLast()
+        }
+        activity.baseConfig.colorPickerRecentColors = recents
     }
 
     private fun onHueTouch(event: MotionEvent): Boolean {
