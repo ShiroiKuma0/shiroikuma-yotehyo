@@ -19,6 +19,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import org.fossify.calendar.R
 import org.fossify.calendar.adapters.EventListAdapter
@@ -437,6 +438,38 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
                 }
             }
         }
+        styleViewSwitchers()
+    }
+
+    // The 日 週 月 年 quick view-switch buttons (actionLayout text items) sitting left of the grid icon.
+    // Text, colour, font/weight/size and the click target are all (re)applied here on each theme refresh.
+    private fun styleViewSwitchers() {
+        val color = themeColor(ThemeSlot.VIEW_SWITCHER)
+        val menu = binding.mainMenu.requireToolbar().menu
+        val switchers = listOf(
+            Triple(R.id.switch_to_day, "日", DAILY_VIEW),
+            Triple(R.id.switch_to_week, "週", WEEKLY_GRID_VIEW),
+            Triple(R.id.switch_to_month, "月", MONTHLY_VIEW),
+            Triple(R.id.switch_to_year, "年", YEARLY_VIEW),
+        )
+        switchers.forEach { (itemId, label, targetView) ->
+            val view = menu.findItem(itemId)?.actionView as? TextView ?: return@forEach
+            view.text = label
+            view.setTextColor(color)
+            view.applyThemeFont(ThemeSlot.VIEW_SWITCHER)
+            view.setOnClickListener { switchToView(targetView) }
+        }
+    }
+
+    private fun switchToView(view: Int) {
+        if (binding.fabExtendedOverlay.isVisible()) {
+            hideExtendedFab()
+        }
+        resetActionBarTitle()
+        closeSearch()
+        updateView(view)
+        shouldGoToTodayBeVisible = false
+        refreshMenuItems()
     }
 
     override fun onBackPressedCompat(): Boolean {
