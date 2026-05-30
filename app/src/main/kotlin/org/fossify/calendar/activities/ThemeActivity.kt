@@ -16,6 +16,7 @@ import org.fossify.calendar.databinding.ItemThemeSliderBinding
 import org.fossify.calendar.databinding.ItemThemeSubsectionBinding
 import org.fossify.calendar.databinding.ItemThemeTextBinding
 import org.fossify.calendar.databinding.ItemThemeValueBinding
+import org.fossify.calendar.dialogs.AlphaColorPickerDialog
 import org.fossify.calendar.dialogs.FontPickerDialog
 import org.fossify.calendar.extensions.FontWeightOption
 import org.fossify.calendar.extensions.ThemeGroup
@@ -35,7 +36,6 @@ import org.fossify.calendar.helpers.MAX_FONT_SIZE_SP
 import org.fossify.calendar.helpers.THEME_UNSET
 import org.fossify.calendar.helpers.WEEKLY_STYLE_DAY_BOXES
 import org.fossify.calendar.helpers.WEEKLY_STYLE_TIME_GRID
-import org.fossify.commons.dialogs.ColorPickerDialog
 import org.fossify.commons.dialogs.RadioGroupDialog
 import org.fossify.commons.extensions.adjustAlpha
 import org.fossify.commons.extensions.beVisibleIf
@@ -252,7 +252,7 @@ class ThemeActivity : SimpleActivity() {
     private fun sizeLabel(sp: Int) = if (sp > 0) "$sp sp" else getString(R.string.theme_size_default)
 
     private fun openColorPicker(slot: ThemeSlot) {
-        ColorPickerDialog(this, themeColor(slot), addDefaultColorButton = true) { wasPositive, color ->
+        AlphaColorPickerDialog(this, themeColor(slot), addDefaultColorButton = true) { wasPositive, color ->
             if (wasPositive) setThemeColor(slot, color) else resetThemeColor(slot)
             if (slot.isFoundation) {
                 // foundation cascades into the chrome + every inheriting preview
@@ -265,7 +265,7 @@ class ThemeActivity : SimpleActivity() {
     }
 
     private fun openTextColorPicker(slot: ThemeSlot, b: ItemThemeTextBinding) {
-        ColorPickerDialog(this, themeColor(slot), addDefaultColorButton = true) { wasPositive, color ->
+        AlphaColorPickerDialog(this, themeColor(slot), addDefaultColorButton = true) { wasPositive, color ->
             if (wasPositive) setThemeColor(slot, color) else resetThemeColor(slot)
             if (slot.isFoundation) {
                 recreate()
