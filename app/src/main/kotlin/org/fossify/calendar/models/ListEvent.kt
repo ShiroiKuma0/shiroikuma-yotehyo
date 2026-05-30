@@ -14,8 +14,15 @@ data class ListEvent(
     var isTask: Boolean,
     var isTaskCompleted: Boolean,
     var isAttendeeInviteDeclined: Boolean,
-    var isEventCanceled: Boolean
+    var isEventCanceled: Boolean,
+    var categoryBackgroundColor: Int = Int.MIN_VALUE,
+    var categoryFontFamily: String = "",
+    var categoryFontWeight: Int = 0,
+    var categoryFontSize: Int = 0,
 ) : ListItem() {
+
+    fun hasCategoryStyle() = categoryBackgroundColor != Int.MIN_VALUE ||
+        categoryFontFamily.isNotEmpty() || categoryFontWeight > 0 || categoryFontSize > 0
 
     companion object {
         val empty = ListEvent(

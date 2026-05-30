@@ -893,7 +893,11 @@ fun Context.getEventListItems(
                 it.isTask(),
                 it.isTaskCompleted(),
                 it.isAttendeeInviteDeclined(),
-                it.isEventCanceled()
+                it.isEventCanceled(),
+                it.categoryBackgroundColor,
+                it.categoryFontFamily,
+                it.categoryFontWeight,
+                it.categoryFontSize
             )
         listItems.add(listEvent)
     }

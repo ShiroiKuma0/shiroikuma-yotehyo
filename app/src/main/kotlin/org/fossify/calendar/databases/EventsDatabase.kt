@@ -10,6 +10,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import org.fossify.calendar.R
 import org.fossify.calendar.extensions.config
 import org.fossify.calendar.helpers.Converters
+import org.fossify.calendar.helpers.THEME_UNSET
 import org.fossify.calendar.helpers.LOCAL_CALENDAR_ID
 import org.fossify.calendar.interfaces.CalendarsDao
 import org.fossify.calendar.interfaces.EventsDao
@@ -24,7 +25,7 @@ import java.util.concurrent.Executors
 
 @Database(
     entities = [Event::class, CalendarEntity::class, Widget::class, Task::class],
-    version = 12
+    version = 13
 )
 @TypeConverters(Converters::class)
 abstract class EventsDatabase : RoomDatabase() {
@@ -66,6 +67,7 @@ abstract class EventsDatabase : RoomDatabase() {
                             .addMigrations(MIGRATION_9_10)
                             .addMigrations(MIGRATION_10_11)
                             .addMigrations(MIGRATION_11_12)
+                            .addMigrations(MIGRATION_12_13)
                             .build()
                         db!!.openHelper.setWriteAheadLoggingEnabled(true)
                     }
@@ -188,6 +190,17 @@ abstract class EventsDatabase : RoomDatabase() {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.apply {
                     execSQL("ALTER TABLE events ADD COLUMN end_time_zone TEXT NOT NULL DEFAULT ''")
+                }
+            }
+        }
+
+        private val MIGRATION_12_13 = object : Migration(12, 13) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.apply {
+                    execSQL("ALTER TABLE event_types ADD COLUMN background_color INTEGER NOT NULL DEFAULT $THEME_UNSET")
+                    execSQL("ALTER TABLE event_types ADD COLUMN font_family TEXT NOT NULL DEFAULT ''")
+                    execSQL("ALTER TABLE event_types ADD COLUMN font_weight INTEGER NOT NULL DEFAULT 0")
+                    execSQL("ALTER TABLE event_types ADD COLUMN font_size INTEGER NOT NULL DEFAULT 0")
                 }
             }
         }

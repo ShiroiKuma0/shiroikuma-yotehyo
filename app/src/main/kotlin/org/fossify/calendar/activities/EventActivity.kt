@@ -1173,7 +1173,7 @@ class EventActivity : SimpleActivity() {
             activity = this,
             currCalendar = mCalendarId,
             showCalDAVCalendars = config.caldavSync,
-            showNewCalendarOption = false,
+            showNewCalendarOption = true,
             addLastUsedOneAsFirstOption = false,
             showOnlyWritable = true,
             showManageCalendars = true

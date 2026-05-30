@@ -18,6 +18,7 @@ import org.fossify.calendar.databinding.FragmentWeekGridBinding
 import org.fossify.calendar.databinding.WeekGridDayBinding
 import org.fossify.calendar.databinding.WeekGridEventBinding
 import org.fossify.calendar.extensions.ThemeSlot
+import org.fossify.calendar.extensions.applyCategoryFont
 import org.fossify.calendar.extensions.applyThemeFont
 import org.fossify.calendar.extensions.config
 import org.fossify.calendar.extensions.eventsHelper
@@ -32,6 +33,7 @@ import org.fossify.calendar.helpers.EVENT_OCCURRENCE_TS
 import org.fossify.calendar.helpers.Formatter
 import org.fossify.calendar.helpers.formatDayBoxHeader
 import org.fossify.calendar.helpers.IS_TASK_COMPLETED
+import org.fossify.calendar.helpers.THEME_UNSET
 import org.fossify.calendar.helpers.TYPE_EVENT
 import org.fossify.calendar.helpers.TYPE_TASK
 import org.fossify.calendar.helpers.WEEK_START_TIMESTAMP
@@ -241,7 +243,15 @@ class WeekGridFragment : Fragment() {
 
         line.root.text = label
         line.root.setTextColor(color)
-        line.root.applyThemeFont(ThemeSlot.EVENT_TEXT)
+        // Category (event type) styling: its own font and background when set, else the themed event font.
+        if (event.categoryFontFamily.isNotEmpty() || event.categoryFontWeight > 0 || event.categoryFontSize > 0) {
+            line.root.applyCategoryFont(event.categoryFontFamily, event.categoryFontWeight, event.categoryFontSize)
+        } else {
+            line.root.applyThemeFont(ThemeSlot.EVENT_TEXT)
+        }
+        if (event.categoryBackgroundColor != THEME_UNSET) {
+            line.root.setBackgroundColor(event.categoryBackgroundColor)
+        }
         if (event.isTaskCompleted()) {
             line.root.paintFlags = line.root.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
         }

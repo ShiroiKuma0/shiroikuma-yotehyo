@@ -131,6 +131,14 @@ fun TextView.applyThemeFont(slot: ThemeSlot, baseStyle: Int = Typeface.NORMAL) {
     }
 }
 
+/** Apply an explicit family / weight / size (e.g. a category's font) to a text view; size only overrides if set. */
+fun TextView.applyCategoryFont(family: String, weight: Int, sizeSp: Int) {
+    typeface = context.themeTypeface(family, weight)
+    if (sizeSp > 0) {
+        setTextSize(TypedValue.COMPLEX_UNIT_SP, sizeSp.toFloat())
+    }
+}
+
 /** Render the live sample line in an explicit family/weight/size/color (used by the on-page preview). */
 fun TextView.showFontSample(family: String, weight: Int, sizeSp: Int, color: Int) {
     text = context.getString(R.string.font_sample_text)
