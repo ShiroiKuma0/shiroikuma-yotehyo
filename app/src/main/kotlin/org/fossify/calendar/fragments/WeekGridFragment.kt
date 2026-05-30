@@ -2,6 +2,7 @@ package org.fossify.calendar.fragments
 
 import android.content.Intent
 import android.graphics.Paint
+import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
@@ -15,6 +16,7 @@ import org.fossify.calendar.databinding.FragmentWeekGridBinding
 import org.fossify.calendar.databinding.WeekGridDayBinding
 import org.fossify.calendar.databinding.WeekGridEventBinding
 import org.fossify.calendar.extensions.ThemeSlot
+import org.fossify.calendar.extensions.applyThemeFont
 import org.fossify.calendar.extensions.config
 import org.fossify.calendar.extensions.eventsHelper
 import org.fossify.calendar.extensions.launchNewEventIntent
@@ -32,7 +34,6 @@ import org.fossify.calendar.models.Event
 import org.fossify.commons.extensions.adjustAlpha
 import org.fossify.commons.extensions.getContrastColor
 import org.fossify.commons.extensions.getProperBackgroundColor
-import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.helpers.MEDIUM_ALPHA
 import org.joda.time.DateTime
 import org.joda.time.DateTimeConstants
@@ -142,8 +143,9 @@ class WeekGridFragment : Fragment() {
             }
             cell.weekGridDayHeader.setTextColor(headerTextColor)
             cell.weekGridDayHeader.gravity = headerGravity
+            cell.weekGridDayHeader.applyThemeFont(textSlot, Typeface.BOLD)
 
-            val boxFill = if (isToday) ctx.themeColor(ThemeSlot.TODAY_HIGHLIGHT).adjustAlpha(0.12f) else backgroundColor
+            val boxFill = if (isToday) ctx.themeColor(ThemeSlot.TODAY_BOX_FILL) else backgroundColor
             cell.weekGridDayBox.background = GradientDrawable().apply {
                 setColor(boxFill)
                 if (boxBorderPx > 0) {
@@ -203,7 +205,7 @@ class WeekGridFragment : Fragment() {
             "${Formatter.getTime(ctx, Formatter.getDateTimeFromTS(event.startTS))} ${event.title}"
         }
 
-        var color = if (event.color != 0) event.color else ctx.getProperTextColor()
+        var color = if (event.color != 0) event.color else ctx.themeColor(ThemeSlot.EVENT_TEXT)
         val shouldDim = if (event.isTask()) {
             dimCompletedTasks && event.isTaskCompleted()
         } else {
@@ -215,6 +217,7 @@ class WeekGridFragment : Fragment() {
 
         line.root.text = label
         line.root.setTextColor(color)
+        line.root.applyThemeFont(ThemeSlot.EVENT_TEXT)
         if (event.isTaskCompleted()) {
             line.root.paintFlags = line.root.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
         }

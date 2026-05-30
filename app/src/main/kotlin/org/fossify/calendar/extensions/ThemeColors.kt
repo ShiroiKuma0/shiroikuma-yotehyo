@@ -32,34 +32,38 @@ enum class ThemeSlot(
     val group: ThemeGroup,
     @StringRes val labelRes: Int,
     val isFoundation: Boolean = false,
+    // hasFont = true for concrete text elements (family / weight / size are configurable per element)
+    val hasFont: Boolean = false,
 ) {
     // Foundation — reuse the stock commons colors (editing these repaints the whole app)
     BACKGROUND("theme_background", ThemeGroup.FOUNDATION, R.string.theme_background, isFoundation = true),
     PRIMARY("theme_primary", ThemeGroup.FOUNDATION, R.string.theme_primary, isFoundation = true),
-    TEXT("theme_text", ThemeGroup.FOUNDATION, R.string.theme_text, isFoundation = true),
-    TEXT_SECONDARY("theme_text_secondary", ThemeGroup.FOUNDATION, R.string.theme_text_secondary),
+    TEXT("theme_text", ThemeGroup.FOUNDATION, R.string.theme_text, isFoundation = true, hasFont = true),
+    TEXT_SECONDARY("theme_text_secondary", ThemeGroup.FOUNDATION, R.string.theme_text_secondary, hasFont = true),
 
     // Search bar (the top MySearchMenu)
     SEARCH_FILL("theme_search_fill", ThemeGroup.SEARCH, R.string.theme_search_fill),
-    SEARCH_TEXT("theme_search_text", ThemeGroup.SEARCH, R.string.theme_search_text),
+    SEARCH_TEXT("theme_search_text", ThemeGroup.SEARCH, R.string.theme_search_text, hasFont = true),
     SEARCH_HINT("theme_search_hint", ThemeGroup.SEARCH, R.string.theme_search_hint),
     SEARCH_ICON("theme_search_icon", ThemeGroup.SEARCH, R.string.theme_search_icon),
     SEARCH_BORDER("theme_search_border", ThemeGroup.SEARCH, R.string.theme_search_border),
 
     // Calendar surfaces
+    EVENT_TEXT("theme_event_text", ThemeGroup.CALENDAR, R.string.theme_event_text, hasFont = true),
     TODAY_HIGHLIGHT("theme_today_highlight", ThemeGroup.CALENDAR, R.string.theme_today_highlight),
     WEEKEND("theme_weekend", ThemeGroup.CALENDAR, R.string.theme_weekend),
     GRID_LINES("theme_grid_lines", ThemeGroup.CALENDAR, R.string.theme_grid_lines),
     DAY_BOX_HEADER("theme_day_box_header", ThemeGroup.CALENDAR, R.string.theme_day_box_header),
-    DAY_BOX_HEADER_TEXT("theme_day_box_header_text", ThemeGroup.CALENDAR, R.string.theme_day_box_header_text),
+    DAY_BOX_HEADER_TEXT("theme_day_box_header_text", ThemeGroup.CALENDAR, R.string.theme_day_box_header_text, hasFont = true),
     DAY_BOX_HEADER_BORDER("theme_day_box_header_border", ThemeGroup.CALENDAR, R.string.theme_day_box_header_border),
     DAY_BOX_BORDER("theme_day_box_border", ThemeGroup.CALENDAR, R.string.theme_day_box_border),
 
     // Today / weekend day-box overrides (inherit the general day-box slots by default)
-    TODAY_TEXT("theme_today_text", ThemeGroup.CALENDAR, R.string.theme_today_text),
+    TODAY_BOX_FILL("theme_today_box_fill", ThemeGroup.CALENDAR, R.string.theme_today_box_fill),
+    TODAY_TEXT("theme_today_text", ThemeGroup.CALENDAR, R.string.theme_today_text, hasFont = true),
     TODAY_HEADER_BORDER("theme_today_header_border", ThemeGroup.CALENDAR, R.string.theme_today_header_border),
     TODAY_BOX_BORDER("theme_today_box_border", ThemeGroup.CALENDAR, R.string.theme_today_box_border),
-    WEEKEND_TEXT("theme_weekend_text", ThemeGroup.CALENDAR, R.string.theme_weekend_text),
+    WEEKEND_TEXT("theme_weekend_text", ThemeGroup.CALENDAR, R.string.theme_weekend_text, hasFont = true),
     WEEKEND_HEADER_BORDER("theme_weekend_header_border", ThemeGroup.CALENDAR, R.string.theme_weekend_header_border),
     WEEKEND_BOX_BORDER("theme_weekend_box_border", ThemeGroup.CALENDAR, R.string.theme_weekend_box_border),
 }
@@ -86,9 +90,12 @@ private fun Context.themeDefault(slot: ThemeSlot): Int = when (slot) {
 
     // Calendar: today markers follow the accent; weekend reuses the stock weekend color;
     // grid lines inherit the text color at the same low alpha the views already use.
+    ThemeSlot.EVENT_TEXT -> themeColor(ThemeSlot.TEXT)
     ThemeSlot.TODAY_HIGHLIGHT -> themeColor(ThemeSlot.PRIMARY)
     ThemeSlot.WEEKEND -> config.highlightWeekendsColor
     ThemeSlot.GRID_LINES -> themeColor(ThemeSlot.TEXT).adjustAlpha(LOWER_ALPHA)
+    // Today box fill exposes the formerly hard-coded 12% wash so its colour + alpha are editable.
+    ThemeSlot.TODAY_BOX_FILL -> themeColor(ThemeSlot.TODAY_HIGHLIGHT).adjustAlpha(0.12f)
     // Day-box week view header bars default to the accent (today/weekend get their own slots).
     ThemeSlot.DAY_BOX_HEADER -> themeColor(ThemeSlot.PRIMARY)
     // Header text defaults to a readable contrast of the header background; box borders to grid lines.

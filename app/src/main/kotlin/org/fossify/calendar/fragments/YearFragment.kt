@@ -10,6 +10,8 @@ import org.fossify.calendar.activities.MainActivity
 import org.fossify.calendar.databinding.FragmentYearBinding
 import org.fossify.calendar.databinding.SmallMonthViewHolderBinding
 import org.fossify.calendar.databinding.TopNavigationBinding
+import org.fossify.calendar.extensions.ThemeSlot
+import org.fossify.calendar.extensions.applyThemeFont
 import org.fossify.calendar.extensions.config
 import org.fossify.calendar.extensions.getProperDayIndexInWeek
 import org.fossify.calendar.extensions.getViewBitmap
@@ -104,6 +106,7 @@ class YearFragment : Fragment(), YearlyCalendar {
             }
 
             monthHolder.monthLabel.setTextColor(curTextColor)
+            monthHolder.monthLabel.applyThemeFont(ThemeSlot.TEXT)
             val firstDayOfMonth = dateTime.withMonthOfYear(monthOfYear).withDayOfMonth(1)
             monthView.firstDay = requireContext().getProperDayIndexInWeek(firstDayOfMonth)
             val numberOfDays = dateTime.withMonthOfYear(monthOfYear).dayOfMonth().maximumValue
