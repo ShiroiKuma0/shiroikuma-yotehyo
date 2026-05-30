@@ -84,7 +84,6 @@ import org.fossify.calendar.helpers.UPDATE_BOTTOM
 import org.fossify.calendar.helpers.UPDATE_TOP
 import org.fossify.calendar.helpers.VIEW_TO_OPEN
 import org.fossify.calendar.helpers.WEEKLY_GRID_VIEW
-import org.fossify.calendar.helpers.WEEKLY_STYLE_DAY_BOXES
 import org.fossify.calendar.helpers.WEEKLY_VIEW
 import org.fossify.calendar.helpers.WEEK_START_DATE_TIME
 import org.fossify.calendar.helpers.YEAR
@@ -177,7 +176,6 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
     private var mStoredHighlightWeekendsColor = 0
     private var mStoredTodayColor = 0
     private var mStoredGridColor = 0
-    private var mStoredWeeklyViewStyle = 0
     private var mStoredThemeRevision = 0
 
     // search results have endless scrolling, so reaching the top/bottom fetches further results
@@ -291,7 +289,6 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
         if (config.storedView == WEEKLY_VIEW || config.storedView == WEEKLY_GRID_VIEW) {
             if (mStoredFirstDayOfWeek != config.firstDayOfWeek || mStoredUse24HourFormat != config.use24HourFormat
                 || mStoredMidnightSpan != config.showMidnightSpanningEventsAtTop || mStoredStartWeekWithCurrentDay != config.startWeekWithCurrentDay
-                || mStoredWeeklyViewStyle != config.weeklyViewStyle
             ) {
                 updateViewPager()
             }
@@ -485,7 +482,6 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
             mStoredHighlightWeekendsColor = highlightWeekendsColor
             mStoredMidnightSpan = showMidnightSpanningEventsAtTop
             mStoredStartWeekWithCurrentDay = startWeekWithCurrentDay
-            mStoredWeeklyViewStyle = weeklyViewStyle
             mStoredThemeRevision = themeRevision
         }
         mStoredTodayColor = themeColor(ThemeSlot.TODAY_HIGHLIGHT)
@@ -674,13 +670,21 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
 
     private fun showViewDialog() {
         val items = arrayListOf(
-            RadioItem(DAILY_VIEW, getString(R.string.daily_view)),
-            RadioItem(WEEKLY_VIEW, getString(R.string.weekly_view)),
-            RadioItem(WEEKLY_GRID_VIEW, getString(R.string.weekly_grid_view)),
-            RadioItem(MONTHLY_VIEW, getString(R.string.monthly_view)),
-            RadioItem(MONTHLY_DAILY_VIEW, getString(R.string.monthly_daily_view)),
-            RadioItem(YEARLY_VIEW, getString(R.string.yearly_view)),
-            RadioItem(EVENTS_LIST_VIEW, getString(R.string.simple_event_list))
+            RadioItem(DAILY_VIEW, getString(R.string.daily_view))
+        )
+        if (config.showTimeGridWeekly) {
+            items.add(RadioItem(WEEKLY_VIEW, getString(R.string.weekly_view)))
+        }
+        if (config.showBoxGridWeekly) {
+            items.add(RadioItem(WEEKLY_GRID_VIEW, getString(R.string.weekly_grid_view)))
+        }
+        items.addAll(
+            arrayListOf(
+                RadioItem(MONTHLY_VIEW, getString(R.string.monthly_view)),
+                RadioItem(MONTHLY_DAILY_VIEW, getString(R.string.monthly_daily_view)),
+                RadioItem(YEARLY_VIEW, getString(R.string.yearly_view)),
+                RadioItem(EVENTS_LIST_VIEW, getString(R.string.simple_event_list))
+            )
         )
 
         RadioGroupDialog(activity = this, items = items, checkedItemId = config.storedView) {
@@ -1356,12 +1360,7 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
         YEARLY_VIEW -> YearFragmentsHolder()
         EVENTS_LIST_VIEW -> EventListFragment()
         WEEKLY_GRID_VIEW -> WeekGridFragmentsHolder()
-        WEEKLY_VIEW -> if (config.weeklyViewStyle == WEEKLY_STYLE_DAY_BOXES) {
-            WeekGridFragmentsHolder()
-        } else {
-            WeekFragmentsHolder()
-        }
-
+        WEEKLY_VIEW -> WeekFragmentsHolder()
         else -> WeekFragmentsHolder()
     }
 

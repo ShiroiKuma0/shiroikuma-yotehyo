@@ -284,10 +284,15 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getInt(WEEKLY_VIEW_DAYS, 7)
         set(weeklyViewDays) = prefs.edit().putInt(WEEKLY_VIEW_DAYS, weeklyViewDays).apply()
 
-    // Which layout the standard WEEKLY_VIEW renders: time grid (default) or Pimlical-style day boxes.
-    var weeklyViewStyle: Int
-        get() = prefs.getInt(WEEKLY_VIEW_STYLE, WEEKLY_STYLE_TIME_GRID)
-        set(weeklyViewStyle) = prefs.edit().putInt(WEEKLY_VIEW_STYLE, weeklyViewStyle).apply()
+    // Whether the time-grid weekly view (WEEKLY_VIEW) is offered in the change-view picker.
+    var showTimeGridWeekly: Boolean
+        get() = prefs.getBoolean(SHOW_TIME_GRID_WEEKLY, true)
+        set(showTimeGridWeekly) = prefs.edit().putBoolean(SHOW_TIME_GRID_WEEKLY, showTimeGridWeekly).apply()
+
+    // Whether the box-grid weekly view (WEEKLY_GRID_VIEW, Pimlical-style day boxes) is offered in the change-view picker.
+    var showBoxGridWeekly: Boolean
+        get() = prefs.getBoolean(SHOW_BOX_GRID_WEEKLY, true)
+        set(showBoxGridWeekly) = prefs.edit().putBoolean(SHOW_BOX_GRID_WEEKLY, showBoxGridWeekly).apply()
 
     var highlightWeekends: Boolean
         get() = prefs.getBoolean(HIGHLIGHT_WEEKENDS, false)

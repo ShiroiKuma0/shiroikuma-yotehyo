@@ -53,10 +53,6 @@ const val LAST_VIEW = 6
 const val MONTHLY_DAILY_VIEW = 7
 const val WEEKLY_GRID_VIEW = 8
 
-// Weekly view style (which layout the standard WEEKLY_VIEW renders)
-const val WEEKLY_STYLE_TIME_GRID = 0
-const val WEEKLY_STYLE_DAY_BOXES = 1
-
 // Day-box week view header text alignment
 const val DAY_BOX_ALIGN_START = 0
 const val DAY_BOX_ALIGN_CENTER = 1
@@ -148,7 +144,8 @@ const val EXPORT_TASKS = "export_tasks"
 const val EXPORT_PAST_EVENTS = "export_past_events"
 const val WEEKLY_VIEW_ITEM_HEIGHT_MULTIPLIER = "weekly_view_item_height_multiplier"
 const val WEEKLY_VIEW_DAYS = "weekly_view_days"
-const val WEEKLY_VIEW_STYLE = "weekly_view_style"
+const val SHOW_TIME_GRID_WEEKLY = "show_time_grid_weekly"
+const val SHOW_BOX_GRID_WEEKLY = "show_box_grid_weekly"
 const val DAY_BOX_HEADER_ALIGNMENT = "day_box_header_alignment"
 const val DAY_BOX_BORDER_THICKNESS = "day_box_border_thickness"
 const val DAY_BOX_HEADER_BORDER_THICKNESS = "day_box_header_border_thickness"

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/theme_toggle_holder"
+    style="@style/SettingsHolderSwitchStyle"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <org.fossify.commons.views.MyMaterialSwitch
+        android:id="@+id/theme_toggle_switch"
+        style="@style/SettingsSwitchStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clickable="false"
+        tools:text="Time-grid weekly view"
+        xmlns:tools="http://schemas.android.com/tools" />
+
+</RelativeLayout>

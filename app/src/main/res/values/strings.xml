@@ -75,9 +75,8 @@
     <string name="theme_sub_highlights_grid">Highlights &amp; grid</string>
     <!-- Day-box (Pimlical-style) week view -->
     <string name="weekly_grid_view">Weekly grid (day boxes)</string>
-    <string name="weekly_view_style">Weekly view style</string>
-    <string name="weekly_style_time_grid">Time grid</string>
-    <string name="weekly_style_day_boxes">Day boxes</string>
+    <string name="theme_show_time_grid_weekly">Time-grid weekly view</string>
+    <string name="theme_show_box_grid_weekly">Box-grid weekly view</string>
     <string name="change_view">Change view</string>
     <string name="daily_view">Daily view</string>
     <string name="weekly_view">Weekly view</string>
