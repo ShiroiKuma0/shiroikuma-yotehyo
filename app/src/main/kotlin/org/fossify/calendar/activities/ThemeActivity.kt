@@ -1,6 +1,8 @@
 package org.fossify.calendar.activities
 
 import android.os.Bundle
+import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.StringRes
@@ -45,6 +47,8 @@ class ThemeActivity : SimpleActivity() {
     private val defaultBadges = HashMap<ThemeSlot, TextView>()
     private var textColor = 0
     private var primaryColor = 0
+    private var indentStepPx = 0
+    private var currentRowIndent = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,6 +72,8 @@ class ThemeActivity : SimpleActivity() {
         defaultBadges.clear()
         textColor = getProperTextColor()
         primaryColor = getProperPrimaryColor()
+        indentStepPx = 3 * resources.getDimensionPixelSize(org.fossify.commons.R.dimen.activity_margin)
+        currentRowIndent = 0
 
         // Foundation — the base colors that cascade through the whole app.
         addSection(R.string.theme_group_foundation)
@@ -121,12 +127,22 @@ class ThemeActivity : SimpleActivity() {
 
     private fun slotsOf(group: ThemeGroup) = ThemeSlot.entries.filter { it.group == group }
 
+    // Left-indent a row by `level` steps so the section -> subsection -> rows hierarchy is visible.
+    private fun indentView(view: View, level: Int) {
+        (view.layoutParams as? ViewGroup.MarginLayoutParams)?.let {
+            it.marginStart = level * indentStepPx
+            view.layoutParams = it
+        }
+    }
+
     private fun addSection(@StringRes titleRes: Int) {
         val section = ItemThemeSectionBinding.inflate(layoutInflater, binding.themeHolder, false)
         section.themeSectionLabel.text = getString(titleRes)
         section.themeSectionLabel.setTextColor(primaryColor)
         section.themeSectionUnderline.setBackgroundColor(primaryColor)
+        indentView(section.root, 0)
         binding.themeHolder.addView(section.root)
+        currentRowIndent = 1
     }
 
     private fun addSubsection(@StringRes titleRes: Int) {
@@ -134,7 +150,9 @@ class ThemeActivity : SimpleActivity() {
         sub.themeSubsectionLabel.text = getString(titleRes)
         sub.themeSubsectionLabel.setTextColor(primaryColor)
         sub.themeSubsectionUnderline.setBackgroundColor(primaryColor)
+        indentView(sub.root, 1)
         binding.themeHolder.addView(sub.root)
+        currentRowIndent = 2
     }
 
     private fun addColorRow(slot: ThemeSlot) {
@@ -147,6 +165,7 @@ class ThemeActivity : SimpleActivity() {
         row.root.setOnClickListener { openPicker(slot) }
         previews[slot] = row.themeColorPreview
         defaultBadges[slot] = row.themeColorDefault
+        indentView(row.root, currentRowIndent)
         binding.themeHolder.addView(row.root)
     }
 
@@ -157,6 +176,7 @@ class ThemeActivity : SimpleActivity() {
         row.themeValueValue.setTextColor(textColor.adjustAlpha(0.6f))
         row.themeValueValue.text = weeklyStyleText()
         row.root.setOnClickListener { openWeeklyStylePicker(row.themeValueValue) }
+        indentView(row.root, currentRowIndent)
         binding.themeHolder.addView(row.root)
     }
 
@@ -210,6 +230,7 @@ class ThemeActivity : SimpleActivity() {
         row.themeValueValue.setTextColor(textColor.adjustAlpha(0.6f))
         row.themeValueValue.text = alignmentText()
         row.root.setOnClickListener { openHeaderAlignmentPicker(row.themeValueValue) }
+        indentView(row.root, currentRowIndent)
         binding.themeHolder.addView(row.root)
     }
 
@@ -246,6 +267,7 @@ class ThemeActivity : SimpleActivity() {
             row.themeSliderValue.text = thicknessText(it)
             onChange(it)
         }
+        indentView(row.root, currentRowIndent)
         binding.themeHolder.addView(row.root)
     }
 
