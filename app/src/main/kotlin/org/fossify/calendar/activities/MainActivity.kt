@@ -174,6 +174,7 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
     private var mStoredTodayColor = 0
     private var mStoredGridColor = 0
     private var mStoredWeeklyViewStyle = 0
+    private var mStoredThemeRevision = 0
 
     // search results have endless scrolling, so reaching the top/bottom fetches further results
     private var minFetchedSearchTS = 0L
@@ -270,6 +271,7 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
             || mStoredDayCode != Formatter.getTodayCode() || mStoredDimPastEvents != config.dimPastEvents || mStoredDimCompletedTasks != config.dimCompletedTasks
             || mStoredHighlightWeekends != config.highlightWeekends || mStoredHighlightWeekendsColor != config.highlightWeekendsColor
             || mStoredTodayColor != themeColor(ThemeSlot.TODAY_HIGHLIGHT) || mStoredGridColor != themeColor(ThemeSlot.GRID_LINES)
+            || mStoredThemeRevision != config.themeRevision
         ) {
             updateViewPager()
         }
@@ -459,6 +461,7 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
             mStoredMidnightSpan = showMidnightSpanningEventsAtTop
             mStoredStartWeekWithCurrentDay = startWeekWithCurrentDay
             mStoredWeeklyViewStyle = weeklyViewStyle
+            mStoredThemeRevision = themeRevision
         }
         mStoredTodayColor = themeColor(ThemeSlot.TODAY_HIGHLIGHT)
         mStoredGridColor = themeColor(ThemeSlot.GRID_LINES)

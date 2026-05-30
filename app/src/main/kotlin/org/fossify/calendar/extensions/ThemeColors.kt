@@ -7,6 +7,7 @@ import org.fossify.calendar.helpers.PALETTE_BLACK
 import org.fossify.calendar.helpers.PALETTE_YELLOW
 import org.fossify.calendar.helpers.THEME_UNSET
 import org.fossify.commons.extensions.adjustAlpha
+import org.fossify.commons.extensions.getContrastColor
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
@@ -50,6 +51,9 @@ enum class ThemeSlot(
     WEEKEND("theme_weekend", ThemeGroup.CALENDAR, R.string.theme_weekend),
     GRID_LINES("theme_grid_lines", ThemeGroup.CALENDAR, R.string.theme_grid_lines),
     DAY_BOX_HEADER("theme_day_box_header", ThemeGroup.CALENDAR, R.string.theme_day_box_header),
+    DAY_BOX_HEADER_TEXT("theme_day_box_header_text", ThemeGroup.CALENDAR, R.string.theme_day_box_header_text),
+    DAY_BOX_HEADER_BORDER("theme_day_box_header_border", ThemeGroup.CALENDAR, R.string.theme_day_box_header_border),
+    DAY_BOX_BORDER("theme_day_box_border", ThemeGroup.CALENDAR, R.string.theme_day_box_border),
 }
 
 /** The effective color for a slot: the user's override if set, otherwise its inherited default. */
@@ -79,6 +83,10 @@ private fun Context.themeDefault(slot: ThemeSlot): Int = when (slot) {
     ThemeSlot.GRID_LINES -> themeColor(ThemeSlot.TEXT).adjustAlpha(LOWER_ALPHA)
     // Day-box week view header bars default to the accent (today/weekend get their own slots).
     ThemeSlot.DAY_BOX_HEADER -> themeColor(ThemeSlot.PRIMARY)
+    // Header text defaults to a readable contrast of the header background; box borders to grid lines.
+    ThemeSlot.DAY_BOX_HEADER_TEXT -> themeColor(ThemeSlot.DAY_BOX_HEADER).getContrastColor()
+    ThemeSlot.DAY_BOX_BORDER -> themeColor(ThemeSlot.GRID_LINES)
+    ThemeSlot.DAY_BOX_HEADER_BORDER -> themeColor(ThemeSlot.DAY_BOX_BORDER)
 }
 
 /** Set an explicit override for a slot. Write-through slots persist to the stock commons/config colors. */

@@ -304,11 +304,47 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(THEME_V1_SEEDED, false)
         set(value) = prefs.edit().putBoolean(THEME_V1_SEEDED, value).apply()
 
+    // Bumped whenever any UI override changes, so MainActivity can repaint the views on resume.
+    var themeRevision: Int
+        get() = prefs.getInt(THEME_REVISION, 0)
+        set(value) = prefs.edit().putInt(THEME_REVISION, value).apply()
+
+    private fun bumpThemeRevision() = prefs.edit().putInt(THEME_REVISION, themeRevision + 1).apply()
+
     fun getThemeOverride(key: String): Int = prefs.getInt(key, THEME_UNSET)
 
-    fun setThemeOverride(key: String, color: Int) = prefs.edit().putInt(key, color).apply()
+    fun setThemeOverride(key: String, color: Int) {
+        prefs.edit().putInt(key, color).apply()
+        bumpThemeRevision()
+    }
 
-    fun clearThemeOverride(key: String) = prefs.edit().remove(key).apply()
+    fun clearThemeOverride(key: String) {
+        prefs.edit().remove(key).apply()
+        bumpThemeRevision()
+    }
+
+    // Day-box week view: header text alignment (DAY_BOX_ALIGN_*).
+    var dayBoxHeaderAlignment: Int
+        get() = prefs.getInt(DAY_BOX_HEADER_ALIGNMENT, DAY_BOX_ALIGN_END)
+        set(value) {
+            prefs.edit().putInt(DAY_BOX_HEADER_ALIGNMENT, value).apply()
+            bumpThemeRevision()
+        }
+
+    // Day-box week view: border thickness in dp, 0 = no border.
+    var dayBoxBorderThickness: Int
+        get() = prefs.getInt(DAY_BOX_BORDER_THICKNESS, 1)
+        set(value) {
+            prefs.edit().putInt(DAY_BOX_BORDER_THICKNESS, value).apply()
+            bumpThemeRevision()
+        }
+
+    var dayBoxHeaderBorderThickness: Int
+        get() = prefs.getInt(DAY_BOX_HEADER_BORDER_THICKNESS, 0)
+        set(value) {
+            prefs.edit().putInt(DAY_BOX_HEADER_BORDER_THICKNESS, value).apply()
+            bumpThemeRevision()
+        }
 
     var lastUsedEventSpan: Int
         get() = prefs.getInt(LAST_USED_EVENT_SPAN, YEAR_SECONDS)

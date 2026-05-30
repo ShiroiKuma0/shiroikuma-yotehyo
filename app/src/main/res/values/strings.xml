@@ -19,9 +19,21 @@
     <string name="theme_today_highlight">Today highlight</string>
     <string name="theme_weekend">Weekend</string>
     <string name="theme_grid_lines">Grid lines</string>
-    <string name="theme_day_box_header">Day-box header</string>
+    <string name="theme_day_box_header">Header background</string>
+    <string name="theme_day_box_header_text">Header text</string>
+    <string name="theme_day_box_border">Box border</string>
+    <string name="theme_day_box_header_border">Header border</string>
+    <string name="theme_day_box_header_border_thickness">Header border thickness</string>
+    <string name="theme_day_box_border_thickness">Box border thickness</string>
+    <string name="theme_thickness_none">None</string>
+    <string name="theme_thickness_value">%1$d dp</string>
+    <string name="theme_day_box_header_align">Header alignment</string>
+    <string name="theme_align_left">Left</string>
+    <string name="theme_align_center">Center</string>
+    <string name="theme_align_right">Right</string>
     <string name="theme_default_value">Default</string>
     <string name="theme_sub_weekly_view">Weekly view</string>
+    <string name="theme_sub_day_boxes">Day boxes</string>
     <string name="theme_sub_highlights_grid">Highlights &amp; grid</string>
     <!-- Day-box (Pimlical-style) week view -->
     <string name="weekly_grid_view">Weekly grid (day boxes)</string>

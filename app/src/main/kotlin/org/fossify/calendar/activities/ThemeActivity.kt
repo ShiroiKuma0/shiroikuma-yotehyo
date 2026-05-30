@@ -8,6 +8,7 @@ import org.fossify.calendar.R
 import org.fossify.calendar.databinding.ActivityThemeBinding
 import org.fossify.calendar.databinding.ItemThemeColorBinding
 import org.fossify.calendar.databinding.ItemThemeSectionBinding
+import org.fossify.calendar.databinding.ItemThemeSliderBinding
 import org.fossify.calendar.databinding.ItemThemeSubsectionBinding
 import org.fossify.calendar.databinding.ItemThemeValueBinding
 import org.fossify.calendar.extensions.ThemeGroup
@@ -16,6 +17,9 @@ import org.fossify.calendar.extensions.config
 import org.fossify.calendar.extensions.resetThemeColor
 import org.fossify.calendar.extensions.setThemeColor
 import org.fossify.calendar.extensions.themeColor
+import org.fossify.calendar.helpers.DAY_BOX_ALIGN_CENTER
+import org.fossify.calendar.helpers.DAY_BOX_ALIGN_END
+import org.fossify.calendar.helpers.DAY_BOX_ALIGN_START
 import org.fossify.calendar.helpers.THEME_UNSET
 import org.fossify.calendar.helpers.WEEKLY_STYLE_DAY_BOXES
 import org.fossify.calendar.helpers.WEEKLY_STYLE_TIME_GRID
@@ -25,6 +29,7 @@ import org.fossify.commons.extensions.adjustAlpha
 import org.fossify.commons.extensions.beVisibleIf
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
+import org.fossify.commons.extensions.onSeekBarChangeListener
 import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.NavigationIcon
 import org.fossify.commons.models.RadioItem
@@ -75,7 +80,18 @@ class ThemeActivity : SimpleActivity() {
         addSection(R.string.theme_group_calendar)
         addSubsection(R.string.theme_sub_weekly_view)
         addWeeklyViewStyleRow()
+        addSubsection(R.string.theme_sub_day_boxes)
         addColorRow(ThemeSlot.DAY_BOX_HEADER)
+        addColorRow(ThemeSlot.DAY_BOX_HEADER_TEXT)
+        addHeaderAlignmentRow()
+        addColorRow(ThemeSlot.DAY_BOX_HEADER_BORDER)
+        addThicknessRow(R.string.theme_day_box_header_border_thickness, config.dayBoxHeaderBorderThickness) {
+            config.dayBoxHeaderBorderThickness = it
+        }
+        addColorRow(ThemeSlot.DAY_BOX_BORDER)
+        addThicknessRow(R.string.theme_day_box_border_thickness, config.dayBoxBorderThickness) {
+            config.dayBoxBorderThickness = it
+        }
         addSubsection(R.string.theme_sub_highlights_grid)
         addColorRow(ThemeSlot.TODAY_HIGHLIGHT)
         addColorRow(ThemeSlot.WEEKEND)
@@ -165,4 +181,55 @@ class ThemeActivity : SimpleActivity() {
             R.string.weekly_style_time_grid
         }
     )
+
+    private fun addHeaderAlignmentRow() {
+        val row = ItemThemeValueBinding.inflate(layoutInflater, binding.themeHolder, false)
+        row.themeValueLabel.text = getString(R.string.theme_day_box_header_align)
+        row.themeValueLabel.setTextColor(textColor)
+        row.themeValueValue.setTextColor(textColor.adjustAlpha(0.6f))
+        row.themeValueValue.text = alignmentText()
+        row.root.setOnClickListener { openHeaderAlignmentPicker(row.themeValueValue) }
+        binding.themeHolder.addView(row.root)
+    }
+
+    private fun openHeaderAlignmentPicker(valueView: TextView) {
+        val items = arrayListOf(
+            RadioItem(DAY_BOX_ALIGN_START, getString(R.string.theme_align_left)),
+            RadioItem(DAY_BOX_ALIGN_CENTER, getString(R.string.theme_align_center)),
+            RadioItem(DAY_BOX_ALIGN_END, getString(R.string.theme_align_right))
+        )
+        RadioGroupDialog(this, items, config.dayBoxHeaderAlignment) {
+            config.dayBoxHeaderAlignment = it as Int
+            valueView.text = alignmentText()
+        }
+    }
+
+    private fun alignmentText() = getString(
+        when (config.dayBoxHeaderAlignment) {
+            DAY_BOX_ALIGN_START -> R.string.theme_align_left
+            DAY_BOX_ALIGN_CENTER -> R.string.theme_align_center
+            else -> R.string.theme_align_right
+        }
+    )
+
+    private fun addThicknessRow(@StringRes labelRes: Int, current: Int, max: Int = 12, onChange: (Int) -> Unit) {
+        val row = ItemThemeSliderBinding.inflate(layoutInflater, binding.themeHolder, false)
+        row.themeSliderLabel.text = getString(labelRes)
+        row.themeSliderLabel.setTextColor(textColor)
+        row.themeSliderValue.setTextColor(textColor.adjustAlpha(0.6f))
+        row.themeSliderValue.text = thicknessText(current)
+        row.themeSliderSeekbar.max = max
+        row.themeSliderSeekbar.progress = current
+        row.themeSliderSeekbar.onSeekBarChangeListener {
+            row.themeSliderValue.text = thicknessText(it)
+            onChange(it)
+        }
+        binding.themeHolder.addView(row.root)
+    }
+
+    private fun thicknessText(dp: Int) = if (dp <= 0) {
+        getString(R.string.theme_thickness_none)
+    } else {
+        getString(R.string.theme_thickness_value, dp)
+    }
 }

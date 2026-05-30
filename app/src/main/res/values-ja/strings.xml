@@ -19,9 +19,21 @@
     <string name="theme_today_highlight">今日の強調</string>
     <string name="theme_weekend">週末</string>
     <string name="theme_grid_lines">グリッド線</string>
-    <string name="theme_day_box_header">日ボックスの見出し</string>
+    <string name="theme_day_box_header">見出しの背景</string>
+    <string name="theme_day_box_header_text">見出しの文字</string>
+    <string name="theme_day_box_border">ボックスの枠線</string>
+    <string name="theme_day_box_header_border">見出しの枠線</string>
+    <string name="theme_day_box_header_border_thickness">見出しの枠線の太さ</string>
+    <string name="theme_day_box_border_thickness">ボックスの枠線の太さ</string>
+    <string name="theme_thickness_none">なし</string>
+    <string name="theme_thickness_value">%1$d dp</string>
+    <string name="theme_day_box_header_align">見出しの配置</string>
+    <string name="theme_align_left">左</string>
+    <string name="theme_align_center">中央</string>
+    <string name="theme_align_right">右</string>
     <string name="theme_default_value">標準</string>
     <string name="theme_sub_weekly_view">週ビュー</string>
+    <string name="theme_sub_day_boxes">日ボックス</string>
     <string name="theme_sub_highlights_grid">強調とグリッド</string>
     <!-- Day-box (Pimlical-style) week view -->
     <string name="weekly_grid_view">週グリッド（日ボックス）</string>

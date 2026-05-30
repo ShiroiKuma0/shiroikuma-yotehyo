@@ -57,6 +57,11 @@ const val WEEKLY_GRID_VIEW = 8
 const val WEEKLY_STYLE_TIME_GRID = 0
 const val WEEKLY_STYLE_DAY_BOXES = 1
 
+// Day-box week view header text alignment
+const val DAY_BOX_ALIGN_START = 0
+const val DAY_BOX_ALIGN_CENTER = 1
+const val DAY_BOX_ALIGN_END = 2
+
 const val REMINDER_OFF = -1
 const val REMINDER_DEFAULT_VALUE = "$REMINDER_OFF,$REMINDER_OFF,$REMINDER_OFF"
 
@@ -141,12 +146,16 @@ const val EXPORT_PAST_EVENTS = "export_past_events"
 const val WEEKLY_VIEW_ITEM_HEIGHT_MULTIPLIER = "weekly_view_item_height_multiplier"
 const val WEEKLY_VIEW_DAYS = "weekly_view_days"
 const val WEEKLY_VIEW_STYLE = "weekly_view_style"
+const val DAY_BOX_HEADER_ALIGNMENT = "day_box_header_alignment"
+const val DAY_BOX_BORDER_THICKNESS = "day_box_border_thickness"
+const val DAY_BOX_HEADER_BORDER_THICKNESS = "day_box_header_border_thickness"
 const val HIGHLIGHT_WEEKENDS = "highlight_weekends"
 const val HIGHLIGHT_WEEKENDS_COLOR = "highlight_weekends_color"
 const val LAST_USED_EVENT_SPAN = "last_used_event_span"
 
 // Granular theming (白い熊 予定表 UI)
 const val THEME_V1_SEEDED = "theme_v1_seeded"
+const val THEME_REVISION = "theme_revision" // bumped on any UI-override change so views repaint
 const val THEME_UNSET = Int.MIN_VALUE // a slot with this stored value follows its inherited default
 const val PALETTE_BLACK = 0xFF000000.toInt()
 const val PALETTE_YELLOW = 0xFFFFEB3B.toInt()
