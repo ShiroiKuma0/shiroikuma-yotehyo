@@ -31,6 +31,15 @@
             android:layout_width="@dimen/color_sample_size"
             android:layout_height="@dimen/color_sample_size"
             android:layout_centerVertical="true"
+            android:layout_marginEnd="@dimen/small_margin"
+            android:layout_toStartOf="@+id/calendar_background_color"
+            android:clickable="false" />
+
+        <ImageView
+            android:id="@+id/calendar_background_color"
+            android:layout_width="@dimen/color_sample_size"
+            android:layout_height="@dimen/color_sample_size"
+            android:layout_centerVertical="true"
             android:layout_marginEnd="@dimen/medium_margin"
             android:layout_toStartOf="@+id/overflow_menu_icon"
             android:clickable="false" />

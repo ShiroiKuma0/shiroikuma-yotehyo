@@ -1,5 +1,7 @@
 package org.fossify.calendar.adapters
 
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.Menu
@@ -11,6 +13,7 @@ import org.fossify.calendar.activities.SimpleActivity
 import org.fossify.calendar.databinding.ItemCalendarBinding
 import org.fossify.calendar.extensions.eventsHelper
 import org.fossify.calendar.helpers.LOCAL_CALENDAR_ID
+import org.fossify.calendar.helpers.THEME_UNSET
 import org.fossify.calendar.interfaces.DeleteCalendarsListener
 import org.fossify.calendar.models.CalendarEntity
 import org.fossify.commons.adapters.MyRecyclerViewAdapter
@@ -18,8 +21,8 @@ import org.fossify.commons.dialogs.ConfirmationDialog
 import org.fossify.commons.dialogs.RadioGroupDialog
 import org.fossify.commons.extensions.getPopupMenuTheme
 import org.fossify.commons.extensions.getProperBackgroundColor
+import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
-import org.fossify.commons.extensions.setFillWithStroke
 import org.fossify.commons.extensions.toast
 import org.fossify.commons.models.RadioItem
 import org.fossify.commons.views.MyRecyclerView
@@ -95,7 +98,14 @@ class ManageCalendarsAdapter(
         ItemCalendarBinding.bind(view).apply {
             eventItemFrame.isSelected = selectedKeys.contains(calendar.id?.toInt())
             calendarTitle.text = calendar.getDisplayTitle()
-            calendarColor.setFillWithStroke(calendar.color, activity.getProperBackgroundColor())
+            // Two drops: the foreground (text) colour and the background colour. A black drop gets a
+            // yellow ring so it doesn't vanish into the page; an unset background shows a hollow ring.
+            calendarColor.background = colorDrop(calendar.color)
+            calendarBackgroundColor.background = if (calendar.backgroundColor != THEME_UNSET) {
+                colorDrop(calendar.backgroundColor)
+            } else {
+                colorDrop(Color.TRANSPARENT, forceVisibleBorder = true)
+            }
             calendarTitle.setTextColor(textColor)
 
             overflowMenuIcon.drawable.apply {
@@ -108,6 +118,20 @@ class ManageCalendarsAdapter(
             }
         }
     }
+
+    // A filled circle for a colour drop. Black (or, when forced, transparent) gets a yellow (accent)
+    // border so it stays visible against the dark page; other colours get a subtle background-coloured ring.
+    private fun colorDrop(fill: Int, forceVisibleBorder: Boolean = false): GradientDrawable {
+        val needsAccentBorder = forceVisibleBorder || fill == Color.BLACK
+        val strokeColor = if (needsAccentBorder) activity.getProperPrimaryColor() else activity.getProperBackgroundColor()
+        return GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(fill)
+            setStroke(colorDropStrokePx, strokeColor)
+        }
+    }
+
+    private val colorDropStrokePx = (2 * activity.resources.displayMetrics.density).toInt()
 
     private fun showPopupMenu(view: View, calendar: CalendarEntity) {
         finishActMode()
