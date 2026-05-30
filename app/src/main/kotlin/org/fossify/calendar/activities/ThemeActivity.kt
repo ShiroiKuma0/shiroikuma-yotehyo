@@ -92,6 +92,14 @@ class ThemeActivity : SimpleActivity() {
         addThicknessRow(R.string.theme_day_box_border_thickness, config.dayBoxBorderThickness) {
             config.dayBoxBorderThickness = it
         }
+        addSubsection(R.string.theme_sub_today_boxes)
+        addColorRow(ThemeSlot.TODAY_TEXT)
+        addColorRow(ThemeSlot.TODAY_HEADER_BORDER)
+        addColorRow(ThemeSlot.TODAY_BOX_BORDER)
+        addSubsection(R.string.theme_sub_weekend_boxes)
+        addColorRow(ThemeSlot.WEEKEND_TEXT)
+        addColorRow(ThemeSlot.WEEKEND_HEADER_BORDER)
+        addColorRow(ThemeSlot.WEEKEND_BOX_BORDER)
         addSubsection(R.string.theme_sub_highlights_grid)
         addColorRow(ThemeSlot.TODAY_HIGHLIGHT)
         addColorRow(ThemeSlot.WEEKEND)
