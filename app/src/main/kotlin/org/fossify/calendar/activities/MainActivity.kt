@@ -15,7 +15,9 @@ import android.provider.ContactsContract.Data
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
+import android.view.GestureDetector
 import android.view.MenuItem
+import android.view.MotionEvent
 import android.view.View
 import android.widget.EditText
 import android.widget.ImageView
@@ -186,6 +188,10 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
     private var bottomItemAtRefresh: ListItem? = null
 
     private val binding by viewBinding(ActivityMainBinding::inflate)
+
+    private val goToTodaySwipeDetector by lazy {
+        GestureDetector(this, GoToTodaySwipeListener())
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -755,6 +761,50 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
 
     private fun goToToday() {
         getCurrentFragment()?.goToToday()
+    }
+
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        // Observe touches without consuming them, so the current view keeps scrolling/paging
+        // normally while we watch for the "swipe up in the left quarter -> go to today" gesture.
+        goToTodaySwipeDetector.onTouchEvent(ev)
+        return super.dispatchTouchEvent(ev)
+    }
+
+    private inner class GoToTodaySwipeListener : GestureDetector.SimpleOnGestureListener() {
+        private val minSwipeDistance = 80 * resources.displayMetrics.density
+        private val minSwipeVelocity = 250 * resources.displayMetrics.density
+        private val leftAreaFraction = 0.25f
+
+        override fun onFling(
+            e1: MotionEvent?,
+            e2: MotionEvent,
+            velocityX: Float,
+            velocityY: Float,
+        ): Boolean {
+            e1 ?: return false
+            if (binding.mainMenu.isSearchOpen || binding.fabExtendedOverlay.isVisible()) {
+                return false
+            }
+
+            val fragment = getCurrentFragment() ?: return false
+            val viewWidth = binding.root.width
+            if (viewWidth == 0) {
+                return false
+            }
+
+            val startedInLeftArea = e1.x < viewWidth * leftAreaFraction
+            val verticalDistance = e1.y - e2.y
+            val isUpwardSwipe = verticalDistance > minSwipeDistance &&
+                -velocityY > minSwipeVelocity &&
+                -velocityY > Math.abs(velocityX)
+
+            if (startedInLeftArea && isUpwardSwipe && fragment.shouldGoToTodayBeVisible()) {
+                fragment.goToToday()
+                return true
+            }
+
+            return false
+        }
     }
 
     fun showGoToDateDialog() {
