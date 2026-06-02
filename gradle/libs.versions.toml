@@ -21,7 +21,7 @@ androidx-test-rules = "1.7.0"
 androidx-test-ext-junit = "1.3.0"
 androidx-test-ext-truth = "1.7.0"
 #Fossify
-commons = "6.1.6-sk1"  # shiroikuma: patched Commons (anti-tamper removed), from mavenLocal
+commons = "6.1.6-sk2"  # shiroikuma: patched Commons (anti-tamper removed + fork-package fixes), from mavenLocal
 #Gradle
 gradlePlugins-agp = "9.2.1"
 #build
