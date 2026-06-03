@@ -3,10 +3,13 @@ package org.fossify.calendar.fragments
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
+import android.view.GestureDetector
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.RecyclerView
 import org.fossify.calendar.R
 import org.fossify.calendar.activities.MainActivity
 import org.fossify.calendar.activities.SimpleActivity
@@ -18,11 +21,15 @@ import org.fossify.calendar.extensions.applyThemeFont
 import org.fossify.calendar.extensions.config
 import org.fossify.calendar.extensions.eventsHelper
 import org.fossify.calendar.extensions.getViewBitmap
+import org.fossify.calendar.extensions.launchNewEventIntent
+import org.fossify.calendar.extensions.launchNewTaskIntent
 import org.fossify.calendar.extensions.printBitmap
 import org.fossify.calendar.helpers.*
 import org.fossify.calendar.interfaces.NavigationListener
 import org.fossify.calendar.models.Event
+import org.fossify.commons.dialogs.RadioGroupDialog
 import org.fossify.commons.extensions.*
+import org.fossify.commons.models.RadioItem
 
 class DayFragment : Fragment() {
     var mListener: NavigationListener? = null
@@ -84,6 +91,44 @@ class DayFragment : Fragment() {
             }
             setTextColor(context.getProperTextColor())
             applyThemeFont(ThemeSlot.TEXT)
+        }
+
+        setupLongPressToAdd()
+    }
+
+    // Long-press on empty space (no event row under the touch) adds an event/task for this day,
+    // matching the box week view's empty-space long-press. A RecyclerView swallows a plain
+    // OnLongClickListener, so detect it via a GestureDetector and skip when over an event row
+    // (those keep their own long-press -> selection behavior).
+    private fun setupLongPressToAdd() {
+        val gestureDetector = GestureDetector(requireContext(), object : GestureDetector.SimpleOnGestureListener() {
+            override fun onLongPress(e: MotionEvent) {
+                if (binding.dayEvents.findChildViewUnder(e.x, e.y) == null) {
+                    addEventOrTask()
+                }
+            }
+        })
+
+        binding.dayEvents.addOnItemTouchListener(object : RecyclerView.SimpleOnItemTouchListener() {
+            override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
+                gestureDetector.onTouchEvent(e)
+                return false
+            }
+        })
+    }
+
+    private fun addEventOrTask() {
+        val ctx = requireContext()
+        if (ctx.config.allowCreatingTasks) {
+            val items = arrayListOf(
+                RadioItem(TYPE_EVENT, getString(R.string.event)),
+                RadioItem(TYPE_TASK, getString(R.string.task))
+            )
+            RadioGroupDialog(requireActivity(), items) {
+                if (it as Int == TYPE_TASK) ctx.launchNewTaskIntent(mDayCode) else ctx.launchNewEventIntent(mDayCode)
+            }
+        } else {
+            ctx.launchNewEventIntent(mDayCode)
         }
     }
 
