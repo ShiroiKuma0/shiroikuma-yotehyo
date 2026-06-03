@@ -75,6 +75,14 @@ class WeekGridFragment : Fragment() {
         return binding.root
     }
 
+    override fun onResume() {
+        super.onResume()
+        // Re-fetch on resume so newly created/edited events show up, and to pick up a date rollover
+        // or theme change. Unlike the other fragments this view had no onResume refresh, so a new
+        // event only appeared after the holder recreated the fragment (e.g. switching views).
+        refreshEvents()
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         mWasDestroyed = true
@@ -161,6 +169,9 @@ class WeekGridFragment : Fragment() {
                     setStroke(boxBorderPx, boxBorderColor)
                 }
             }
+            // Inset the box content by the border thickness so opaque event backgrounds
+            // (category colors) and the header don't paint over the box's border stroke.
+            cell.weekGridDayBox.setPadding(boxBorderPx, boxBorderPx, boxBorderPx, boxBorderPx)
             cell.weekGridDayEvents.removeAllViews()
             // Tap the box / header / empty space -> open this day's day view (back returns here).
             // Long-press the header or empty space -> add a new event/task. (Per-event tap/long-press
