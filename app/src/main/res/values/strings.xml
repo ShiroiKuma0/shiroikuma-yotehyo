@@ -8,6 +8,10 @@
     <string name="theme_group_search">Search bar</string>
     <string name="theme_group_chrome">Top bar &amp; menu</string>
     <string name="theme_group_calendar">Calendar</string>
+    <string name="theme_group_dialogs">Dialogs</string>
+    <string name="theme_dialog_border_color">Border color</string>
+    <string name="theme_dialog_border_width">Border width</string>
+    <string name="theme_dialog_styled_buttons">Boxed buttons (black fill, accent border)</string>
     <string name="theme_toolbar_icons">Top bar icons</string>
     <string name="theme_menu_text">Menu text</string>
     <string name="theme_settings_title">Settings title &amp; arrow</string>

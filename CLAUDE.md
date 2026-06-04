@@ -150,7 +150,7 @@ colors") whenever the installed app id is not `org.fossify.*` — always the cas
 - **Source:** the `shiroikuma-commons` fork (`~/git/shiroikuma-commons`, branch `custom`), which strips
   Commons' anti-tamper "fake version" / sideloading checks out entirely **and** carries fork-package
   fixes for spots where Commons hard-codes `org.fossify.*` (documented in that repo's CLAUDE.md).
-- **Delivery:** published to the local Maven repo, consumed as `commons = "6.1.6-sk2"` in
+- **Delivery:** published to the local Maven repo, consumed as `commons = "6.1.6-sk3"` in
   `gradle/libs.versions.toml` (`mavenLocal()` is already a repository in `settings.gradle.kts`).
 - Because Commons itself no longer nags, this app carries **no** in-app workaround — no `getPackageName`
   spoof, no `SIDELOADING_FALSE`, no `res/raw/keep.xml`.
@@ -160,6 +160,12 @@ non-`org.fossify.*` consumers, hiding the Contacts app's shared private/local co
 birthdays/anniversaries) from this app. Fixed in the commons fork as of `-sk2` — nothing to change in
 this repo beyond the pin.
 
+**Dialog accent border (`-sk3`):** the commons fork adds opt-in `BaseConfig` settings
+(`dialogBorderColor`, `dialogBorderWidth`, `styledDialogButtons`) that `setupDialogStuff` uses to draw a
+configurable accent border + boxed buttons around every dialog — so a dialog is visible against the
+black app background. This app seeds the defaults once (`seedDialogStyleIfNeeded`, yellow / 2 dp / on)
+and exposes them under the "Dialogs" section of 白い熊 予定表 UI (`ThemeActivity`).
+
 **On a fresh machine, or after an upstream bump changes the Commons version — republish before building:**
 
 ```bash
@@ -168,5 +174,5 @@ git checkout <new-commons-tag>     # then re-apply all patches (anti-tamper stri
 JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 ./gradlew :commons:publishToMavenLocal -PVERSION=<ver>-skN
 ```
 
-Then set this app's `commons` pin to the same `<ver>-skN` (currently `6.1.6-sk2`; `-skN` is our patch
+Then set this app's `commons` pin to the same `<ver>-skN` (currently `6.1.6-sk3`; `-skN` is our patch
 revision — see the commons fork's CLAUDE.md). The patched AAR lives only in `~/.m2`, not in the repo.

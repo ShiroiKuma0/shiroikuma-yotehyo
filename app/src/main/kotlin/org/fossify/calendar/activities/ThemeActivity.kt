@@ -44,6 +44,7 @@ import org.fossify.calendar.helpers.DAY_BOX_HEADER_FORMAT_JAPANESE_ERA
 import org.fossify.calendar.helpers.EVENT_TIME_FORMAT_JAPANESE
 import org.fossify.calendar.helpers.DAY_BOX_THICKNESS_INHERIT
 import org.fossify.calendar.helpers.MAX_FONT_SIZE_SP
+import org.fossify.calendar.helpers.PALETTE_YELLOW
 import org.fossify.calendar.helpers.THEME_UNSET
 import org.fossify.calendar.helpers.formatDayBoxHeader
 import org.fossify.commons.dialogs.RadioGroupDialog
@@ -171,6 +172,37 @@ class ThemeActivity : SimpleActivity() {
         addSubsection(R.string.theme_sub_grid_lines)
         addSlot(ThemeSlot.GRID_LINES)
         WeekGridLine.entries.forEach { addGridLineRows(it) }
+
+        // Dialogs — the accent border drawn around every dialog (so it stands out from a same-colored
+        // app background) and the boxed button style. Read by Commons' patched setupDialogStuff.
+        addSection(R.string.theme_group_dialogs)
+        addDialogBorderColorRow()
+        addThicknessRow(R.string.theme_dialog_border_width, config.dialogBorderWidth, min = 0, max = 8) {
+            config.dialogBorderWidth = it
+        }
+        addToggleRow(R.string.theme_dialog_styled_buttons, config.styledDialogButtons) {
+            config.styledDialogButtons = it
+        }
+    }
+
+    // Standalone colour row for the dialog accent border (not a ThemeSlot). The "Default" badge shows
+    // while the colour is still the fork default; the picker's default button resets to it.
+    private fun addDialogBorderColorRow() {
+        val row = ItemThemeColorBinding.inflate(layoutInflater, binding.themeHolder, false)
+        row.themeColorLabel.text = getString(R.string.theme_dialog_border_color)
+        row.themeColorLabel.setTextColor(textColor)
+        row.themeColorPreview.background.setTint(config.dialogBorderColor)
+        row.themeColorDefault.setTextColor(textColor.adjustAlpha(0.6f))
+        row.themeColorDefault.beVisibleIf(config.dialogBorderColor == PALETTE_YELLOW)
+        row.root.setOnClickListener {
+            AlphaColorPickerDialog(this, config.dialogBorderColor, addDefaultColorButton = true) { wasPositive, color ->
+                config.dialogBorderColor = if (wasPositive) color else PALETTE_YELLOW
+                row.themeColorPreview.background.setTint(config.dialogBorderColor)
+                row.themeColorDefault.beVisibleIf(config.dialogBorderColor == PALETTE_YELLOW)
+            }
+        }
+        indentView(row.root, currentRowIndent)
+        binding.themeHolder.addView(row.root)
     }
 
     // Per box-grid grid line: its toggle, then (indented) its colour and thickness. Colour follows
