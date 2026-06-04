@@ -348,6 +348,10 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(THEME_V1_SEEDED, false)
         set(value) = prefs.edit().putBoolean(THEME_V1_SEEDED, value).apply()
 
+    var dialogStyleSeeded: Boolean
+        get() = prefs.getBoolean(DIALOG_STYLE_SEEDED, false)
+        set(value) = prefs.edit().putBoolean(DIALOG_STYLE_SEEDED, value).apply()
+
     // Bumped whenever any UI override changes, so MainActivity can repaint the views on resume.
     var themeRevision: Int
         get() = prefs.getInt(THEME_REVISION, 0)

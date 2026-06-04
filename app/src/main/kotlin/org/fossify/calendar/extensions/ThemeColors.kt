@@ -3,6 +3,7 @@ package org.fossify.calendar.extensions
 import android.content.Context
 import androidx.annotation.StringRes
 import org.fossify.calendar.R
+import org.fossify.calendar.helpers.DIALOG_BORDER_WIDTH_DEFAULT
 import org.fossify.calendar.helpers.PALETTE_BLACK
 import org.fossify.calendar.helpers.PALETTE_YELLOW
 import org.fossify.calendar.helpers.THEME_UNSET
@@ -175,4 +176,21 @@ fun Context.seedBlackYellowThemeIfNeeded() {
     config.primaryColor = PALETTE_YELLOW
     config.accentColor = PALETTE_YELLOW
     config.themeV1Seeded = true
+}
+
+/**
+ * One-time seed of the yellow dialog accent: a yellow border around every dialog and the boxed
+ * (black fill + yellow text/border) button style. These live in Commons' BaseConfig so the patched
+ * setupDialogStuff can read them; we write the fork defaults here once, on first run, so existing
+ * installs (already past the black/yellow seed) still pick them up. Adjustable later in 白い熊 予定表 UI.
+ */
+fun Context.seedDialogStyleIfNeeded() {
+    if (config.dialogStyleSeeded) {
+        return
+    }
+
+    config.dialogBorderColor = PALETTE_YELLOW
+    config.dialogBorderWidth = DIALOG_BORDER_WIDTH_DEFAULT
+    config.styledDialogButtons = true
+    config.dialogStyleSeeded = true
 }
