@@ -1,6 +1,6 @@
 ---
 name: build-apk
-description: Build the signed foss release APK with the buildFoss Gradle task, then always ask whether to push it to the connected phone via adb. Build PROACTIVELY as soon as a coherent code change is complete and compiles — do NOT wait for the user to say "build it". Also use whenever the user explicitly asks to build the app, build the APK, make a release build, or build and push to the phone.
+description: Build the signed foss release APK with the buildFoss Gradle task. Build PROACTIVELY as soon as a coherent code change is complete and compiles — do NOT wait for the user to say "build it". But NEVER push to the phone on your own — ALWAYS ask the user before every adb push, no exceptions. Also use whenever the user explicitly asks to build the app, build the APK, make a release build, or build and push to the phone.
 ---
 
 # Build the foss release APK and optionally push to phone
@@ -12,8 +12,10 @@ build?" first. As soon as you have finished a coherent set of code changes and t
 steps below. Don't rebuild after every tiny intermediate edit — build once the change is in a
 testable state.
 
-This removes only the *ask-before-build* wait. Pushing the APK to the phone is still gated on the
-user's explicit confirmation (step 3), and the repo's commit/push rules are unchanged.
+This removes only the *ask-before-build* wait. It does **not** touch pushing: the `adb push` to the
+phone is **always** gated on the user's explicit confirmation for *this* build (step 3) — never push
+on your own, never assume a prior "yes" carries over, never batch a push in with the build. The
+repo's commit/push rules are unchanged.
 
 ## Steps
 
