@@ -10,13 +10,13 @@ import org.fossify.calendar.R
 import org.fossify.calendar.activities.ManageCalendarsActivity
 import org.fossify.calendar.databinding.DialogSelectCalendarBinding
 import org.fossify.calendar.databinding.RadioButtonWithColorBinding
+import org.fossify.calendar.extensions.calendarColorDrop
 import org.fossify.calendar.extensions.eventsHelper
+import org.fossify.calendar.helpers.THEME_UNSET
 import org.fossify.calendar.models.CalendarEntity
 import org.fossify.commons.extensions.beVisibleIf
 import org.fossify.commons.extensions.getAlertDialogBuilder
-import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.hideKeyboard
-import org.fossify.commons.extensions.setFillWithStroke
 import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.commons.extensions.updateTextColors
 import org.fossify.commons.extensions.viewBinding
@@ -100,11 +100,17 @@ class SelectCalendarDialog(
             id = calendar.id!!.toInt()
         }
 
+        // Real calendars/categories show two drops: the foreground (text) colour and the background
+        // colour, like "o o". An unset background shows a hollow ring. The synthetic "Last used" / "Add
+        // new" rows use a transparent colour and get no drops at all.
         if (calendar.color != Color.TRANSPARENT) {
-            radioBinding.dialogRadioColor.setFillWithStroke(
-                fillColor = calendar.color,
-                backgroundColor = activity.getProperBackgroundColor()
-            )
+            radioBinding.dialogRadioColor.background = activity.calendarColorDrop(calendar.color)
+            radioBinding.dialogRadioBackgroundColor.background =
+                if (calendar.backgroundColor != THEME_UNSET) {
+                    activity.calendarColorDrop(calendar.backgroundColor)
+                } else {
+                    activity.calendarColorDrop(Color.TRANSPARENT, forceVisibleBorder = true)
+                }
         }
 
         radioBinding.root.setOnClickListener { viewClicked(calendar) }

@@ -16,6 +16,8 @@ import android.content.pm.ActivityInfo
 import android.content.res.Resources
 import android.database.Cursor
 import android.graphics.Bitmap
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.MediaScannerConnection
@@ -96,6 +98,8 @@ import org.fossify.commons.extensions.formatSecondsToTimeString
 import org.fossify.commons.extensions.getContrastColor
 import org.fossify.commons.extensions.getDoesFilePathExist
 import org.fossify.commons.extensions.getMimeType
+import org.fossify.commons.extensions.getProperBackgroundColor
+import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.grantReadUriPermission
 import org.fossify.commons.extensions.hasProperStoredFirstParentUri
 import org.fossify.commons.extensions.removeBit
@@ -1207,4 +1211,18 @@ fun Context.scheduleDummyAlarm() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
     )
+}
+
+// A filled circle for a category colour drop. Black (or, when forced — e.g. an unset background) gets a
+// yellow (accent) ring so it stays visible against the dark page; other colours get a subtle
+// background-coloured ring. Shared by Manage Calendars and the calendar-picker dialog.
+fun Context.calendarColorDrop(fill: Int, forceVisibleBorder: Boolean = false): GradientDrawable {
+    val needsAccentBorder = forceVisibleBorder || fill == Color.BLACK
+    val strokeColor = if (needsAccentBorder) getProperPrimaryColor() else getProperBackgroundColor()
+    val strokePx = (2 * resources.displayMetrics.density).toInt()
+    return GradientDrawable().apply {
+        shape = GradientDrawable.OVAL
+        setColor(fill)
+        setStroke(strokePx, strokeColor)
+    }
 }
