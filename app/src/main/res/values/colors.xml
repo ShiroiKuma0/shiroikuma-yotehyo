@@ -4,4 +4,8 @@
     <color name="default_birthdays_color">@color/md_blue_800</color>
     <color name="default_holidays_color">@color/md_green_700</color>
     <color name="default_anniversaries_color">@color/md_red_400_dark</color>
+
+    <!-- Keyboard-entry time picker (MaterialTimePicker): black fill, yellow (PALETTE_YELLOW) text/frame. -->
+    <color name="yotehyo_time_picker_bg">#FF000000</color>
+    <color name="yotehyo_time_picker_fg">#FFFFEB3B</color>
 </resources>

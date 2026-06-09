@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_launcher_name">白い熊 予定表</string>
+    <!-- Keyboard time-picker captions (KeyboardTimePickerDialog), localized in values-ja -->
+    <string name="time_picker_hour">Hour</string>
+    <string name="time_picker_minute">Minute</string>
     <!-- 白い熊 予定表 UI: granular theming -->
     <string name="shiroikuma_ui_category">白い熊 予定表 UI</string>
     <string name="theme_and_colors">Theme &amp; colors</string>
