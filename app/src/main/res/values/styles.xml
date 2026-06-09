@@ -37,4 +37,33 @@
     <style name="DatePickerDarkStyle">
         <item name="android:textColorPrimary">@color/theme_dark_text_color</item>
     </style>
+
+    <!-- One digit cell of the keyboard time picker (KeyboardTimePickerDialog): a single-digit, black
+         box with a yellow digit. The focused cell is marked by a thicker border (see the background
+         drawable), not by recolouring. -->
+    <style name="TimePickerCell">
+        <item name="android:layout_width">48dp</item>
+        <item name="android:layout_height">64dp</item>
+        <item name="android:background">@drawable/time_picker_cell_bg</item>
+        <item name="android:textColor">@color/yotehyo_time_picker_fg</item>
+        <item name="android:textColorHighlight">@android:color/transparent</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">32sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:inputType">number</item>
+        <item name="android:digits">0123456789</item>
+        <item name="android:maxLength">1</item>
+        <item name="android:cursorVisible">false</item>
+        <item name="android:importantForAutofill">no</item>
+    </style>
+
+    <!-- "Hour" / "Minute" caption under each pair of cells (localized, e.g. 時 / 分). -->
+    <style name="TimePickerLabel">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">4dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/yotehyo_time_picker_fg</item>
+    </style>
 </resources>

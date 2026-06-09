@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One keyboard time-picker digit cell: a yellow-framed box on black. The cell stays black throughout;
+     the focused cell — the one your next keystroke overwrites — is marked by a thicker yellow border
+     rather than an inverted fill. See KeyboardTimePickerDialog. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/yotehyo_time_picker_bg" />
+            <corners android:radius="4dp" />
+            <stroke android:width="3dp" android:color="@color/yotehyo_time_picker_fg" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/yotehyo_time_picker_bg" />
+            <corners android:radius="4dp" />
+            <stroke android:width="1.5dp" android:color="@color/yotehyo_time_picker_fg" />
+        </shape>
+    </item>
+</selector>

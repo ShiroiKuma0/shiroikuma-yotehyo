@@ -1,14 +1,11 @@
 package org.fossify.calendar.activities
 
-import android.app.TimePickerDialog
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.media.AudioManager
 import android.media.RingtoneManager
 import android.os.Bundle
 import android.widget.Toast
-import com.google.android.material.timepicker.MaterialTimePicker
-import com.google.android.material.timepicker.TimeFormat
 import org.fossify.calendar.R
 import org.fossify.calendar.databinding.ActivitySettingsBinding
 import org.fossify.calendar.dialogs.ExportEventsDialog
@@ -24,6 +21,7 @@ import org.fossify.calendar.extensions.eventsHelper
 import org.fossify.calendar.extensions.getSyncedCalDAVCalendars
 import org.fossify.calendar.extensions.scheduleNextAutomaticBackup
 import org.fossify.calendar.extensions.showImportEventsDialog
+import org.fossify.calendar.extensions.showKeyboardTimePicker
 import org.fossify.calendar.extensions.tryImportEventsFromFile
 import org.fossify.calendar.extensions.updateWidgets
 import org.fossify.calendar.helpers.ALLOW_CHANGING_TIME_ZONES
@@ -89,9 +87,7 @@ import org.fossify.commons.extensions.getFontSizeText
 import org.fossify.commons.extensions.getFormattedMinutes
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperPrimaryColor
-import org.fossify.commons.extensions.getTimePickerDialogTheme
 import org.fossify.commons.extensions.hideKeyboard
-import org.fossify.commons.extensions.isDynamicTheme
 import org.fossify.commons.extensions.openNotificationSettings
 import org.fossify.commons.extensions.setFillWithStroke
 import org.fossify.commons.extensions.showErrorToast
@@ -951,43 +947,14 @@ class SettingsActivity : SimpleActivity() {
                     config.defaultStartTime = it
                     updateDefaultStartTimeText()
                 } else {
-                    val timeListener =
-                        TimePickerDialog.OnTimeSetListener { view, hourOfDay, minute ->
-                            config.defaultStartTime = hourOfDay * 60 + minute
-                            updateDefaultStartTimeText()
-                        }
-
                     val currentDateTime = DateTime.now()
-
-                    if (isDynamicTheme()) {
-                        val timeFormat = if (config.use24HourFormat) {
-                            TimeFormat.CLOCK_24H
-                        } else {
-                            TimeFormat.CLOCK_12H
-                        }
-
-                        val timePicker = MaterialTimePicker.Builder()
-                            .setTimeFormat(timeFormat)
-                            .setHour(currentDateTime.hourOfDay)
-                            .setMinute(currentDateTime.minuteOfHour)
-                            .setInputMode(MaterialTimePicker.INPUT_MODE_CLOCK)
-                            .build()
-
-                        timePicker.addOnPositiveButtonClickListener {
-                            config.defaultStartTime = timePicker.hour * 60 + timePicker.minute
-                            updateDefaultStartTimeText()
-                        }
-
-                        timePicker.show(supportFragmentManager, "")
-                    } else {
-                        TimePickerDialog(
-                            this,
-                            getTimePickerDialogTheme(),
-                            timeListener,
-                            currentDateTime.hourOfDay,
-                            currentDateTime.minuteOfHour,
-                            config.use24HourFormat
-                        ).show()
+                    showKeyboardTimePicker(
+                        currentDateTime.hourOfDay,
+                        currentDateTime.minuteOfHour,
+                        config.use24HourFormat,
+                    ) { hours, minutes ->
+                        config.defaultStartTime = hours * 60 + minutes
+                        updateDefaultStartTimeText()
                     }
                 }
             }

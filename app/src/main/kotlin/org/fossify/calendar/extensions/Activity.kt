@@ -6,6 +6,7 @@ import org.fossify.calendar.BuildConfig
 import org.fossify.calendar.activities.SimpleActivity
 import org.fossify.calendar.dialogs.CustomEventRepeatIntervalDialog
 import org.fossify.calendar.dialogs.ImportEventsDialog
+import org.fossify.calendar.dialogs.KeyboardTimePickerDialog
 import org.fossify.calendar.helpers.*
 import org.fossify.calendar.models.Event
 import org.fossify.commons.activities.BaseSimpleActivity
@@ -16,6 +17,18 @@ import org.fossify.commons.models.RadioItem
 import java.io.File
 import java.io.FileOutputStream
 import java.util.TreeSet
+
+// Show a keyboard-entry time picker: HH:MM as four single-digit black/yellow boxes you type into (not
+// the circular clock). Used for every event / task / default-time picker in 白い熊 予定表. See
+// KeyboardTimePickerDialog for the type-four-digits-and-overwrite behaviour.
+fun BaseSimpleActivity.showKeyboardTimePicker(
+    hour: Int,
+    minute: Int,
+    is24Hour: Boolean,
+    callback: (hour: Int, minute: Int) -> Unit,
+) {
+    KeyboardTimePickerDialog(this, hour, minute, is24Hour, callback)
+}
 
 fun BaseSimpleActivity.shareEvents(ids: List<Long>) {
     ensureBackgroundThread {

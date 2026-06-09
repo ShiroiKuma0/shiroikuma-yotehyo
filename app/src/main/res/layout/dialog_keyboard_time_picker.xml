@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Keyboard time picker: HH:MM as four single-digit cells (a 2×2 grid of black/yellow boxes), a colon,
+  and an optional AM/PM toggle (shown only in 12-hour mode). Each pair of cells carries a localized
+  caption underneath (Hour / Minute → 時 / 分). Behaviour lives in KeyboardTimePickerDialog.
+
+  Each non-cell column repeats the caption row as an invisible spacer so the colon and AM/PM toggle
+  stay vertically aligned with the cell boxes, not dragged down by the captions.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center_horizontal"
+    android:gravity="center"
+    android:orientation="horizontal"
+    android:paddingStart="@dimen/activity_margin"
+    android:paddingTop="@dimen/activity_margin"
+    android:paddingEnd="@dimen/activity_margin"
+    android:paddingBottom="@dimen/normal_margin">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/time_picker_hour_tens"
+                style="@style/TimePickerCell" />
+
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/time_picker_hour_units"
+                style="@style/TimePickerCell"
+                android:layout_marginStart="4dp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/time_picker_label_hour"
+            style="@style/TimePickerLabel"
+            android:text="@string/time_picker_hour" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/time_picker_colon"
+            android:layout_width="wrap_content"
+            android:layout_height="64dp"
+            android:gravity="center"
+            android:paddingStart="6dp"
+            android:paddingEnd="6dp"
+            android:text=":"
+            android:textColor="@color/yotehyo_time_picker_fg"
+            android:textSize="32sp"
+            android:textStyle="bold" />
+
+        <TextView
+            style="@style/TimePickerLabel"
+            android:text=" "
+            android:visibility="invisible" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/time_picker_minute_tens"
+                style="@style/TimePickerCell" />
+
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/time_picker_minute_units"
+                style="@style/TimePickerCell"
+                android:layout_marginStart="4dp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/time_picker_label_minute"
+            style="@style/TimePickerLabel"
+            android:text="@string/time_picker_minute" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/time_picker_ampm_holder"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/time_picker_ampm"
+            android:layout_width="wrap_content"
+            android:layout_height="64dp"
+            android:background="@drawable/time_picker_cell_bg"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:minWidth="56dp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:textColor="@color/yotehyo_time_picker_fg"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            style="@style/TimePickerLabel"
+            android:text=" "
+            android:visibility="invisible" />
+    </LinearLayout>
+</LinearLayout>

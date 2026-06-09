@@ -1,13 +1,10 @@
 package org.fossify.calendar.activities
 
 import android.app.DatePickerDialog
-import android.app.TimePickerDialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.core.content.ContextCompat
-import com.google.android.material.timepicker.MaterialTimePicker
-import com.google.android.material.timepicker.TimeFormat
 import org.fossify.calendar.R
 import org.fossify.calendar.databinding.ActivityTaskBinding
 import org.fossify.calendar.dialogs.DeleteEventDialog
@@ -31,6 +28,7 @@ import org.fossify.calendar.extensions.notifyEvent
 import org.fossify.calendar.extensions.seconds
 import org.fossify.calendar.extensions.shareEvents
 import org.fossify.calendar.extensions.showEventRepeatIntervalDialog
+import org.fossify.calendar.extensions.showKeyboardTimePicker
 import org.fossify.calendar.extensions.updateTaskCompletion
 import org.fossify.calendar.helpers.CALENDAR_ID
 import org.fossify.calendar.helpers.DELETE_ALL_OCCURRENCES
@@ -85,9 +83,7 @@ import org.fossify.commons.extensions.getFormattedMinutes
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
-import org.fossify.commons.extensions.getTimePickerDialogTheme
 import org.fossify.commons.extensions.hideKeyboard
-import org.fossify.commons.extensions.isDynamicTheme
 import org.fossify.commons.extensions.isGone
 import org.fossify.commons.extensions.openNotificationSettings
 import org.fossify.commons.extensions.removeBit
@@ -706,34 +702,12 @@ class TaskActivity : SimpleActivity() {
 
     private fun setupTime() {
         hideKeyboard()
-        if (isDynamicTheme()) {
-            val timeFormat = if (config.use24HourFormat) {
-                TimeFormat.CLOCK_24H
-            } else {
-                TimeFormat.CLOCK_12H
-            }
-
-            val timePicker = MaterialTimePicker.Builder()
-                .setTimeFormat(timeFormat)
-                .setHour(mTaskDateTime.hourOfDay)
-                .setMinute(mTaskDateTime.minuteOfHour)
-                .setInputMode(MaterialTimePicker.INPUT_MODE_CLOCK)
-                .build()
-
-            timePicker.addOnPositiveButtonClickListener {
-                timeSet(timePicker.hour, timePicker.minute)
-            }
-
-            timePicker.show(supportFragmentManager, "")
-        } else {
-            TimePickerDialog(
-                this,
-                getTimePickerDialogTheme(),
-                timeSetListener,
-                mTaskDateTime.hourOfDay,
-                mTaskDateTime.minuteOfHour,
-                config.use24HourFormat
-            ).show()
+        showKeyboardTimePicker(
+            mTaskDateTime.hourOfDay,
+            mTaskDateTime.minuteOfHour,
+            config.use24HourFormat,
+        ) { hours, minutes ->
+            timeSet(hours, minutes)
         }
     }
 
@@ -741,10 +715,6 @@ class TaskActivity : SimpleActivity() {
         DatePickerDialog.OnDateSetListener { _, year, monthOfYear, dayOfMonth ->
             dateSet(year, monthOfYear, dayOfMonth)
         }
-
-    private val timeSetListener = TimePickerDialog.OnTimeSetListener { _, hourOfDay, minute ->
-        timeSet(hourOfDay, minute)
-    }
 
     private fun dateSet(year: Int, month: Int, day: Int) {
         mTaskDateTime = mTaskDateTime.withDate(year, month + 1, day)
