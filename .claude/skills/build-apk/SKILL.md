@@ -1,9 +1,9 @@
 ---
 name: build-apk
-description: Build the signed foss release APK with the buildFoss Gradle task. Build PROACTIVELY as soon as a coherent code change is complete and compiles — do NOT wait for the user to say "build it". But NEVER push to the phone on your own — ALWAYS ask the user before every adb push, no exceptions. Also use whenever the user explicitly asks to build the app, build the APK, make a release build, or build and push to the phone.
+description: Build the signed foss release APK with the buildFoss Gradle task. Build PROACTIVELY as soon as a coherent code change is complete and compiles — do NOT wait for the user to say "build it". But NEVER send the APK to the phone on your own — ALWAYS ask the user first whether to scp it to skhw (first choice) or adb push it, no exceptions. Also use whenever the user explicitly asks to build the app, build the APK, make a release build, or build and send to the phone.
 ---
 
-# Build the foss release APK and optionally push to phone
+# Build the foss release APK and optionally send to phone
 
 ## When to build
 
@@ -12,10 +12,10 @@ build?" first. As soon as you have finished a coherent set of code changes and t
 steps below. Don't rebuild after every tiny intermediate edit — build once the change is in a
 testable state.
 
-This removes only the *ask-before-build* wait. It does **not** touch pushing: the `adb push` to the
-phone is **always** gated on the user's explicit confirmation for *this* build (step 3) — never push
-on your own, never assume a prior "yes" carries over, never batch a push in with the build. The
-repo's commit/push rules are unchanged.
+This removes only the *ask-before-build* wait. It does **not** touch sending to the phone: the
+transfer (`scp` to skhw or `adb push`) is **always** gated on the user's explicit answer for *this*
+build (step 3) — never send on your own, never assume a prior answer carries over, never batch a
+transfer in with the build. The repo's commit/push rules are unchanged.
 
 ## Steps
 
@@ -28,18 +28,20 @@ repo's commit/push rules are unchanged.
    - This runs `assembleFossRelease`, copies the signed APK to `~/tmp/<apk name>`, and auto-increments `BUILD_NUMBER` in `gradle.properties`.
    - The task prints `>>> ~/tmp/<apk name>`; use that line to confirm the exact filename, and confirm `BUILD SUCCESSFUL`.
 
-3. **Always ask** (via AskUserQuestion) whether to push the APK to the phone — every build, no assuming. Options: "Yes, push via adb" / "No, just build".
+3. **Always ask** (via AskUserQuestion) how to transfer the APK to the phone — every build, no assuming. Options, in this order: "Scp to skhw" (FIRST choice) / "adb push" / "No, just build".
 
-4. **If yes, push directly yourself** (do NOT rely on the buildFoss task's own prompt — see caveat):
-   - `adb devices` — confirm a device is connected.
-   - `adb shell mkdir -p /sdcard/tmp`
-   - `adb push ~/tmp/<apk name> /sdcard/tmp/<apk name>`
-   - Verify: `adb shell ls -l /sdcard/tmp/<apk name>` (size should match the local file in `~/tmp`).
-   - Never install the APK — only push it to `/sdcard/tmp/`. The user installs it manually.
+4. **Transfer per the answer** (do NOT rely on the buildFoss task's own prompt — see caveat):
+   - **Scp to skhw** — invoke the global **scp** skill (copies the newest APK in `~/tmp/` to `skhw:~/tmp/`). If skhw is unreachable (its tunnel is served by the phone's sshd and may be down), report that and offer the adb push instead.
+   - **adb push:**
+     - `adb devices` — confirm a device is connected.
+     - `adb shell mkdir -p /sdcard/tmp`
+     - `adb push ~/tmp/<apk name> /sdcard/tmp/<apk name>`
+     - Verify: `adb shell ls -l /sdcard/tmp/<apk name>` (size should match the local file in `~/tmp`).
+     - Never install the APK — only push it to `/sdcard/tmp/`. The user installs it manually.
 
-## Caveat — why push directly instead of via the task
+## Caveat — why transfer directly instead of via the task
 
-The `buildFoss` task (`app/build.gradle.kts`) has an interactive `read -p "Push to phone? (y/n)"` prompt, but it runs in a subprocess of the **Gradle daemon**, whose stdin/stdout are not connected to Claude's Bash tool. Piping `y`/`n` into `./gradlew buildFoss` does not reach the prompt — the daemon subprocess gets EOF, silently skips the push, and its output is invisible. So the task's prompt is effectively dead under this tooling: ask the user via AskUserQuestion and run `adb push` yourself.
+The `buildFoss` task (`app/build.gradle.kts`) has an interactive `read -p "Push to phone? (y/n)"` prompt, but it runs in a subprocess of the **Gradle daemon**, whose stdin/stdout are not connected to Claude's Bash tool. Piping `y`/`n` into `./gradlew buildFoss` does not reach the prompt — the daemon subprocess gets EOF, silently skips the push, and its output is invisible. So the task's prompt is effectively dead under this tooling: ask the user via AskUserQuestion and run the `scp` / `adb push` yourself.
 
 ## Signing
 
