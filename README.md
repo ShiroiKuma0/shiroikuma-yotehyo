@@ -1,59 +1,49 @@
-# Fossify Calendar
-<img alt="Logo" src="graphics/icon.webp" width="120" />
-
-<a href='https://play.google.com/store/apps/details?id=org.fossify.calendar'><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png' height=80/></a> <a href="https://f-droid.org/packages/org.fossify.calendar/"><img src="https://fdroid.gitlab.io/artwork/badge/get-it-on-en.svg" alt="Get it on F-Droid" height=80/></a> <a href="https://apt.izzysoft.de/fdroid/index/apk/org.fossify.calendar"><img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" alt="Get it on IzzyOnDroid" height=80/></a>
-
-Your Private & Powerful Schedule Planner
-
-Tired of cluttered calendars and privacy concerns?
-
-Fossify Calendar is here to change that. Your open-source powerhouse for managing life, designed with privacy as its core and packed with powerful features to keep you organized.
-
-Here's what makes Fossify Calendar different:
-
-**🚫 AD-FREE AND PRIVATE:**  
-Your events remain yours. No ads, no tracking, no intrusive permissions.
-
-**⏰ FLEXIBLE AND CUSTOMIZABLE:**  
-Craft events precisely with times, durations, reminders, and advanced repetition rules.
-
-**🔄 SEAMLESS SYNCING:**  
-Sync effortlessly with Google Calendar, Outlook, Nextcloud, Exchange, and more.
-
-**🎨 PERSONALIZE YOUR PLANNER:**  
-Set custom sounds, looping audio streams, vibrations, and themes to match your preferences.
-
-**🌈 VIBRANT WIDGETS:**  
-Brighten your day with beautiful calendar widgets and themes for your home screen.
-
-**📅 EFFORTLESS DAY MANAGEMENT:**  
-Plan your day with ease, whether you're a busy professional or a family organizer.
-
-**🎉 IMPORT CELEBRATIONS:**  
-Never miss a birthday or anniversary! Easily import holidays and special dates.
-
-**🔍 FILTER VIEWS:**  
-Quickly find what you're looking for with event filters.
-
-**📆 MULTIPLE VIEWS:**  
-Switch between daily, weekly, monthly, yearly, and event views effortlessly.
-
-**✨ MATERIAL DESIGN ELEGANCE:**  
-Enjoy an intuitive and user-friendly interface with dynamic themes.
-
-**Plus, Fossify Calendar is open-source!**
-
-Join the vibrant community on GitHub, contribute to the project, and make it uniquely yours.
-
-Download Fossify Calendar now and experience the power of a private and customizable schedule.
-
-➡️ Explore more Fossify apps: https://www.fossify.org<br>
-➡️ Open-Source Code: https://www.github.com/FossifyOrg<br>
-➡️ Join the community on Reddit: https://www.reddit.com/r/Fossify<br>
-➡️ Connect on Telegram: https://t.me/Fossify
-
 <div align="center">
-<img alt="App image" src="fastlane/metadata/android/en-US/images/phoneScreenshots/1_en-US.png" width="30%">
-<img alt="App image" src="fastlane/metadata/android/en-US/images/phoneScreenshots/2_en-US.png" width="30%">
-<img alt="App image" src="fastlane/metadata/android/en-US/images/phoneScreenshots/4_en-US.png" width="30%">
+
+<img src="graphics/icon.webp" width="120" alt="白い熊 予定表 icon" />
+
+# 白い熊 予定表
+
+**A black-and-yellow, fully themeable, Pimlical-style calendar.**
+
+A fork of [Fossify Calendar](https://github.com/FossifyOrg/Calendar) with **major additions**: a granular per-element theming system, a Pimlical-style day-box weekly view, category-based Export/Import of everything (events, settings, fonts, calendars), per-element fonts, Japanese date/time formats, and one-tap navigation shortcuts.
+
+Installs **side-by-side** with Fossify Calendar (app id `shiroikuma.yotehyo`).
+
+**📥 Latest release: [`1.10.3+48`](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases)
+
 </div>
+
+---
+
+## 🎨 Granular black/yellow theming — the 白い熊 予定表 UI page
+One consolidated page controls every colour in the app — ~30 slots with a cascading foundation (background / primary / text), covering the search bar, top-bar chrome, menus, event text, day boxes, today/weekend styling, grid lines, and dialogs. Every colour picker has an alpha slider and recent colours; defaults are pure yellow `#FFFF00` on black. Dialogs get a configurable accent border and boxed buttons so they stand out on the black background.
+
+## 📦 Export / Import everything, by category
+The first section of the UI page: pick a persistent export directory (it shows the latest export at a glance), then export or import by category — **all calendars (all events & tasks, as standard ICS)**, general settings, UI & theme (imported fonts ride along), widgets, and calendar categories with their styling. Round-pill panel buttons, chain-closing success dialogs, optional in-place app restart after import.
+
+## 📅 Pimlical-style day-box weekly view
+A selectable weekly view built from day boxes: configurable headers (Japanese date format by default, Japanese era or any custom pattern), per-day-type colours and border thicknesses for today and weekends, and seven individually toggleable grid lines, each with its own colour and thickness. Long-press empty space to add an event or task.
+
+## ✍️ Per-element fonts
+Any text element — events, day-box headers, menus, the view switcher — can get its own font family (import your own font files), weight, and size, with a live sample. Calendar categories can carry their own background colour and font, applied throughout the views.
+
+## 🇯🇵 Japanese time formats & quick navigation
+Event times in a Japanese clock/duration style (or any custom pattern), 日週月年 view-switcher glyphs in the search bar, a 設定 two-glyph shortcut (設 opens the UI page, 定 opens Settings), long-press the overflow button for the UI page, swipe up in the left quarter to jump to today, and a keyboard-entry HH:MM time picker instead of the clock face.
+
+## 🌐 Per-event timezones
+Events can carry independent start and end timezones, annotated in the day view.
+
+---
+
+## Built on Fossify Calendar
+A fork of [Fossify Calendar](https://github.com/FossifyOrg/Calendar) (app id `shiroikuma.yotehyo`, so it coexists with the official build). Fossify builds privacy-first, ad-free, open-source Android apps; this fork keeps that foundation and its syncing (CalDAV etc.) intact. It builds against a [patched Fossify Commons](https://github.com/ShiroiKuma0/shiroikuma-commons) that removes the anti-tamper checks a re-signed fork would trip. The code remains under the [GPL-3.0 license](LICENSE).
+
+## Building
+```bash
+git clone git@github.com:ShiroiKuma0/shiroikuma-yotehyo.git
+cd shiroikuma-yotehyo
+# needs JDK 21 and the patched commons published to mavenLocal (see CLAUDE.md)
+JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 ./gradlew buildFoss
+```
+The signed foss release APK lands in `~/tmp/shiroikuma-yotehyo_<version>+<N>_arm64-v8a.apk`.
