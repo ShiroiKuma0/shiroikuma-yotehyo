@@ -163,8 +163,13 @@ this repo beyond the pin.
 **Dialog accent border (`-sk3`):** the commons fork adds opt-in `BaseConfig` settings
 (`dialogBorderColor`, `dialogBorderWidth`, `styledDialogButtons`) that `setupDialogStuff` uses to draw a
 configurable accent border + boxed buttons around every dialog — so a dialog is visible against the
-black app background. This app seeds the defaults once (`seedDialogStyleIfNeeded`, yellow / 2 dp / on)
-and exposes them under the "Dialogs" section of 白い熊 予定表 UI (`ThemeActivity`).
+black app background. This app seeds the defaults once (`seedDialogStyleIfNeeded`, pure yellow
+`#FFFF00` / 2 dp / on) and exposes them under the "Dialogs" section of 白い熊 予定表 UI
+(`ThemeActivity`).
+
+**UI default palette:** black `#000000` + **pure yellow `#FFFF00`** (`PALETTE_BLACK` /
+`PALETTE_YELLOW` in `helpers/Constants.kt`, mirrored by `yotehyo_time_picker_fg` in
+`res/values/colors.xml`). Never material yellow `#FFEB3B`.
 
 **On a fresh machine, or after an upstream bump changes the Commons version — republish before building:**
 

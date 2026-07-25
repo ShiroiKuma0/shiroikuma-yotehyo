@@ -194,3 +194,52 @@ fun Context.seedDialogStyleIfNeeded() {
     config.styledDialogButtons = true
     config.dialogStyleSeeded = true
 }
+
+/**
+ * One-time migration of every persisted color whose RGB is the old material yellow (#FFEB3B) to the
+ * pure yellow PALETTE_YELLOW (#FFFF00), preserving the alpha byte. Covers the seeded stock commons
+ * colors, the dialog border, the widget colors, the weekend highlight, every ThemeSlot override and
+ * every week grid line override. Bumps the theme revision so already-themed views repaint.
+ */
+fun Context.migrateToPureYellowIfNeeded() {
+    if (config.pureYellowMigrated) {
+        return
+    }
+
+    val oldYellowRgb = 0xFFEB3B // the pre-migration PALETTE_YELLOW, without its alpha byte
+    fun Int.migrated() = if (this and 0xFFFFFF == oldYellowRgb) {
+        (this and 0xFF000000.toInt()) or (PALETTE_YELLOW and 0xFFFFFF)
+    } else {
+        this
+    }
+
+    // Stock commons colors (seeded by seedBlackYellowThemeIfNeeded) + the dialog accent border.
+    config.backgroundColor = config.backgroundColor.migrated()
+    config.textColor = config.textColor.migrated()
+    config.primaryColor = config.primaryColor.migrated()
+    config.accentColor = config.accentColor.migrated()
+    config.dialogBorderColor = config.dialogBorderColor.migrated()
+
+    // Widget colors and the weekend highlight (single source of truth for the WEEKEND slot).
+    config.widgetBgColor = config.widgetBgColor.migrated()
+    config.widgetTextColor = config.widgetTextColor.migrated()
+    config.highlightWeekendsColor = config.highlightWeekendsColor.migrated()
+
+    // Explicit per-slot and per-grid-line overrides; THEME_UNSET slots keep following their defaults.
+    ThemeSlot.entries.forEach { slot ->
+        val override = config.getThemeOverride(slot.key)
+        if (override != THEME_UNSET && override.migrated() != override) {
+            config.setThemeOverride(slot.key, override.migrated())
+        }
+    }
+    WeekGridLine.entries.forEach { line ->
+        val color = config.getGridLineColor(line.key)
+        if (color != THEME_UNSET && color.migrated() != color) {
+            config.setGridLineColor(line.key, color.migrated())
+        }
+    }
+
+    // Repaint everything with the new yellow.
+    config.themeRevision = config.themeRevision + 1
+    config.pureYellowMigrated = true
+}

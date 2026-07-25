@@ -7,5 +7,5 @@
 
     <!-- Keyboard-entry time picker (MaterialTimePicker): black fill, yellow (PALETTE_YELLOW) text/frame. -->
     <color name="yotehyo_time_picker_bg">#FF000000</color>
-    <color name="yotehyo_time_picker_fg">#FFFFEB3B</color>
+    <color name="yotehyo_time_picker_fg">#FFFFFF00</color>
 </resources>

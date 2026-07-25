@@ -171,11 +171,12 @@ const val LAST_USED_EVENT_SPAN = "last_used_event_span"
 // Granular theming (白い熊 予定表 UI)
 const val THEME_V1_SEEDED = "theme_v1_seeded"
 const val DIALOG_STYLE_SEEDED = "dialog_style_seeded" // one-time seed of the yellow dialog border/buttons
+const val PURE_YELLOW_MIGRATED = "pure_yellow_migrated" // one-time #FFEB3B → #FFFF00 rewrite of persisted colors
 const val DIALOG_BORDER_WIDTH_DEFAULT = 2 // dp
 const val THEME_REVISION = "theme_revision" // bumped on any UI-override change so views repaint
 const val THEME_UNSET = Int.MIN_VALUE // a slot with this stored value follows its inherited default
 const val PALETTE_BLACK = 0xFF000000.toInt()
-const val PALETTE_YELLOW = 0xFFFFEB3B.toInt()
+const val PALETTE_YELLOW = 0xFFFFFF00.toInt()
 
 // Per-element fonts: one entry per text slot, keyed by the slot key.
 const val FONT_FAMILY_PREFIX = "font_family_" // String, "" = system/global default

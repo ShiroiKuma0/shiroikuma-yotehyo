@@ -352,6 +352,10 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(DIALOG_STYLE_SEEDED, false)
         set(value) = prefs.edit().putBoolean(DIALOG_STYLE_SEEDED, value).apply()
 
+    var pureYellowMigrated: Boolean
+        get() = prefs.getBoolean(PURE_YELLOW_MIGRATED, false)
+        set(value) = prefs.edit().putBoolean(PURE_YELLOW_MIGRATED, value).apply()
+
     // Bumped whenever any UI override changes, so MainActivity can repaint the views on resume.
     var themeRevision: Int
         get() = prefs.getInt(THEME_REVISION, 0)
