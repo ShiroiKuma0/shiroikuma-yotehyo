@@ -19,6 +19,7 @@ import org.fossify.calendar.databinding.ItemThemeTextBinding
 import org.fossify.calendar.databinding.ItemThemeToggleBinding
 import org.fossify.calendar.databinding.ItemThemeValueBinding
 import org.fossify.calendar.dialogs.AlphaColorPickerDialog
+import org.fossify.calendar.dialogs.ExportImportDialog
 import org.fossify.calendar.dialogs.FontPickerDialog
 import org.fossify.calendar.extensions.FontWeightOption
 import org.fossify.calendar.extensions.ThemeGroup
@@ -45,6 +46,7 @@ import org.fossify.calendar.helpers.EVENT_TIME_FORMAT_JAPANESE
 import org.fossify.calendar.helpers.DAY_BOX_THICKNESS_INHERIT
 import org.fossify.calendar.helpers.MAX_FONT_SIZE_SP
 import org.fossify.calendar.helpers.PALETTE_YELLOW
+import org.fossify.calendar.helpers.SettingsTransfer
 import org.fossify.calendar.helpers.THEME_UNSET
 import org.fossify.calendar.helpers.formatDayBoxHeader
 import org.fossify.commons.dialogs.RadioGroupDialog
@@ -60,6 +62,7 @@ import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.commons.extensions.toast
 import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.NavigationIcon
+import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.models.RadioItem
 
 // The consolidated "白い熊 予定表 UI" screen. Built from a section -> (optional subsection) -> rows
@@ -81,6 +84,22 @@ class ThemeActivity : SimpleActivity() {
 
     private val fontImportLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         onFontImported(uri)
+    }
+
+    // Export/Import (top section): the SAF pickers live here — launchers must be registered before
+    // RESUMED — and feed their results into the currently open panel.
+    private var eximDialog: ExportImportDialog? = null
+
+    private val eximDirPicker = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+        eximDialog?.onDirPicked(uri)
+    }
+
+    private val eximImportPicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        eximDialog?.onImportFilePicked(uri)
+    }
+
+    private val eximExportCreator = registerForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
+        eximDialog?.onExportTargetPicked(uri)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -108,6 +127,10 @@ class ThemeActivity : SimpleActivity() {
         primaryColor = getProperPrimaryColor()
         indentStepPx = 3 * resources.getDimensionPixelSize(org.fossify.commons.R.dimen.activity_margin)
         currentRowIndent = 0
+
+        // Export / Import — the first, separated section (same idea and flow as the Kōjiki page).
+        addSection(R.string.eim_heading)
+        addExportImportRow()
 
         // Foundation — the base colors that cascade through the whole app.
         addSection(R.string.theme_group_foundation)
@@ -185,6 +208,60 @@ class ThemeActivity : SimpleActivity() {
         }
     }
 
+    // The tappable Export/Import entry row: title + a status line that is refreshed with the newest
+    // export in the chosen directory every time the page opens (buildRows runs in onResume).
+    private fun addExportImportRow() {
+        val margin = resources.getDimensionPixelSize(org.fossify.commons.R.dimen.activity_margin)
+        val titleView = TextView(this).apply {
+            text = getString(R.string.eim_heading)
+            setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 16f)
+            setTextColor(textColor)
+        }
+        val statusView = TextView(this).apply {
+            text = getString(R.string.eim_desc)
+            setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 13f)
+            setTextColor(textColor.adjustAlpha(0.6f))
+            setPadding(0, margin / 4, 0, 0)
+        }
+        val row = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setPadding(margin, margin * 3 / 4, margin, margin * 3 / 4)
+            val outValue = android.util.TypedValue()
+            theme.resolveAttribute(android.R.attr.selectableItemBackground, outValue, true)
+            setBackgroundResource(outValue.resourceId)
+            isClickable = true
+            setOnClickListener { openExportImport() }
+            addView(titleView)
+            addView(statusView)
+        }
+        row.layoutParams = android.widget.LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        indentView(row, currentRowIndent)
+        binding.themeHolder.addView(row)
+        // Query the export directory for the latest export off the main thread — SAF listing is slow.
+        // Warnings (no directory set / no export yet) show in red, like in the panel.
+        ensureBackgroundThread {
+            val (status, warn) = SettingsTransfer.lastExportStatus(this)
+            runOnUiThread {
+                statusView.text = status
+                if (warn) {
+                    statusView.setTextColor(SettingsTransfer.WARN_COLOR)
+                }
+            }
+        }
+    }
+
+    private fun openExportImport() {
+        eximDialog = ExportImportDialog(
+            activity = this,
+            launchDirPicker = { eximDirPicker.launch(it) },
+            launchImportPicker = { eximImportPicker.launch(arrayOf("application/zip", "application/octet-stream", "*/*")) },
+            launchExportCreate = { eximExportCreator.launch(it) },
+            onChainClose = { finish() }
+        )
+    }
+
     // Standalone colour row for the dialog accent border (not a ThemeSlot). The "Default" badge shows
     // while the colour is still the fork default; the picker's default button resets to it.
     private fun addDialogBorderColorRow() {
@@ -251,11 +328,15 @@ class ThemeActivity : SimpleActivity() {
         }
     }
 
+    // kxkb-style section header: bold accent title with a text-wide underline, preceded by a thin
+    // full-width hairline spacer on every section but the first.
     private fun addSection(@StringRes titleRes: Int) {
         val section = ItemThemeSectionBinding.inflate(layoutInflater, binding.themeHolder, false)
         section.themeSectionLabel.text = getString(titleRes)
         section.themeSectionLabel.setTextColor(primaryColor)
         section.themeSectionUnderline.setBackgroundColor(primaryColor)
+        section.themeSectionDivider.setBackgroundColor(primaryColor)
+        section.themeSectionDivider.beVisibleIf(binding.themeHolder.childCount > 0)
         indentView(section.root, 0)
         binding.themeHolder.addView(section.root)
         currentRowIndent = 1

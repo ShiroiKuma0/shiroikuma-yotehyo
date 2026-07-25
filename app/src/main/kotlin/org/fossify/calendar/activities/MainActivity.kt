@@ -325,6 +325,7 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
         }
 
         setupQuickFilter()
+        setupOverflowLongPress()
 
         if (config.caldavSync) {
             updateCalDAVEvents()
@@ -489,6 +490,22 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
     private fun launchUiPage() {
         hideKeyboard()
         startActivity(Intent(applicationContext, ThemeActivity::class.java))
+    }
+
+    // Long-pressing the top-right overflow (hamburger) button opens the 白い熊 予定表 UI page directly.
+    // The button is an internal toolbar child, so it is located by its standard content description
+    // once the menu has been laid out.
+    private fun setupOverflowLongPress() {
+        val toolbar = binding.mainMenu.requireToolbar()
+        toolbar.post {
+            val description = getString(androidx.appcompat.R.string.abc_action_menu_overflow_description)
+            val views = arrayListOf<View>()
+            toolbar.findViewsWithText(views, description, View.FIND_VIEWS_WITH_CONTENT_DESCRIPTION)
+            views.firstOrNull()?.setOnLongClickListener {
+                launchUiPage()
+                true
+            }
+        }
     }
 
     private fun switchToView(view: Int) {
