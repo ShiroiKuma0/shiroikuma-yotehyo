@@ -6,11 +6,11 @@
 
 **A black-and-yellow, fully themeable, Pimlical-style calendar.**
 
-A fork of [Fossify Calendar](https://github.com/FossifyOrg/Calendar) with **major additions**: a granular per-element theming system, a Pimlical-style day-box weekly view, category-based Export/Import of everything (events, settings, fonts, calendars), per-element fonts, Japanese date/time formats, and one-tap navigation shortcuts.
+A fork of [Fossify Calendar](https://github.com/FossifyOrg/Calendar) with **major additions**: a granular per-element theming system, a Pimlical-style day-box weekly view, category-based Export/Import of everything (events, settings, fonts, calendars), headless backup over a token-gated intent, per-element fonts, Japanese date/time formats, and one-tap navigation shortcuts.
 
 Installs **side-by-side** with Fossify Calendar (app id `shiroikuma.yotehyo`).
 
-**📥 Latest release: [`1.10.3+48`](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases)
+**📥 Latest release: [`1.10.3+49`](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases)
 
 </div>
 
@@ -21,6 +21,9 @@ One consolidated page controls every colour in the app — ~30 slots with a casc
 
 ## 📦 Export / Import everything, by category
 The first section of the UI page: pick a persistent export directory (it shows the latest export at a glance), then export or import by category — **all calendars (all events & tasks, as standard ICS)**, general settings, UI & theme (imported fonts ride along), widgets, and calendar categories with their styling. Round-pill panel buttons, chain-closing success dialogs, optional in-place app restart after import.
+
+## 🤖 Headless backup over a token-gated intent
+The same category export, runnable without touching the phone: a sister automation app broadcasts a token-gated intent, this app exports itself in the background and replies with the written path and its real size. Progress comes back as **real counts, never a percentage** — `Events 1234/8942`. Off by default; the switch and its token live under Export / Import, and the token never travels inside a backup.
 
 ## 📅 Pimlical-style day-box weekly view
 A selectable weekly view built from day boxes: configurable headers (Japanese date format by default, Japanese era or any custom pattern), per-day-type colours and border thicknesses for today and weekends, and seven individually toggleable grid lines, each with its own colour and thickness. Long-press empty space to add an event or task.
