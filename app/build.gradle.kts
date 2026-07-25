@@ -188,6 +188,7 @@ tasks.register("buildFoss") {
 dependencies {
     implementation(libs.fossify.commons)
     implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.documentfile)
     implementation(libs.androidx.swiperefreshlayout)
     implementation(libs.androidx.print)
     implementation(libs.bundles.room)

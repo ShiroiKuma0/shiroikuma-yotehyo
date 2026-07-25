@@ -9,6 +9,7 @@ detektCompose = "0.4.28"
 #Androidx
 print = "1.1.0"
 constraintlayout = "2.2.1"
+documentfile = "1.1.0"
 swiperefreshlayout = "1.2.0"
 work = "2.11.2"
 #Room
@@ -33,6 +34,7 @@ app-build-kotlinJVMTarget = "17"
 [libraries]
 #Android X
 androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayout" }
+androidx-documentfile = { module = "androidx.documentfile:documentfile", version.ref = "documentfile" }
 androidx-print = { module = "androidx.print:print", version.ref = "print" }
 androidx-swiperefreshlayout = { module = "androidx.swiperefreshlayout:swiperefreshlayout", version.ref = "swiperefreshlayout" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
