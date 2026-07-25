@@ -1,9 +1,14 @@
 package org.fossify.calendar.helpers
 
+import android.content.ContentUris
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
+import android.os.Environment
+import android.provider.DocumentsContract
+import android.provider.MediaStore
 import androidx.annotation.StringRes
 import androidx.documentfile.provider.DocumentFile
 import org.fossify.calendar.BuildConfig
@@ -22,6 +27,7 @@ import org.fossify.commons.helpers.APP_SIDELOADING_STATUS
 import org.fossify.commons.helpers.BACKGROUND_COLOR
 import org.fossify.commons.helpers.FontHelper
 import org.fossify.commons.helpers.INTERNAL_STORAGE_PATH
+import org.fossify.commons.helpers.isRPlus
 import org.fossify.commons.helpers.IS_GLOBAL_THEME_ENABLED
 import org.fossify.commons.helpers.IS_SYSTEM_THEME_ENABLED
 import org.fossify.commons.helpers.LAST_EXPORTED_SETTINGS_FILE
@@ -47,6 +53,7 @@ import org.json.JSONObject
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.FileOutputStream
 import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -54,6 +61,12 @@ import java.util.Locale
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
+
+/**
+ * Real-count progress from the export core: how many of what have been written, plus the ready-made
+ * display line. Never a percentage — 白い熊 reads the numbers ("Events 1234/8942").
+ */
+typealias ProgressReporter = (current: Long, total: Long, unit: String, text: String) -> Unit
 
 /**
  * The category-based settings Export/Import behind the top section of 白い熊 予定表 UI (same idea and
@@ -67,37 +80,75 @@ import java.util.zip.ZipOutputStream
 object SettingsTransfer {
     const val FORMAT = "yotehyo-export"
     const val VERSION = 1
-    const val EXPORT_PREFIX = "shiroikuma-yotehyo-"
     const val WARN_COLOR = 0xFFFF5252.toInt() // warn-red for "no directory / no export yet" statuses
+
+    // The app's English dash-separated name, and the prefix every export of ours starts with — the whole
+    // family names its backups "<app-name>_<yyyy-MM-dd_HH-mm-ss>.zip", so 白い熊 can keep every app's
+    // backups in one directory and have them sort and read uniformly. Deliberately version-free: a backup
+    // is identified by when it was taken, not by the build that wrote it (that is recorded inside, as
+    // manifest.json's appVersion). Older exports carried the version in the name and still match this
+    // prefix, so the "last export" row keeps finding them.
+    const val EXPORT_PREFIX = "shiroikuma-yotehyo"
 
     private const val EXIMPORT_PREFS = "yotehyo_eximport" // device-local; deliberately never exported
     private const val KEY_DIR_URI = "dir_uri"
 
-    /** A selectable export/import category. `id` names the category's file inside the ZIP. */
-    enum class Category(val id: String, @StringRes val labelRes: Int) {
-        EVENTS("events", R.string.eim_cat_events),
-        GENERAL("general", R.string.eim_cat_general),
-        UI_THEME("ui_theme", R.string.eim_cat_ui),
-        WIDGETS("widgets", R.string.eim_cat_widgets),
-        CALENDARS("calendars", R.string.eim_cat_calendars);
+    /**
+     * Everything independently selectable in an export or import: the top-level categories plus their
+     * parts (sub-options). `id` is what the automation contract accepts in its "items" extra, and for a
+     * top-level category it is also the stable name its data carries inside the ZIP. A part names its
+     * parent through [parentId] and is dotted after it ("ui_theme.fonts") — selecting a parent WITHOUT
+     * its parts means that category's own data only. [labelRes] is the descriptive label shown in the
+     * picker (in-app and in 自由作業盤), [shortLabelRes] the bare noun used in progress lines.
+     */
+    enum class Category(
+        val id: String,
+        val parentId: String?,
+        @StringRes val labelRes: Int,
+        @StringRes val shortLabelRes: Int,
+    ) {
+        EVENTS("events", null, R.string.eim_cat_events, R.string.eim_cat_events_short),
+        GENERAL("general", null, R.string.eim_cat_general, R.string.eim_cat_general_short),
+        UI_THEME("ui_theme", null, R.string.eim_cat_ui, R.string.eim_cat_ui_short),
+        UI_THEME_FONTS("ui_theme.fonts", "ui_theme", R.string.eim_cat_fonts, R.string.eim_cat_fonts_short),
+        WIDGETS("widgets", null, R.string.eim_cat_widgets, R.string.eim_cat_widgets_short),
+        CALENDARS("calendars", null, R.string.eim_cat_calendars, R.string.eim_cat_calendars_short);
+
+        val isTopLevel: Boolean get() = parentId == null
+
+        /** The parts of this category, in declaration order — empty for a leaf. */
+        val children: List<Category> get() = entries.filter { it.parentId == id }
 
         companion object {
             fun byId(id: String): Category? = entries.firstOrNull { it.id == id }
+
+            /** Parents first, each followed by its own parts — the order both pickers render. */
+            val listed: List<Category>
+                get() = entries.filter { it.isTopLevel }.flatMap { listOf(it) + it.children }
         }
     }
 
     // Events/tasks travel as standard ICS (the upstream exporter/importer handles recurrences,
-    // reminders and categories); everything else is a plain JSON file.
-    private fun entryName(cat: Category) = if (cat == Category.EVENTS) "events.ics" else "${cat.id}.json"
+    // reminders and categories); the imported fonts are real files under fonts/; everything else is a
+    // plain JSON file. Null = the category has no single entry of its own.
+    private fun entryName(cat: Category): String? = when (cat) {
+        Category.EVENTS -> "events.ics"
+        Category.UI_THEME_FONTS -> null // a directory of real font files, not one entry
+        else -> "${cat.id}.json"
+    }
 
     // Device-local keys never worth exporting: storage paths/SAF grants, version bookkeeping,
-    // sideloading state, and the last-used export bookkeeping of the stock mechanism.
+    // sideloading state, the last-used export bookkeeping of the stock mechanism, and the automation
+    // gate. The automation pair is excluded on purpose and must stay excluded: each device owns its own
+    // security state, so a restore must never silently flip automation on or overwrite the token — and
+    // the shared secret must never travel inside a backup ZIP.
     private val DEVICE_LOCAL_KEYS = setOf(
         APP_ID, APP_RUN_COUNT, LAST_VERSION, APP_SIDELOADING_STATUS, INTERNAL_STORAGE_PATH,
         SD_CARD_PATH, OTG_REAL_PATH, OTG_PARTITION, WAS_OTG_HANDLED, SD_TREE_URI, OTG_TREE_URI,
         PRIMARY_ANDROID_DATA_TREE_URI, OTG_ANDROID_DATA_TREE_URI, SD_ANDROID_DATA_TREE_URI,
         PRIMARY_ANDROID_OBB_TREE_URI, OTG_ANDROID_OBB_TREE_URI, SD_ANDROID_OBB_TREE_URI,
-        LAST_EXPORTED_SETTINGS_FOLDER, LAST_EXPORTED_SETTINGS_FILE, AUTO_BACKUP_FOLDER
+        LAST_EXPORTED_SETTINGS_FOLDER, LAST_EXPORTED_SETTINGS_FILE, AUTO_BACKUP_FOLDER,
+        AUTOMATION_ENABLED, AUTOMATION_TOKEN
     )
 
     // Everything the 白い熊 予定表 UI page controls, plus the stock look keys it writes through to.
@@ -126,32 +177,47 @@ object SettingsTransfer {
 
     // ---------- Export ----------
 
-    /** Write a ZIP of the selected categories to [out]. Returns a short human summary. */
-    fun export(context: Context, cats: Set<Category>, out: OutputStream): String {
-        var count = 0
+    /**
+     * The export core, callable headlessly — no Activity, no user interaction. Writes a ZIP of the
+     * selected categories into [out] and reports real counts through [onProgress] (unthrottled; the
+     * caller decides how often to surface them). Blocking, so call it on a background thread; it throws
+     * on failure so the Export/Import panel and the automation receiver share one error path.
+     * Returns a short human summary.
+     */
+    fun export(
+        context: Context,
+        cats: Set<Category>,
+        out: OutputStream,
+        onProgress: ProgressReporter = { _, _, _, _ -> },
+    ): String {
+        // Declaration order, not the caller's, so a ZIP's contents never depend on how the set was built.
+        val ordered = Category.listed.filter { it in cats }
+        require(ordered.isNotEmpty()) { "nothing selected" }
+        val total = ordered.size.toLong()
+        val unit = context.getString(R.string.state_progress_unit_category)
+
         ZipOutputStream(out).use { zip ->
             val manifest = JSONObject()
                 .put("format", FORMAT)
                 .put("version", VERSION)
                 .put("app", context.packageName)
+                .put("appVersion", BuildConfig.VERSION_NAME)
                 .put("createdTs", System.currentTimeMillis())
-                .put("categories", JSONArray(cats.map { it.id }))
+                .put("categories", JSONArray(ordered.map { it.id }))
             writeEntry(zip, "manifest.json", manifest.toString(2))
 
-            for (cat in cats) {
-                val content = when (cat) {
-                    Category.EVENTS -> exportEventsIcs(context)
-                    Category.CALENDARS -> exportCalendars(context).toByteArray()
-                    else -> exportPrefs(context, cat).toByteArray()
+            ordered.forEachIndexed { index, cat ->
+                val done = index + 1L
+                onProgress(done, total, unit, "$unit $done/$total — ${context.getString(cat.shortLabelRes)}")
+                when (cat) {
+                    Category.EVENTS -> writeEntry(zip, "events.ics", exportEventsIcs(context, onProgress))
+                    Category.UI_THEME_FONTS -> exportFonts(context, zip)
+                    Category.CALENDARS -> writeEntry(zip, entryName(cat)!!, exportCalendars(context))
+                    else -> writeEntry(zip, entryName(cat)!!, exportPrefs(context, cat))
                 }
-                writeEntry(zip, entryName(cat), content)
-                if (cat == Category.UI_THEME) {
-                    exportFonts(context, zip)
-                }
-                count++
             }
         }
-        return "$count categor${if (count == 1) "y" else "ies"}"
+        return "${ordered.size} categor${if (ordered.size == 1) "y" else "ies"}"
     }
 
     // One JSON object per prefs category, every value typed so import can restore it exactly.
@@ -212,9 +278,11 @@ object SettingsTransfer {
         zip.closeEntry()
     }
 
-    // Every local + synced calendar, all events and tasks, past included. The exporter's callback
-    // runs synchronously because export() is always called from a background thread.
-    private fun exportEventsIcs(context: Context): ByteArray {
+    // Every local + synced calendar, all events and tasks, past included. The exporter's callback runs
+    // synchronously because export() is always called from a background thread. This is the one category
+    // that can hold thousands of rows, so it reports its own real counts ("Events 1234/8942") rather than
+    // leaving 白い熊 with a single category tick for the whole run.
+    private fun exportEventsIcs(context: Context, onProgress: ProgressReporter): ByteArray {
         val calendarIds = context.calendarsDB.getCalendars().mapNotNull { it.id }
         val events = context.eventsHelper.getEventsToExport(
             calendars = calendarIds,
@@ -222,10 +290,19 @@ object SettingsTransfer {
             exportTasks = true,
             exportPastEntries = true
         )
+        val unit = context.getString(R.string.state_progress_unit_events)
+        val total = events.size.toLong()
         val out = ByteArrayOutputStream()
         var exportResult: IcsExporter.ExportResult? = null
-        IcsExporter(context).exportEvents(out, events, showExportingToast = false) { exportResult = it }
-        if (exportResult == IcsExporter.ExportResult.EXPORT_FAIL) {
+        IcsExporter(context).exportEvents(
+            outputStream = out,
+            events = events,
+            showExportingToast = false,
+            onProgress = { written -> onProgress(written.toLong(), total, unit, "$unit $written/$total") },
+        ) { exportResult = it }
+        // An empty calendar is a valid backup — the exporter only reports FAIL by writing nothing, which
+        // is exactly what "no events" looks like, so treat it as a failure only when there was work to do.
+        if (exportResult == IcsExporter.ExportResult.EXPORT_FAIL && events.isNotEmpty()) {
             error("events export failed")
         }
         return out.toByteArray()
@@ -233,7 +310,7 @@ object SettingsTransfer {
 
     // ---------- Import ----------
 
-    /** Categories present in a ZIP (from its manifest, falling back to the `<id>.json` files found). */
+    /** Categories present in a ZIP (from its manifest, falling back to the entries actually found). */
     fun categoriesIn(zip: ByteArray): Set<Category> {
         val files = readZip(zip)
         files["manifest.json"]?.let { manifest ->
@@ -245,26 +322,33 @@ object SettingsTransfer {
                 }
             }
         }
-        return Category.entries.filter { files.containsKey(entryName(it)) }.toSet()
+        return Category.entries.filter { cat ->
+            if (cat == Category.UI_THEME_FONTS) {
+                files.keys.any { it.startsWith("fonts/") }
+            } else {
+                files.containsKey(entryName(cat))
+            }
+        }.toSet()
     }
 
     /** Apply the selected categories from a ZIP. Missing files are skipped. Returns a human summary. */
     fun import(activity: SimpleActivity, zip: ByteArray, cats: Set<Category>): String {
         val files = readZip(zip)
         val parts = mutableListOf<String>()
-        for (cat in cats) {
-            val data = files[entryName(cat)] ?: continue
-            val count = when (cat) {
-                Category.EVENTS -> importEventsIcs(activity, data)
-                Category.CALENDARS -> importCalendars(activity, data.decodeToString())
-                else -> importPrefs(activity, cat, data.decodeToString())
-            }
-            if (cat == Category.UI_THEME) {
+        for (cat in Category.listed.filter { it in cats }) {
+            val count = if (cat == Category.UI_THEME_FONTS) {
                 importFonts(activity, files)
+            } else {
+                val data = files[entryName(cat)] ?: continue
+                when (cat) {
+                    Category.EVENTS -> importEventsIcs(activity, data)
+                    Category.CALENDARS -> importCalendars(activity, data.decodeToString())
+                    else -> importPrefs(activity, cat, data.decodeToString())
+                }
             }
             parts.add("${activity.getString(cat.labelRes)}: $count")
         }
-        if (Category.UI_THEME in cats || Category.WIDGETS in cats) {
+        if (Category.UI_THEME in cats || Category.UI_THEME_FONTS in cats || Category.WIDGETS in cats) {
             // Repaint everything with the imported look on the next resume.
             activity.config.themeRevision = activity.config.themeRevision + 1
         }
@@ -352,15 +436,19 @@ object SettingsTransfer {
         return count
     }
 
-    private fun importFonts(context: Context, files: Map<String, ByteArray>) {
+    /** Restores the imported font files; returns how many were written. */
+    private fun importFonts(context: Context, files: Map<String, ByteArray>): Int {
+        var count = 0
         files.forEach { (name, bytes) ->
             if (name.startsWith("fonts/")) {
                 val fileName = File(name).name // strips any ../ traversal
                 if (fileName.isNotEmpty()) {
                     FontHelper.saveFontData(context, bytes, fileName)
+                    count++
                 }
             }
         }
+        return count
     }
 
     private fun readZip(bytes: ByteArray): Map<String, ByteArray> {
@@ -399,9 +487,112 @@ object SettingsTransfer {
         dirUri(context)?.let { runCatching { DocumentFile.fromTreeUri(context, it) }.getOrNull() }
             ?.takeIf { it.isDirectory }
 
+    /** "shiroikuma-yotehyo_2026-07-25_18-58-23.zip" — the app's English name, then when it was taken. */
     fun exportFileName(): String =
-        EXPORT_PREFIX + BuildConfig.VERSION_NAME + "-export_" +
-            SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.ROOT).format(Date()) + ".zip"
+        EXPORT_PREFIX + "_" + SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.ROOT).format(Date()) + ".zip"
+
+    // ---------- The headless destination (automation) ----------
+
+    /** A resolved headless export destination: where to write, and how big it ended up. */
+    class Target(val displayPath: String, val open: () -> OutputStream, val size: () -> Long)
+
+    /**
+     * Resolve where a headless export writes. Directory precedence, per the automation contract:
+     * [pathOverride] (an absolute directory, created if missing) → the app's configured export
+     * directory → null, which the caller reports as "no-directory".
+     */
+    fun headlessTarget(context: Context, pathOverride: String): Target? {
+        val name = exportFileName()
+        if (pathOverride.isNotEmpty()) {
+            // /sdcard is a symlink; normalize it so the MediaStore path checks below match.
+            val primary = Environment.getExternalStorageDirectory().absolutePath
+            val dir = pathOverride.replaceFirst(Regex("^/sdcard"), primary)
+            val file = File(dir, name)
+            file.parentFile?.mkdirs()
+            return Target(
+                displayPath = file.absolutePath,
+                open = { openAbsolute(context, file) },
+                size = { file.length() },
+            )
+        }
+
+        val dir = exportDir(context) ?: return null
+        val file = dir.createFile("application/zip", name) ?: error("cannot create a file in ${dir.name}")
+        return Target(
+            displayPath = displayPathOf(file.uri),
+            open = { context.contentResolver.openOutputStream(file.uri) ?: error("cannot open ${file.uri}") },
+            size = { file.length() },
+        )
+    }
+
+    /**
+     * Write to an arbitrary absolute path. Download/ and Documents/ take non-media files from any app
+     * through MediaStore with no permission at all; anywhere else on shared storage needs All-files
+     * access on API 30+, so name that remedy instead of letting the write fail silently under FUSE.
+     */
+    private fun openAbsolute(context: Context, file: File): OutputStream {
+        mediaStoreStream(context, file)?.let { return it }
+
+        val primary = Environment.getExternalStorageDirectory().absolutePath
+        if (isRPlus() && file.absolutePath.startsWith("$primary/") && !Environment.isExternalStorageManager()) {
+            error("no-storage-access")
+        }
+        file.parentFile?.mkdirs()
+        return FileOutputStream(file)
+    }
+
+    @Suppress("ReturnCount")
+    private fun mediaStoreStream(context: Context, file: File): OutputStream? {
+        val primary = Environment.getExternalStorageDirectory().absolutePath
+        val parent = file.parentFile?.absolutePath ?: return null
+        if (!parent.startsWith("$primary/")) return null
+
+        val relative = parent.removePrefix("$primary/").trimEnd('/')
+        val topDir = relative.substringBefore('/')
+        if (topDir != Environment.DIRECTORY_DOWNLOADS && topDir != Environment.DIRECTORY_DOCUMENTS) {
+            return null
+        }
+
+        val collection = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+        // Rewrite our own earlier file of the same name instead of piling up "name (1).zip" copies.
+        runCatching {
+            val selection = "${MediaStore.MediaColumns.RELATIVE_PATH} = ? AND " +
+                "${MediaStore.MediaColumns.DISPLAY_NAME} = ?"
+            context.contentResolver.query(
+                collection, arrayOf(MediaStore.MediaColumns._ID), selection, arrayOf("$relative/", file.name), null
+            )?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val uri = ContentUris.withAppendedId(collection, cursor.getLong(0))
+                    return context.contentResolver.openOutputStream(uri, "wt")
+                }
+            }
+        }
+
+        val values = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, file.name)
+            put(MediaStore.MediaColumns.MIME_TYPE, "application/zip")
+            put(MediaStore.MediaColumns.RELATIVE_PATH, relative)
+        }
+        val uri = runCatching { context.contentResolver.insert(collection, values) }.getOrNull() ?: return null
+        return runCatching { context.contentResolver.openOutputStream(uri) }.getOrNull()
+    }
+
+    /**
+     * Best-effort filesystem path for a SAF document ("primary:〇/x.zip" → "/storage/emulated/0/〇/x.zip"),
+     * so the automation reply names a path 白い熊 can actually open. Falls back to the URI.
+     */
+    private fun displayPathOf(uri: Uri): String {
+        val docId = runCatching { DocumentsContract.getDocumentId(uri) }.getOrNull() ?: return uri.toString()
+        val volume = docId.substringBefore(':', "")
+        val relative = docId.substringAfter(':', "")
+        if (volume.isEmpty() || relative.isEmpty()) return uri.toString()
+        val root = if (volume == "primary") {
+            Environment.getExternalStorageDirectory().absolutePath
+        } else {
+            "/storage/$volume"
+        }
+        return "$root/$relative"
+    }
 
     /** (message, isWarning) describing the newest export in the chosen directory. Does IO — call off the main thread. */
     fun lastExportStatus(context: Context): Pair<String, Boolean> {

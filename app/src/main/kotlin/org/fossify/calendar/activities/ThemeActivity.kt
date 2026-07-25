@@ -1,7 +1,12 @@
 package org.fossify.calendar.activities
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
+import android.provider.Settings
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -17,6 +22,7 @@ import org.fossify.calendar.databinding.ItemThemeSliderBinding
 import org.fossify.calendar.databinding.ItemThemeSubsectionBinding
 import org.fossify.calendar.databinding.ItemThemeTextBinding
 import org.fossify.calendar.databinding.ItemThemeToggleBinding
+import org.fossify.calendar.databinding.ItemThemeTokenBinding
 import org.fossify.calendar.databinding.ItemThemeValueBinding
 import org.fossify.calendar.dialogs.AlphaColorPickerDialog
 import org.fossify.calendar.dialogs.ExportImportDialog
@@ -49,6 +55,7 @@ import org.fossify.calendar.helpers.PALETTE_YELLOW
 import org.fossify.calendar.helpers.SettingsTransfer
 import org.fossify.calendar.helpers.THEME_UNSET
 import org.fossify.calendar.helpers.formatDayBoxHeader
+import org.fossify.commons.dialogs.ConfirmationDialog
 import org.fossify.commons.dialogs.RadioGroupDialog
 import org.fossify.commons.extensions.adjustAlpha
 import org.fossify.commons.extensions.beVisibleIf
@@ -59,10 +66,12 @@ import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.onSeekBarChangeListener
 import org.fossify.commons.extensions.onTextChangeListener
 import org.fossify.commons.extensions.setupDialogStuff
+import org.fossify.commons.extensions.showErrorToast
 import org.fossify.commons.extensions.toast
 import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.NavigationIcon
 import org.fossify.commons.helpers.ensureBackgroundThread
+import org.fossify.commons.helpers.isRPlus
 import org.fossify.commons.models.RadioItem
 
 // The consolidated "白い熊 予定表 UI" screen. Built from a section -> (optional subsection) -> rows
@@ -71,6 +80,11 @@ import org.fossify.commons.models.RadioItem
 // with a live sample beneath. Every colour is picked with an alpha-enabled dialog.
 @Suppress("TooManyFunctions")
 class ThemeActivity : SimpleActivity() {
+    companion object {
+        // How many hex characters of the automation token stay visible at each end.
+        private const val TOKEN_VISIBLE_CHARS = 8
+    }
+
     private val binding by viewBinding(ActivityThemeBinding::inflate)
     private val previews = HashMap<ThemeSlot, ImageView>()
     private val defaultBadges = HashMap<ThemeSlot, TextView>()
@@ -131,6 +145,10 @@ class ThemeActivity : SimpleActivity() {
         // Export / Import — the first, separated section (same idea and flow as the Kōjiki page).
         addSection(R.string.eim_heading)
         addExportImportRow()
+        // Automation sits directly below the export row it drives — the placement every sister app
+        // shares, so 白い熊 finds it where backup lives.
+        addSubsection(R.string.automation)
+        addAutomationRows()
 
         // Foundation — the base colors that cascade through the whole app.
         addSection(R.string.theme_group_foundation)
@@ -250,6 +268,110 @@ class ThemeActivity : SimpleActivity() {
                 }
             }
         }
+    }
+
+    // ---- Automation: a subgroup of Export / Import, since every automation intent drives that export
+    // (see receivers/StateExportReceiver) ----
+
+    private fun addAutomationRows() {
+        // Two rows, in the order every sister app uses: the master switch (default OFF), then the token.
+        addToggleRow(R.string.enable_automation, config.automationEnabled) {
+            config.automationEnabled = it
+        }
+        addDescriptionRow(R.string.enable_automation_desc)
+        addTokenRow()
+
+        // All-files access: needed so an automation broadcast can write to an arbitrary absolute path
+        // (白い熊's archive folder) outside Download/ and Documents/. API 30+ only.
+        if (isRPlus()) {
+            addAllFilesAccessRow()
+        }
+    }
+
+    /**
+     * The automation-token row: label plus the abbreviated token, tapping anywhere copies the full token,
+     * and a Regenerate action on the right that warns pasted copies stop working.
+     */
+    private fun addTokenRow() {
+        val row = ItemThemeTokenBinding.inflate(layoutInflater, binding.themeHolder, false)
+        row.themeTokenLabel.text = getString(R.string.automation_token)
+        row.themeTokenLabel.setTextColor(textColor)
+        row.themeTokenValue.text = abbreviateToken(config.automationToken)
+        row.themeTokenValue.setTextColor(textColor.adjustAlpha(0.6f))
+        row.themeTokenRegenerate.text = getString(R.string.automation_token_regenerate)
+        row.themeTokenRegenerate.setTextColor(primaryColor)
+        row.root.setOnClickListener {
+            // Not commons' copyToClipboard: that one toasts the value itself, which would put the full
+            // secret back on screen right after we deliberately abbreviated it.
+            getSystemService(ClipboardManager::class.java)
+                .setPrimaryClip(ClipData.newPlainText(getString(R.string.automation_token), config.automationToken))
+            toast(R.string.automation_token_copied)
+        }
+        row.themeTokenRegenerate.setOnClickListener {
+            ConfirmationDialog(
+                activity = this,
+                message = getString(R.string.automation_token_regenerate_warning),
+                positive = R.string.automation_token_regenerate,
+                negative = org.fossify.commons.R.string.cancel,
+            ) {
+                row.themeTokenValue.text = abbreviateToken(config.regenerateAutomationToken())
+                toast(R.string.automation_token_regenerated)
+            }
+        }
+        indentView(row.root, currentRowIndent)
+        binding.themeHolder.addView(row.root)
+    }
+
+    /** "80922d8c…4c49a87c" — enough to tell two tokens apart without showing the whole secret. */
+    private fun abbreviateToken(token: String): String =
+        if (token.length <= TOKEN_VISIBLE_CHARS * 2) {
+            token
+        } else {
+            token.take(TOKEN_VISIBLE_CHARS) + "…" + token.takeLast(TOKEN_VISIBLE_CHARS)
+        }
+
+    private fun addAllFilesAccessRow() {
+        val granted = Environment.isExternalStorageManager()
+        val row = ItemThemeValueBinding.inflate(layoutInflater, binding.themeHolder, false)
+        row.themeValueLabel.text = getString(R.string.all_files_access)
+        row.themeValueLabel.setTextColor(textColor)
+        row.themeValueValue.text =
+            getString(if (granted) R.string.all_files_access_granted else R.string.all_files_access_needed)
+        row.themeValueValue.setTextColor(if (granted) textColor.adjustAlpha(0.6f) else SettingsTransfer.WARN_COLOR)
+        row.root.setOnClickListener {
+            try {
+                startActivity(
+                    Intent(
+                        Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+                        Uri.parse("package:$packageName")
+                    )
+                )
+            } catch (e: Exception) {
+                try {
+                    startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
+                } catch (e2: Exception) {
+                    showErrorToast(e2)
+                }
+            }
+        }
+        indentView(row.root, currentRowIndent)
+        binding.themeHolder.addView(row.root)
+    }
+
+    /** A dimmed explanatory line under the row it belongs to. */
+    private fun addDescriptionRow(@StringRes textRes: Int) {
+        val margin = resources.getDimensionPixelSize(org.fossify.commons.R.dimen.activity_margin)
+        val view = TextView(this).apply {
+            text = getString(textRes)
+            setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 13f)
+            setTextColor(textColor.adjustAlpha(0.6f))
+            setPadding(margin, 0, margin, margin / 2)
+            layoutParams = android.widget.LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+        indentView(view, currentRowIndent)
+        binding.themeHolder.addView(view)
     }
 
     private fun openExportImport() {

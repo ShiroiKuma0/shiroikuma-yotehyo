@@ -31,10 +31,16 @@ class IcsExporter(private val context: Context) {
     private val reminderLabel = context.getString(R.string.reminder)
     private val exportTime = Formatter.getExportedTime(System.currentTimeMillis())
 
+    /**
+     * [onProgress] is called with the number of entries written so far, after each one — the headless
+     * automation export (SettingsTransfer) turns it into real counts for 白い熊's progress line. It runs
+     * on the exporting thread, so keep it cheap; the caller throttles.
+     */
     fun exportEvents(
         outputStream: OutputStream?,
         events: List<Event>,
         showExportingToast: Boolean,
+        onProgress: (written: Int) -> Unit = {},
         callback: (result: ExportResult) -> Unit
     ) {
         if (outputStream == null) {
@@ -64,12 +70,13 @@ class IcsExporter(private val context: Context) {
                 out.writeLn(BEGIN_CALENDAR)
                 out.writeLn(CALENDAR_PRODID)
                 out.writeLn(CALENDAR_VERSION)
-                for (event in events) {
+                events.forEachIndexed { index, event ->
                     if (event.isTask()) {
                         writeTask(out, event)
                     } else {
                         writeEvent(out, event)
                     }
+                    onProgress(index + 1)
                 }
                 out.writeLn(END_CALENDAR)
             }
