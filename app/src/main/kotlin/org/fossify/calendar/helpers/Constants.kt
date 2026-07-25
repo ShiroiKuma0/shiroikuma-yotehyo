@@ -339,6 +339,36 @@ const val CONFIDENTIAL = "CONFIDENTIAL"
 // actions
 const val ACTION_MARK_COMPLETED = "ACTION_MARK_COMPLETED"
 
+// The 保存復元 state-export automation contract — the wire shape every 白い熊 app exposes so a single
+// 自由作業盤 run can back them all up headlessly. See receivers/StateExportReceiver. Both actions are
+// exported and carry no android:permission (the caller cannot hold one); the token is the gate.
+const val ACTION_EXPORT_STATE = "shiroikuma.yotehyo.action.EXPORT_STATE"
+const val ACTION_LIST_CATEGORIES = "shiroikuma.yotehyo.action.LIST_CATEGORIES"
+
+// Contract extras — deliberately bare names, shared verbatim by every sister app.
+const val EXTRA_AUTOMATION_TOKEN = "token"
+const val EXTRA_EXPORT_PATH = "path"
+const val EXTRA_EXPORT_ITEMS = "items"
+const val EXTRA_PROGRESS_ACTION = "progress_action"
+const val EXTRA_REPLY_ACTION = "reply_action"
+const val EXTRA_REPLY_PACKAGE = "reply_package"
+const val EXTRA_REPLY_ID = "reply_id"
+const val EXTRA_REPLY_RESULT = "result"
+const val EXTRA_PROGRESS_APP = "app"
+const val EXTRA_PROGRESS_TEXT = "text"
+const val EXTRA_PROGRESS_CURRENT = "current"
+const val EXTRA_PROGRESS_TOTAL = "total"
+const val EXTRA_PROGRESS_UNIT = "unit"
+
+// At most one progress broadcast per this many ms (the final one at completion is unthrottled).
+const val PROGRESS_THROTTLE_MS = 500L
+
+// The automation gate, in the app's shared prefs but never exported — see SettingsTransfer's
+// DEVICE_LOCAL_KEYS: each device owns its own security state, so a restore must not flip the switch
+// or overwrite the secret, and the token must never travel in a backup ZIP.
+const val AUTOMATION_ENABLED = "automation_enabled"
+const val AUTOMATION_TOKEN = "automation_token"
+
 fun getNowSeconds() = System.currentTimeMillis() / 1000L
 
 fun isWeekend(dayOfWeek: Int): Boolean {

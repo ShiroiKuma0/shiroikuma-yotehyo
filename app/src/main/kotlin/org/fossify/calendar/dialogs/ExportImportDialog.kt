@@ -121,12 +121,24 @@ class ExportImportDialog(
 
         root.addView(divider())
 
+        // The category checklist, in the family's shape: a 全選択 master toggle, then each top-level
+        // category, with its parts (sub-options) indented beneath it and following its toggle.
         val selectAll = checkbox(activity.getString(R.string.eim_select_all), bold = true).apply { isChecked = true }
         root.addView(selectAll)
-        for (cat in SettingsTransfer.Category.entries) {
+        for (cat in SettingsTransfer.Category.entries.filter { it.isTopLevel }) {
             val cb = checkbox(activity.getString(cat.labelRes)).apply { isChecked = true }
             checks[cat] = cb
             root.addView(cb)
+            for (child in cat.children) {
+                val childCb = checkbox(activity.getString(child.labelRes), indent = 1).apply { isChecked = true }
+                checks[child] = childCb
+                root.addView(childCb)
+            }
+            if (cat.children.isNotEmpty()) {
+                cb.setOnCheckedChangeListener { _, isChecked ->
+                    cat.children.forEach { checks[it]?.isChecked = isChecked }
+                }
+            }
         }
         selectAll.setOnCheckedChangeListener { _, isChecked ->
             checks.values.forEach { it.isChecked = isChecked }
@@ -167,7 +179,7 @@ class ExportImportDialog(
             if (bold) typeface = Typeface.DEFAULT_BOLD
         }
 
-    private fun checkbox(label: String, bold: Boolean = false): CheckBox =
+    private fun checkbox(label: String, bold: Boolean = false, indent: Int = 0): CheckBox =
         CheckBox(activity).apply {
             text = label
             setTextColor(textColor)
@@ -175,6 +187,11 @@ class ExportImportDialog(
             if (bold) typeface = Typeface.DEFAULT_BOLD
             buttonTintList = ColorStateList.valueOf(accentColor)
             setPadding(dp(8), dp(7), 0, dp(7))
+            if (indent > 0) {
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+                ).also { it.marginStart = indent * dp(24) }
+            }
         }
 
     private fun divider(): View = View(activity).apply {

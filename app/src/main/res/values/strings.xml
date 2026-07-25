@@ -18,9 +18,19 @@
     <string name="eim_select_all">Select all</string>
     <string name="eim_cat_events">All calendars (all events &amp; tasks)</string>
     <string name="eim_cat_general">General settings</string>
-    <string name="eim_cat_ui">UI &amp; theme (colours, fonts, grid, dialogs)</string>
+    <string name="eim_cat_ui">UI &amp; theme (colours, grid, dialogs)</string>
+    <string name="eim_cat_fonts">Imported font files</string>
     <string name="eim_cat_widgets">Widgets</string>
     <string name="eim_cat_calendars">Calendar categories</string>
+    <!-- Bare category nouns, used in the automation progress lines ("Categories 3/6 — Widgets") -->
+    <string name="eim_cat_events_short">Events</string>
+    <string name="eim_cat_general_short">General</string>
+    <string name="eim_cat_ui_short">UI &amp; theme</string>
+    <string name="eim_cat_fonts_short">Fonts</string>
+    <string name="eim_cat_widgets_short">Widgets</string>
+    <string name="eim_cat_calendars_short">Calendars</string>
+    <string name="state_progress_unit_category">Categories</string>
+    <string name="state_progress_unit_events">Events</string>
     <string name="eim_export">Export</string>
     <string name="eim_import">Import</string>
     <string name="eim_none_selected">No categories selected.</string>
@@ -33,6 +43,18 @@
     <string name="eim_import_none">The file contains no known categories.</string>
     <string name="eim_restart_now">Restart now</string>
     <string name="eim_restart_later">Later</string>
+    <!-- Automation: a subgroup of Export / Import, since every automation intent drives that export -->
+    <string name="automation">Automation</string>
+    <string name="enable_automation">Automation export</string>
+    <string name="enable_automation_desc">Sister-app tasks may trigger this app\'s export through the token-gated intent.</string>
+    <string name="automation_token">Automation token — tap to copy</string>
+    <string name="automation_token_copied">Token copied to the clipboard</string>
+    <string name="automation_token_regenerate">Regenerate</string>
+    <string name="automation_token_regenerate_warning">Generate a new token? Copies already pasted into 白い熊 自由作業盤 — or any other task — stop working until the new token is pasted there.</string>
+    <string name="automation_token_regenerated">Token regenerated</string>
+    <string name="all_files_access">All files access — for backups outside Download/Documents</string>
+    <string name="all_files_access_granted">Granted</string>
+    <string name="all_files_access_needed">Not granted — tap to allow</string>
     <string name="theme_group_foundation">Foundation</string>
     <string name="theme_group_search">Search bar</string>
     <string name="theme_group_chrome">Top bar &amp; menu</string>

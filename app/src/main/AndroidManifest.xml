@@ -20,6 +20,12 @@
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
 
+    <!-- So a 保存復元 automation broadcast can write its backup to the arbitrary absolute directory it
+         names (白い熊's own archive folder, outside Download/ and Documents/). Nothing in the app's own
+         UI needs it; the Export/Import page writes through SAF. Granted by hand from the row under
+         UI page → Export / Import → Automation. See receivers/StateExportReceiver. -->
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+
     <uses-permission
         android:name="android.permission.USE_FINGERPRINT"
         tools:node="remove" />
@@ -316,6 +322,20 @@
         <receiver
             android:name=".receivers.DummyAlarmReceiver"
             android:exported="false" />
+
+        <!-- The 保存復元 state-export contract (白い熊 自由作業盤 backs up every sister app in one run).
+             Deliberately exported with NO android:permission — the calling task cannot hold one, so the
+             automation token is the gate, and both actions are refused until the switch is on.
+             See receivers/StateExportReceiver. -->
+        <receiver
+            android:name=".receivers.StateExportReceiver"
+            android:exported="true"
+            tools:ignore="ExportedReceiver">
+            <intent-filter>
+                <action android:name="shiroikuma.yotehyo.action.EXPORT_STATE" />
+                <action android:name="shiroikuma.yotehyo.action.LIST_CATEGORIES" />
+            </intent-filter>
+        </receiver>
 
         <provider
             android:name="androidx.core.content.FileProvider"

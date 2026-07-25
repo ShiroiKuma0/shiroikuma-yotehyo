@@ -10,10 +10,15 @@ import org.fossify.commons.extensions.getDefaultAlarmTitle
 import org.fossify.commons.helpers.BaseConfig
 import org.fossify.commons.helpers.DAY_MINUTES
 import org.fossify.commons.helpers.YEAR_SECONDS
+import java.security.MessageDigest
+import java.security.SecureRandom
 
 class Config(context: Context) : BaseConfig(context) {
     companion object {
         fun newInstance(context: Context) = Config(context)
+
+        // Length of the automation shared secret, hex-encoded to 48 characters.
+        private const val AUTOMATION_TOKEN_BYTES = 24
     }
 
     var showWeekNumbers: Boolean
@@ -491,4 +496,34 @@ class Config(context: Context) : BaseConfig(context) {
     var widgetShowGrid: Boolean
         get() = prefs.getBoolean(WIDGET_SHOW_GRID, false)
         set(widgetShowGrid) = prefs.edit().putBoolean(WIDGET_SHOW_GRID, widgetShowGrid).apply()
+
+    // External-automation intent surface (receivers/StateExportReceiver): a master switch plus a shared
+    // secret that every automation broadcast must carry. Same model as the renrakusaki fork's Config and
+    // the 自由作業盤 fork's AutomationAuth. Both keys are device-local — SettingsTransfer excludes them
+    // from every export, so the token never travels in a backup ZIP.
+    var automationEnabled: Boolean
+        get() = prefs.getBoolean(AUTOMATION_ENABLED, false)
+        set(automationEnabled) = prefs.edit().putBoolean(AUTOMATION_ENABLED, automationEnabled).apply()
+
+    /** The shared secret; generated on first read so the settings row always shows a value. */
+    val automationToken: String
+        get() = prefs.getString(AUTOMATION_TOKEN, null)?.takeIf { it.isNotEmpty() }
+            ?: regenerateAutomationToken()
+
+    fun regenerateAutomationToken(): String {
+        val bytes = ByteArray(AUTOMATION_TOKEN_BYTES).also { SecureRandom().nextBytes(it) }
+        val token = bytes.joinToString("") { "%02x".format(it) }
+        prefs.edit().putString(AUTOMATION_TOKEN, token).apply()
+        return token
+    }
+
+    /**
+     * True when the caller's token matches the stored secret, compared in constant time. The enabled
+     * check is deliberately separate so callers can report "disabled" and "bad token" distinctly —
+     * they debug differently.
+     */
+    fun isAutomationTokenValid(token: String?): Boolean {
+        if (token.isNullOrEmpty()) return false
+        return MessageDigest.isEqual(token.toByteArray(), automationToken.toByteArray())
+    }
 }
