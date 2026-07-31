@@ -340,10 +340,15 @@ const val CONFIDENTIAL = "CONFIDENTIAL"
 const val ACTION_MARK_COMPLETED = "ACTION_MARK_COMPLETED"
 
 // The 保存復元 state-export automation contract — the wire shape every 白い熊 app exposes so a single
-// 自由作業盤 run can back them all up headlessly. See receivers/StateExportReceiver. Both actions are
-// exported and carry no android:permission (the caller cannot hold one); the token is the gate.
+// 自由作業盤 run can back them all up headlessly. See receivers/StateExportReceiver. All three actions
+// are exported and carry no android:permission (the caller cannot hold one); the token is the gate.
 const val ACTION_EXPORT_STATE = "shiroikuma.yotehyo.action.EXPORT_STATE"
 const val ACTION_LIST_CATEGORIES = "shiroikuma.yotehyo.action.LIST_CATEGORIES"
+
+// 自由作業盤's 中止 button: stop the export in flight. Fire-and-forget — it is never answered, and it
+// is safe to send at any time (nothing running, or already finished, is a silent no-op). It rides the
+// same exported receiver on purpose: a service would be android:exported="false" and unreachable.
+const val ACTION_CANCEL_EXPORT = "shiroikuma.yotehyo.action.CANCEL_EXPORT"
 
 // Contract extras — deliberately bare names, shared verbatim by every sister app.
 const val EXTRA_AUTOMATION_TOKEN = "token"

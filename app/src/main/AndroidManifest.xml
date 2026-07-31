@@ -325,8 +325,9 @@
 
         <!-- The 保存復元 state-export contract (白い熊 自由作業盤 backs up every sister app in one run).
              Deliberately exported with NO android:permission — the calling task cannot hold one, so the
-             automation token is the gate, and both actions are refused until the switch is on.
-             See receivers/StateExportReceiver. -->
+             automation token is the gate, and every action is refused until the switch is on.
+             CANCEL_EXPORT rides this same receiver because a service would be exported="false" and so
+             unreachable from the caller. See receivers/StateExportReceiver. -->
         <receiver
             android:name=".receivers.StateExportReceiver"
             android:exported="true"
@@ -334,6 +335,7 @@
             <intent-filter>
                 <action android:name="shiroikuma.yotehyo.action.EXPORT_STATE" />
                 <action android:name="shiroikuma.yotehyo.action.LIST_CATEGORIES" />
+                <action android:name="shiroikuma.yotehyo.action.CANCEL_EXPORT" />
             </intent-filter>
         </receiver>
 

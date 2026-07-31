@@ -94,18 +94,32 @@ object SettingsTransfer {
     private const val KEY_DIR_URI = "dir_uri"
 
     /**
+     * Thrown out of [export] when the caller's cancel check trips — a stop that was asked for, never a
+     * failure, so the callers answer it with "cancelled" rather than an error reason. See the
+     * CANCEL_EXPORT action in StateExportReceiver.
+     */
+    class Cancelled : Exception("cancelled")
+
+    /**
      * Everything independently selectable in an export or import: the top-level categories plus their
      * parts (sub-options). `id` is what the automation contract accepts in its "items" extra, and for a
      * top-level category it is also the stable name its data carries inside the ZIP. A part names its
      * parent through [parentId] and is dotted after it ("ui_theme.fonts") — selecting a parent WITHOUT
      * its parts means that category's own data only. [labelRes] is the descriptive label shown in the
      * picker (in-app and in 自由作業盤), [shortLabelRes] the bare noun used in progress lines.
+     *
+     * [defaultOn] is whether the item STARTS TICKED in a freshly drawn picker — this app's answer to
+     * state rather than the picker's to guess (the contract's optional fourth LIST_CATEGORIES field).
+     * It defaults to true and every category here keeps it: the "off" case is for something large,
+     * derived and re-creatable (a tile cache, a regenerable thumbnail), and nothing this app exports
+     * is any of those. Anything added later inherits a field that is already on the wire.
      */
     enum class Category(
         val id: String,
         val parentId: String?,
         @StringRes val labelRes: Int,
         @StringRes val shortLabelRes: Int,
+        val defaultOn: Boolean = true,
     ) {
         EVENTS("events", null, R.string.eim_cat_events, R.string.eim_cat_events_short),
         GENERAL("general", null, R.string.eim_cat_general, R.string.eim_cat_general_short),
@@ -183,12 +197,18 @@ object SettingsTransfer {
      * caller decides how often to surface them). Blocking, so call it on a background thread; it throws
      * on failure so the Export/Import panel and the automation receiver share one error path.
      * Returns a short human summary.
+     *
+     * [isCancelled] is polled at every entry boundary — between categories, and between events inside
+     * the one category big enough to matter — and unwinds the run with [Cancelled] the moment it
+     * answers true. Never mid-`write()`: the boundary is always between whole entries. The caller owns
+     * what happens to the half-written ZIP.
      */
     fun export(
         context: Context,
         cats: Set<Category>,
         out: OutputStream,
         onProgress: ProgressReporter = { _, _, _, _ -> },
+        isCancelled: () -> Boolean = { false },
     ): String {
         // Declaration order, not the caller's, so a ZIP's contents never depend on how the set was built.
         val ordered = Category.listed.filter { it in cats }
@@ -207,10 +227,11 @@ object SettingsTransfer {
             writeEntry(zip, "manifest.json", manifest.toString(2))
 
             ordered.forEachIndexed { index, cat ->
+                if (isCancelled()) throw Cancelled()
                 val done = index + 1L
                 onProgress(done, total, unit, "$unit $done/$total — ${context.getString(cat.shortLabelRes)}")
                 when (cat) {
-                    Category.EVENTS -> writeEntry(zip, "events.ics", exportEventsIcs(context, onProgress))
+                    Category.EVENTS -> writeEntry(zip, "events.ics", exportEventsIcs(context, onProgress, isCancelled))
                     Category.UI_THEME_FONTS -> exportFonts(context, zip)
                     Category.CALENDARS -> writeEntry(zip, entryName(cat)!!, exportCalendars(context))
                     else -> writeEntry(zip, entryName(cat)!!, exportPrefs(context, cat))
@@ -281,8 +302,14 @@ object SettingsTransfer {
     // Every local + synced calendar, all events and tasks, past included. The exporter's callback runs
     // synchronously because export() is always called from a background thread. This is the one category
     // that can hold thousands of rows, so it reports its own real counts ("Events 1234/8942") rather than
-    // leaving 白い熊 with a single category tick for the whole run.
-    private fun exportEventsIcs(context: Context, onProgress: ProgressReporter): ByteArray {
+    // leaving 白い熊 with a single category tick for the whole run — and, for the same reason, it is the
+    // one category that must honour a cancel from inside: it checks per entry, on that same synchronous
+    // callback, so [Cancelled] unwinds through the exporter between two whole events.
+    private fun exportEventsIcs(
+        context: Context,
+        onProgress: ProgressReporter,
+        isCancelled: () -> Boolean,
+    ): ByteArray {
         val calendarIds = context.calendarsDB.getCalendars().mapNotNull { it.id }
         val events = context.eventsHelper.getEventsToExport(
             calendars = calendarIds,
@@ -298,7 +325,10 @@ object SettingsTransfer {
             outputStream = out,
             events = events,
             showExportingToast = false,
-            onProgress = { written -> onProgress(written.toLong(), total, unit, "$unit $written/$total") },
+            onProgress = { written ->
+                if (isCancelled()) throw Cancelled()
+                onProgress(written.toLong(), total, unit, "$unit $written/$total")
+            },
         ) { exportResult = it }
         // An empty calendar is a valid backup — the exporter only reports FAIL by writing nothing, which
         // is exactly what "no events" looks like, so treat it as a failure only when there was work to do.
@@ -493,8 +523,18 @@ object SettingsTransfer {
 
     // ---------- The headless destination (automation) ----------
 
-    /** A resolved headless export destination: where to write, and how big it ended up. */
-    class Target(val displayPath: String, val open: () -> OutputStream, val size: () -> Long)
+    /**
+     * A resolved headless export destination: where to write, how big it ended up, and how to take it
+     * back again. [discard] removes the file this target created — the caller runs it whenever the run
+     * does not reach its OK line (cancelled or failed), so the backup directory is left exactly as it
+     * was found: no short archive to mistake for a backup, and none for "last export" to pick up.
+     */
+    class Target(
+        val displayPath: String,
+        val open: () -> OutputStream,
+        val size: () -> Long,
+        val discard: () -> Unit,
+    )
 
     /**
      * Resolve where a headless export writes. Directory precedence, per the automation contract:
@@ -509,10 +549,17 @@ object SettingsTransfer {
             val dir = pathOverride.replaceFirst(Regex("^/sdcard"), primary)
             val file = File(dir, name)
             file.parentFile?.mkdirs()
+            // Whichever route the write took has to be the route the discard takes: a MediaStore
+            // insert owns a row, and under scoped storage File.delete() alone would not reach it.
+            var mediaUri: Uri? = null
             return Target(
                 displayPath = file.absolutePath,
-                open = { openAbsolute(context, file) },
+                open = { openAbsolute(context, file) { mediaUri = it } },
                 size = { file.length() },
+                discard = {
+                    mediaUri?.let { runCatching { context.contentResolver.delete(it, null, null) } }
+                    runCatching { file.delete() }
+                },
             )
         }
 
@@ -522,6 +569,7 @@ object SettingsTransfer {
             displayPath = displayPathOf(file.uri),
             open = { context.contentResolver.openOutputStream(file.uri) ?: error("cannot open ${file.uri}") },
             size = { file.length() },
+            discard = { runCatching { file.delete() } },
         )
     }
 
@@ -529,9 +577,10 @@ object SettingsTransfer {
      * Write to an arbitrary absolute path. Download/ and Documents/ take non-media files from any app
      * through MediaStore with no permission at all; anywhere else on shared storage needs All-files
      * access on API 30+, so name that remedy instead of letting the write fail silently under FUSE.
+     * [onMediaUri] is called with the row we ended up writing, so a discarded run can delete it.
      */
-    private fun openAbsolute(context: Context, file: File): OutputStream {
-        mediaStoreStream(context, file)?.let { return it }
+    private fun openAbsolute(context: Context, file: File, onMediaUri: (Uri) -> Unit): OutputStream {
+        mediaStoreStream(context, file, onMediaUri)?.let { return it }
 
         val primary = Environment.getExternalStorageDirectory().absolutePath
         if (isRPlus() && file.absolutePath.startsWith("$primary/") && !Environment.isExternalStorageManager()) {
@@ -542,7 +591,7 @@ object SettingsTransfer {
     }
 
     @Suppress("ReturnCount")
-    private fun mediaStoreStream(context: Context, file: File): OutputStream? {
+    private fun mediaStoreStream(context: Context, file: File, onMediaUri: (Uri) -> Unit): OutputStream? {
         val primary = Environment.getExternalStorageDirectory().absolutePath
         val parent = file.parentFile?.absolutePath ?: return null
         if (!parent.startsWith("$primary/")) return null
@@ -563,7 +612,7 @@ object SettingsTransfer {
             )?.use { cursor ->
                 if (cursor.moveToFirst()) {
                     val uri = ContentUris.withAppendedId(collection, cursor.getLong(0))
-                    return context.contentResolver.openOutputStream(uri, "wt")
+                    return context.contentResolver.openOutputStream(uri, "wt")?.also { onMediaUri(uri) }
                 }
             }
         }
@@ -574,7 +623,7 @@ object SettingsTransfer {
             put(MediaStore.MediaColumns.RELATIVE_PATH, relative)
         }
         val uri = runCatching { context.contentResolver.insert(collection, values) }.getOrNull() ?: return null
-        return runCatching { context.contentResolver.openOutputStream(uri) }.getOrNull()
+        return runCatching { context.contentResolver.openOutputStream(uri) }.getOrNull()?.also { onMediaUri(uri) }
     }
 
     /**
