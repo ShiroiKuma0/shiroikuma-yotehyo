@@ -122,15 +122,20 @@ class ExportImportDialog(
         root.addView(divider())
 
         // The category checklist, in the family's shape: a 全選択 master toggle, then each top-level
-        // category, with its parts (sub-options) indented beneath it and following its toggle.
-        val selectAll = checkbox(activity.getString(R.string.eim_select_all), bold = true).apply { isChecked = true }
+        // category, with its parts (sub-options) indented beneath it and following its toggle. What
+        // starts ticked comes from Category.defaultOn — the same answer LIST_CATEGORIES sends 自由作業盤,
+        // so this sheet and the automation picker open on the same selection.
+        val selectAll = checkbox(activity.getString(R.string.eim_select_all), bold = true).apply {
+            isChecked = SettingsTransfer.Category.entries.all { it.defaultOn }
+        }
         root.addView(selectAll)
         for (cat in SettingsTransfer.Category.entries.filter { it.isTopLevel }) {
-            val cb = checkbox(activity.getString(cat.labelRes)).apply { isChecked = true }
+            val cb = checkbox(activity.getString(cat.labelRes)).apply { isChecked = cat.defaultOn }
             checks[cat] = cb
             root.addView(cb)
             for (child in cat.children) {
-                val childCb = checkbox(activity.getString(child.labelRes), indent = 1).apply { isChecked = true }
+                val childCb = checkbox(activity.getString(child.labelRes), indent = 1)
+                    .apply { isChecked = child.defaultOn }
                 checks[child] = childCb
                 root.addView(childCb)
             }
@@ -260,9 +265,15 @@ class ExportImportDialog(
             val result = runCatching {
                 val name = SettingsTransfer.exportFileName()
                 val file = dir.createFile("application/zip", name) ?: error("could not create file in folder")
-                activity.contentResolver.openOutputStream(file.uri)?.use { out ->
-                    SettingsTransfer.export(activity, cats, out)
-                } ?: error("no output stream")
+                runCatching {
+                    activity.contentResolver.openOutputStream(file.uri)?.use { out ->
+                        SettingsTransfer.export(activity, cats, out)
+                    } ?: error("no output stream")
+                }.onFailure {
+                    // Same rule as the headless path: a run that failed leaves the backup directory as
+                    // it found it, so no truncated ZIP is left to be read as the last export.
+                    runCatching { file.delete() }
+                }.getOrThrow()
                 name
             }
             activity.runOnUiThread {

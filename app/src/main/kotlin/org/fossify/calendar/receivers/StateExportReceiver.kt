@@ -8,8 +8,10 @@ import android.util.Log
 import java.io.OutputStream
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 import org.fossify.calendar.R
 import org.fossify.calendar.extensions.config
+import org.fossify.calendar.helpers.ACTION_CANCEL_EXPORT
 import org.fossify.calendar.helpers.ACTION_EXPORT_STATE
 import org.fossify.calendar.helpers.ACTION_LIST_CATEGORIES
 import org.fossify.calendar.helpers.EXTRA_AUTOMATION_TOKEN
@@ -34,15 +36,22 @@ import org.fossify.commons.helpers.isRPlus
 /**
  * The 保存復元 state-export contract, for 白い熊 自由作業盤's one-run backup of every sister app.
  *
- * Two exported, token-gated actions:
- *  - [ACTION_LIST_CATEGORIES] — instant; replies "OK:" plus one `id<TAB>label` line per selectable
- *    item, a sub-option adding a third `parent-id` field after its parent's line ("ui_theme.fonts"
- *    under "ui_theme"), so the caller can render it indented and make it follow the parent's toggle.
+ * Three exported, token-gated actions:
+ *  - [ACTION_LIST_CATEGORIES] — instant; replies "OK:" plus one `id<TAB>label<TAB>parent<TAB>on|off`
+ *    line per selectable item. A sub-option names its parent in the third field and follows its
+ *    parent's line ("ui_theme.fonts" under "ui_theme"), so the caller can render it indented and make
+ *    it follow the parent's toggle; a top-level item leaves that field empty. The fourth field is this
+ *    app STATING whether the item starts ticked rather than leaving the picker to guess.
  *  - [ACTION_EXPORT_STATE] — runs the same category ZIP export as the Export/Import page, headlessly
  *    (no Activity, no interaction), and replies with the written path and its real size. Extras:
  *    "token", optional "path" (an absolute directory that OVERRIDES the configured export directory),
  *    optional "items" (comma-separated category ids; absent = everything), optional
  *    "progress_action", plus "reply_action"/"reply_package"/"reply_id".
+ *  - [ACTION_CANCEL_EXPORT] — stops the export in flight; extras "token" and an optional "reply_id"
+ *    (absent = whatever is running, unambiguous because two at once are forbidden). Fire-and-forget:
+ *    it is never answered, and sending it with nothing running is a silent no-op. The terminal
+ *    "ERROR:cancelled" belongs to the ORIGINAL request and is sent once the run has actually unwound
+ *    and its half-written ZIP is gone.
  *
  * Directory precedence: the "path" extra → the app's configured export directory → ERROR:no-directory.
  * One request writes exactly ONE ZIP — every component (events, settings, theme, fonts, widgets,
@@ -63,6 +72,14 @@ class StateExportReceiver : BroadcastReceiver() {
     companion object {
         const val TAG = "YotehyoStateExport"
         private const val KILO = 1024.0
+
+        /**
+         * The export in flight, if any. A cancel arrives on a *different* receiver instance — Android
+         * builds a fresh one per broadcast — so the only way to reach the running export is a
+         * process-wide handle. The contract forbids two exports at once, which is exactly what makes
+         * one slot enough, and what makes an absent "reply_id" on a cancel unambiguous.
+         */
+        private val running = AtomicReference<RunningExport?>(null)
     }
 
     /** What a parsed request turned out to be: already answerable, or an export to run. */
@@ -71,9 +88,25 @@ class StateExportReceiver : BroadcastReceiver() {
         class Export(val cats: Set<SettingsTransfer.Category>, val path: String) : Request()
     }
 
+    /**
+     * A cancellable export: the request it answers, and whether a stop has been asked for. [cancelled]
+     * is written by whichever thread the cancel broadcast lands on and read by the export thread
+     * between entries, hence @Volatile — that flag is the whole stop mechanism. Nothing here kills a
+     * thread or a process; the export unwinds itself at the next boundary.
+     */
+    private class RunningExport(val replyId: String) {
+        @Volatile
+        var cancelled = false
+    }
+
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
-        if (action != ACTION_EXPORT_STATE && action != ACTION_LIST_CATEGORIES) {
+        if (action != ACTION_EXPORT_STATE && action != ACTION_LIST_CATEGORIES && action != ACTION_CANCEL_EXPORT) {
+            return
+        }
+
+        if (action == ACTION_CANCEL_EXPORT) {
+            cancel(context.applicationContext, intent)
             return
         }
 
@@ -119,11 +152,48 @@ class StateExportReceiver : BroadcastReceiver() {
             is Request.Done -> finishWith(request.result)
             is Request.Export -> {
                 val progress = throttledProgress(appContext, progressAction, replyPackage, replyId)
+                val run = RunningExport(replyId)
+                running.set(run)
                 ensureBackgroundThread {
-                    finishWith(export(appContext, request.cats, request.path, progress))
+                    try {
+                        finishWith(export(appContext, request.cats, request.path, progress, run))
+                    } finally {
+                        // Only ever clear our own run, so a cancel that lands after this one ended is
+                        // the no-op it should be rather than a stop aimed at somebody else.
+                        running.compareAndSet(run, null)
+                    }
                 }
             }
         }
+    }
+
+    /**
+     * [ACTION_CANCEL_EXPORT]: raise the stop flag on the export in flight, and answer nothing. Safe to
+     * send at any time — with nothing running, or with the export already finished, or naming an id
+     * that is not the running one, this is a silent no-op: not an error, not a reply, not a crash. The
+     * "ERROR:cancelled" terminal reply is the export thread's to send, for the ORIGINAL request, after
+     * it has unwound and deleted its partial file.
+     */
+    private fun cancel(context: Context, intent: Intent) {
+        val config = context.config
+        val token = intent.getStringExtra(EXTRA_AUTOMATION_TOKEN)
+        val replyId = intent.getStringExtra(EXTRA_REPLY_ID)?.trim().orEmpty()
+        if (!config.automationEnabled || !config.isAutomationTokenValid(token)) {
+            Log.i(
+                TAG,
+                "cancel refused: enabled=${config.automationEnabled}, tokenLen=${token?.length ?: 0}"
+            )
+            return
+        }
+
+        val run = running.get()
+        if (run == null || (replyId.isNotEmpty() && replyId != run.replyId)) {
+            Log.i(TAG, "cancel: nothing to stop (id=${replyId.ifEmpty { "-" }})")
+            return
+        }
+
+        Log.i(TAG, "cancel: stopping the export for id=${run.replyId}")
+        run.cancelled = true
     }
 
     /**
@@ -156,13 +226,16 @@ class StateExportReceiver : BroadcastReceiver() {
     }
 
     /**
-     * "OK:" plus one `id<TAB>label` line per selectable item — the ids are exactly the ones "items"
-     * accepts. A sub-option adds a third `parent-id` field and follows its parent's line, so the caller
-     * can render it indented under the parent.
+     * "OK:" plus one `id<TAB>label<TAB>parent<TAB>on|off` line per selectable item — the ids are exactly
+     * the ones "items" accepts. A sub-option names its parent in the third field and follows its
+     * parent's line, so the caller can render it indented under the parent; a top-level item leaves
+     * that field empty rather than dropping it, because the fourth field is positional. That fourth
+     * field is whether the item starts ticked — our answer, not the picker's guess.
      */
     private fun categoryList(context: Context): String =
         SettingsTransfer.Category.listed.joinToString(separator = "\n", prefix = "OK:") {
-            "${it.id}\t${context.getString(it.labelRes)}" + if (it.parentId != null) "\t${it.parentId}" else ""
+            val parent = it.parentId.orEmpty()
+            "${it.id}\t${context.getString(it.labelRes)}\t$parent\t${if (it.defaultOn) "on" else "off"}"
         }
 
     /**
@@ -183,6 +256,7 @@ class StateExportReceiver : BroadcastReceiver() {
         cats: Set<SettingsTransfer.Category>,
         path: String,
         progress: ThrottledProgress,
+        run: RunningExport,
     ): String {
         val target = try {
             SettingsTransfer.headlessTarget(context, path) ?: return "ERROR:no-directory"
@@ -190,16 +264,29 @@ class StateExportReceiver : BroadcastReceiver() {
             return storageError(path, e)
         }
 
+        var completed = false
         return try {
             // The count is a fallback for a destination we cannot stat; it is final once export() returns,
             // which is after the ZIP's central directory has been flushed.
             val counting = CountingOutputStream(target.open())
-            counting.use { SettingsTransfer.export(context, cats, it, progress.reporter) }
+            counting.use { SettingsTransfer.export(context, cats, it, progress.reporter) { run.cancelled } }
             val bytes = target.size().takeIf { it > 0 } ?: counting.count
             progress.final(cats.size.toLong())
+            completed = true
             "OK:${target.displayPath}|$bytes|${humanSize(bytes)}|${cats.size} categories"
+        } catch (e: SettingsTransfer.Cancelled) {
+            Log.i(TAG, "export unwound: ${e.message}")
+            "ERROR:cancelled"
         } catch (e: Exception) {
             storageError(path, e)
+        } finally {
+            // A run that never reached its OK line leaves nothing behind. This is the point of the
+            // cancel action: the backup directory is exactly as it was found — no short archive for
+            // 白い熊 to mistake for a backup, and none for "last export" to pick up. Failures unwind the
+            // same way, since a truncated ZIP is no more of a backup than a cancelled one.
+            if (!completed) {
+                runCatching { target.discard() }
+            }
         }
     }
 
