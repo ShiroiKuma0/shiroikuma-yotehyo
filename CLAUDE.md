@@ -44,18 +44,36 @@ We always base our version on upstream and add a fork build increment.
 Values live in `gradle.properties`:
 - `VERSION_NAME` — upstream version name (e.g. `1.10.3`).
 - `VERSION_CODE` — upstream version **code** that corresponds to that name (e.g. `20` for 1.10.3).
-- `BUILD_NUMBER` — our fork increment ("+N"). Starts at `1` for the first build of a given upstream version.
+- `BUILD_NUMBER` — our fork increment ("+N"), stored as a **plain integer**. Starts at `1` for the
+  first build of a given upstream version.
 
 `app/build.gradle.kts` computes the installed values:
-- **versionName** = `"<VERSION_NAME>+<BUILD_NUMBER>"`  → e.g. `1.10.3+1`
+- **versionName** = `"<VERSION_NAME>+<BUILD_NUMBER padded to 3 digits>"`  → e.g. `1.10.3+001`
 - **versionCode** = `VERSION_CODE * 10000 + BUILD_NUMBER`  → e.g. `20 * 10000 + 1 = 200001`
 
 This makes the versionCode strictly increase across every rebuild of the same upstream version
 (`200001`, `200002`, …) so in-place updates on the phone always work, and it jumps to the next
 band when upstream changes (e.g. `1.11.0` code 22 → `220001`).
 
-The output APK is named `shiroikuma-yotehyo_<VERSION_NAME>+<BUILD_NUMBER>_arm64-v8a.apk`
-(e.g. `shiroikuma-yotehyo_1.10.3+1_arm64-v8a.apk`). The `arm64-v8a` label is a naming convention;
+### Zero-padding the "+N" (global convention)
+
+**Every rendered form of the counter is zero-padded to three digits** — `+001`, `+014`, `+142`,
+never `+1` or `+14`. That covers the `versionName`, the APK filename, and any release tag derived
+from them (`/publish-version`). The `versionCode` keeps the plain integer: padding is text only,
+and `gradle.properties` stores the plain integer too.
+
+Why: file lists sort lexicographically, and unpadded counters sort **wrongly** — `+10` lands before
+`+3`, burying the newest build in the middle of `~/tmp/`, of the phone's file manager, and of the
+release list. Three digits fixes the order up to `+999`, which the `VERSION_CODE * 10000` multiplier
+already caps the counter at anyway.
+
+This is a global 白い熊 convention (2026-08-01), not a repo-local one — the same padding applies in
+every shiroikuma fork. **Never rename what is already built:** builds `+1` … `+52` and their tags
+keep their unpadded names; the repo adopted the padding at `+053`. For a while the padded names sort
+*before* the older unpadded ones (`+053` < `+9` as text) — that settles as the old builds age out.
+
+The output APK is named `shiroikuma-yotehyo_<VERSION_NAME>+<NNN>_arm64-v8a.apk`
+(e.g. `shiroikuma-yotehyo_1.10.3+053_arm64-v8a.apk`). The `arm64-v8a` label is a naming convention;
 the build produces a single universal APK (no ABI splits), which runs on arm64-v8a.
 
 > Note on the `VERSION_CODE=20` base: upstream's `gradle.properties` briefly carried `21` from a
@@ -68,7 +86,7 @@ the build produces a single universal APK (no ABI splits), which runs on arm64-v
   automatically after a successful build (it rewrites `gradle.properties`), so the committed
   `BUILD_NUMBER` is always the *next* build's number.
 - **On a new upstream version** (user will instruct a rebase): set `VERSION_NAME`/`VERSION_CODE` to the
-  new upstream values and reset `BUILD_NUMBER=1`, then build the new `+1`.
+  new upstream values and reset `BUILD_NUMBER=1`, then build the new `+001`.
 
 ## Building
 
@@ -84,7 +102,7 @@ JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 ./gradlew buildFoss < /dev/null
 
 `buildFoss` (defined in `app/build.gradle.kts`):
 1. runs `assembleFossRelease`,
-2. copies the signed APK to `~/tmp/shiroikuma-yotehyo_<name>+<N>_arm64-v8a.apk`,
+2. copies the signed APK to `~/tmp/shiroikuma-yotehyo_<name>+<NNN>_arm64-v8a.apk`,
 3. auto-increments `BUILD_NUMBER` in `gradle.properties`.
 
 Other useful Gradle tasks: `assembleFossRelease`, `assembleFossDebug`, `detekt`, `lintFossDebug`.

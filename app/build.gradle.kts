@@ -22,9 +22,17 @@ fun hasSigningVars(): Boolean {
             && providers.environmentVariable("SIGNING_STORE_PASSWORD").orNull != null
 }
 
-val forkVersionName = "${project.property("VERSION_NAME")}+${project.property("BUILD_NUMBER")}"
-val forkVersionCode = project.property("VERSION_CODE").toString().toInt() * 10000 +
-        project.property("BUILD_NUMBER").toString().toInt()
+// BUILD_NUMBER is stored in gradle.properties as a plain integer, but every place it is
+// *rendered* zero-pads it to three digits: the versionName, and therefore the APK filename
+// and any release tag derived from them. Unpadded counters sort wrongly in a file listing
+// ("+10" lands before "+3"), which buries the newest build in the middle of ~/tmp/ and of
+// the phone's file manager. Three digits fixes the order up to +999 — which the versionCode
+// multiplier below already caps the counter at anyway. The versionCode itself keeps the
+// plain integer; the padding is text only.
+val forkBuildNumber = project.property("BUILD_NUMBER").toString().trim().toInt()
+val forkBuildNumberPadded = forkBuildNumber.toString().padStart(3, '0')
+val forkVersionName = "${project.property("VERSION_NAME")}+$forkBuildNumberPadded"
+val forkVersionCode = project.property("VERSION_CODE").toString().toInt() * 10000 + forkBuildNumber
 
 base {
     archivesName = "shiroikuma-yotehyo_${forkVersionName}_arm64-v8a"
@@ -171,17 +179,18 @@ tasks.register("buildFoss") {
             """.trimIndent()).inheritIO().start().waitFor()
         }
 
-        // Auto-increment BUILD_NUMBER so the next build is the next "+N"
+        // Auto-increment BUILD_NUMBER so the next build is the next "+N". The property stays
+        // a plain integer on disk — only the rendered forms above are zero-padded.
         val propsFile = rootProject.file("gradle.properties")
-        val currentBuildNumber = project.property("BUILD_NUMBER").toString().toInt()
-        val nextBuildNumber = currentBuildNumber + 1
+        val nextBuildNumber = forkBuildNumber + 1
         propsFile.writeText(
             propsFile.readText().replace(
-                "BUILD_NUMBER=$currentBuildNumber",
+                "BUILD_NUMBER=$forkBuildNumber",
                 "BUILD_NUMBER=$nextBuildNumber"
             )
         )
-        println("[1;36m>>> BUILD_NUMBER bumped to $nextBuildNumber[0m")
+        val nextPadded = nextBuildNumber.toString().padStart(3, '0')
+        println("[1;36m>>> BUILD_NUMBER bumped to $nextBuildNumber (next build: +$nextPadded)[0m")
     }
 }
 
