@@ -49,4 +49,6 @@ cd shiroikuma-yotehyo
 # needs JDK 21 and the patched commons published to mavenLocal (see CLAUDE.md)
 JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 ./gradlew buildFoss
 ```
-The signed foss release APK lands in `~/tmp/shiroikuma-yotehyo_<version>+<N>_arm64-v8a.apk`.
+The signed foss release APK lands in `~/tmp/shiroikuma-yotehyo_<version>+<NNN>_arm64-v8a.apk`
+— the fork build counter is always zero-padded to three digits (`+001`, `+053`) so builds sort
+in order.

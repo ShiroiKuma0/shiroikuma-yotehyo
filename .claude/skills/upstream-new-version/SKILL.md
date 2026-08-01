@@ -16,7 +16,8 @@ upstream release, replay our `custom` customizations on top of it, and produce a
 
 - `VERSION_NAME` / `VERSION_CODE` in `gradle.properties` **track upstream**.
 - `BUILD_NUMBER` is **our** fork increment. It **resets to `1`** on each new upstream version.
-- Fork `versionName` = `"<VERSION_NAME>+<BUILD_NUMBER>"`, `versionCode` = `VERSION_CODE * 10000 + BUILD_NUMBER`.
+- Fork `versionName` = `"<VERSION_NAME>+<BUILD_NUMBER zero-padded to 3 digits>"` (e.g. `1.11.0+001`),
+  `versionCode` = `VERSION_CODE * 10000 + BUILD_NUMBER` (plain integer — the padding is text only).
 - This fork builds against our **patched Fossify Commons** (`commons = "<ver>-skN"` from `mavenLocal`,
   currently `6.1.6-sk2`, the `~/git/shiroikuma-commons` fork, which both strips Commons' anti-tamper
   "fake version" / sideloading nags **and** carries fork-package fixes; `-skN` is our patch revision).
