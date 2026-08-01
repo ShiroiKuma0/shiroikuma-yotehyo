@@ -10,7 +10,7 @@ A fork of [Fossify Calendar](https://github.com/FossifyOrg/Calendar) with **majo
 
 Installs **side-by-side** with Fossify Calendar (app id `shiroikuma.yotehyo`).
 
-**📥 Latest release: [`1.10.3+50`](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases)
+**📥 Latest release: [`1.10.3+053`](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases)
 
 </div>
 
@@ -36,6 +36,9 @@ Event times in a Japanese clock/duration style (or any custom pattern), 日週�
 
 ## 🌐 Per-event timezones
 Events can carry independent start and end timezones, annotated in the day view.
+
+## 📝 Editor layout
+In both the event and task editors the calendar (account) selector sits directly under the description — it is one of the first decisions about an entry, not something to scroll past reminders, repetition, attendees and status to reach.
 
 ---
 
