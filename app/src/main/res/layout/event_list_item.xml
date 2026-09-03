@@ -31,15 +31,19 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="@id/event_item_title" />
 
+        <!-- Task rows only: a checkbox that toggles the task complete straight from the list. -->
         <ImageView
             android:id="@+id/event_item_task_image"
             android:layout_width="wrap_content"
             android:layout_height="0dp"
             android:layout_marginStart="@dimen/small_margin"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/task"
+            android:paddingStart="@dimen/small_margin"
             android:paddingTop="@dimen/small_margin"
+            android:paddingEnd="@dimen/small_margin"
             android:paddingBottom="@dimen/small_margin"
-            android:src="@drawable/ic_task_vector"
+            android:src="@drawable/ic_task_unchecked_vector"
             app:layout_constraintBottom_toBottomOf="@+id/event_item_title"
             app:layout_constraintStart_toEndOf="@+id/event_item_color_bar"
             app:layout_constraintTop_toTopOf="@+id/event_item_title" />

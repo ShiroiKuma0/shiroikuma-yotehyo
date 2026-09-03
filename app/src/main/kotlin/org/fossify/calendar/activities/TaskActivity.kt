@@ -15,6 +15,7 @@ import org.fossify.calendar.dialogs.RepeatRuleWeeklyDialog
 import org.fossify.calendar.dialogs.SelectCalendarDialog
 import org.fossify.calendar.extensions.calendarsDB
 import org.fossify.calendar.extensions.config
+import org.fossify.calendar.extensions.completedTasksDB
 import org.fossify.calendar.extensions.eventsDB
 import org.fossify.calendar.extensions.eventsHelper
 import org.fossify.calendar.extensions.getNewEventTimestampFromCode
@@ -41,6 +42,7 @@ import org.fossify.calendar.helpers.EVENT_COLOR
 import org.fossify.calendar.helpers.EVENT_ID
 import org.fossify.calendar.helpers.EVENT_OCCURRENCE_TS
 import org.fossify.calendar.helpers.FLAG_ALL_DAY
+import org.fossify.calendar.helpers.FLAG_FIXED_ENTRY
 import org.fossify.calendar.helpers.FLAG_TASK_COMPLETED
 import org.fossify.calendar.helpers.Formatter
 import org.fossify.calendar.helpers.IS_DUPLICATE_INTENT
@@ -395,6 +397,11 @@ class TaskActivity : SimpleActivity() {
             taskAllDay.toggle()
         }
 
+        taskFixedEntryHolder.setOnClickListener {
+            taskFixedEntry.toggle()
+            updateMarkCompleteVisibility()
+        }
+
         taskDate.setOnClickListener { setupDate() }
         taskTime.setOnClickListener { setupTime() }
         calendarHolder.setOnClickListener { showCalendarDialog() }
@@ -443,6 +450,7 @@ class TaskActivity : SimpleActivity() {
         binding.taskTitle.setText(mTask.title)
         binding.taskDescription.setText(mTask.description)
         binding.taskAllDay.isChecked = mTask.getIsAllDay()
+        binding.taskFixedEntry.isChecked = mTask.isFixedEntry()
         toggleAllDay(mTask.getIsAllDay())
         checkRepeatTexts(mRepeatInterval)
     }
@@ -543,7 +551,14 @@ class TaskActivity : SimpleActivity() {
                 }
             }
             importId = newImportId
-            flags = mTask.flags.addBitIf(binding.taskAllDay.isChecked, FLAG_ALL_DAY)
+            flags = mTask.flags
+                .addBitIf(binding.taskAllDay.isChecked, FLAG_ALL_DAY)
+                .addBitIf(binding.taskFixedEntry.isChecked, FLAG_FIXED_ENTRY)
+            if (isFixedEntry()) {
+                // it can no longer be ticked, so a completion left over from before must go
+                flags = flags.removeBit(FLAG_TASK_COMPLETED)
+                mTask.id?.let { completedTasksDB.deleteTaskWithIdAndTs(it, mOriginalStartTS) }
+            }
             lastUpdated = System.currentTimeMillis()
             calendarId = mCalendarId
             type = TYPE_TASK
@@ -783,7 +798,7 @@ class TaskActivity : SimpleActivity() {
 
     private fun setupMarkCompleteButton() {
         binding.toggleMarkComplete.setOnClickListener { toggleCompletion() }
-        binding.toggleMarkComplete.beVisibleIf(mTask.id != null)
+        updateMarkCompleteVisibility()
         updateTaskCompletedButton()
         ensureBackgroundThread {
             // the stored value might be incorrect so update it (e.g. user completed the task via notification action before editing)
@@ -792,6 +807,11 @@ class TaskActivity : SimpleActivity() {
                 updateTaskCompletedButton()
             }
         }
+    }
+
+    /** A fixed entry has nothing to complete, so the button goes with the checkbox. */
+    private fun updateMarkCompleteVisibility() {
+        binding.toggleMarkComplete.beVisibleIf(mTask.id != null && !binding.taskFixedEntry.isChecked)
     }
 
     private fun updateTaskCompletedButton() {

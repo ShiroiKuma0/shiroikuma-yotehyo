@@ -190,10 +190,29 @@ class EventListAdapter(
             if (listEvent.categoryFontFamily.isNotEmpty() || listEvent.categoryFontWeight > 0 || listEvent.categoryFontSize > 0) {
                 eventItemTitle.applyCategoryFont(listEvent.categoryFontFamily, listEvent.categoryFontWeight, listEvent.categoryFontSize)
             }
+            // Task rows carry a checkbox: tapping it ticks the task off without leaving the list.
+            // a fixed entry is a record, so it gets no checkbox and reads like a plain event
+            val showCheckbox = listEvent.isTask && !listEvent.isFixedEntry
+            eventItemTaskImage.beVisibleIf(showCheckbox)
+            if (showCheckbox) {
+                eventItemTaskImage.setImageResource(
+                    if (listEvent.isTaskCompleted) {
+                        R.drawable.ic_task_checked_vector
+                    } else {
+                        R.drawable.ic_task_unchecked_vector
+                    }
+                )
+                eventItemTaskImage.contentDescription = activity.getString(
+                    if (listEvent.isTaskCompleted) R.string.mark_incomplete else R.string.mark_completed
+                )
+                eventItemTaskImage.setOnClickListener { toggleTaskCompletion(listEvent) }
+            } else {
+                eventItemTaskImage.setOnClickListener(null)
+                eventItemTaskImage.isClickable = false
+            }
             eventItemTaskImage.applyColorFilter(newTextColor)
-            eventItemTaskImage.beVisibleIf(listEvent.isTask)
 
-            val startMargin = if (listEvent.isTask) {
+            val startMargin = if (showCheckbox) {
                 0
             } else {
                 mediumMargin
@@ -217,6 +236,27 @@ class EventListAdapter(
             text = listSectionMonth.title
             setTextColor(properPrimaryColor)
             applyThemeFont(ThemeSlot.TEXT)
+        }
+    }
+
+    /**
+     * Flips the task's completed state straight from the list, keying the completion on the
+     * occurrence actually tapped, and restyles just that row.
+     */
+    private fun toggleTaskCompletion(listEvent: ListEvent) {
+        val completed = !listEvent.isTaskCompleted
+        ensureBackgroundThread {
+            val task = activity.eventsDB.getTaskWithId(listEvent.id)?.copy(startTS = listEvent.startTS)
+                ?: return@ensureBackgroundThread
+            activity.updateTaskCompletion(task, completed)
+            activity.updateWidgets()
+            activity.runOnUiThread {
+                val position = listItems.indexOfFirst { it === listEvent }
+                listEvent.isTaskCompleted = completed
+                if (position != -1) {
+                    notifyItemChanged(position)
+                }
+            }
         }
     }
 
