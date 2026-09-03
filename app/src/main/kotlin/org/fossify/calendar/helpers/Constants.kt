@@ -122,6 +122,8 @@ const val SHOW_GRID = "show_grid"
 const val LOOP_REMINDERS = "loop_reminders"
 const val DIM_PAST_EVENTS = "dim_past_events"
 const val DIM_COMPLETED_TASKS = "dim_completed_tasks"
+const val ROLL_OVER_INCOMPLETE_TASKS = "roll_over_incomplete_tasks"
+const val LAST_TASK_ROLLOVER_DAY_CODE = "last_task_rollover_day_code"
 const val LAST_SOUND_URI = "last_sound_uri"
 const val LAST_REMINDER_CHANNEL_ID = "last_reminder_channel_ID"
 const val REMINDER_AUDIO_STREAM = "reminder_audio_stream"
@@ -210,6 +212,9 @@ const val FLAG_ALL_DAY = 1
 const val FLAG_IS_IN_PAST = 2
 const val FLAG_MISSING_YEAR = 4
 const val FLAG_TASK_COMPLETED = 8
+
+// A record rather than a to-do: no completion checkbox, and the rollover leaves it where it is.
+const val FLAG_FIXED_ENTRY = 16
 
 // constants related to ICS file exporting / importing
 const val BEGIN_CALENDAR = "BEGIN:VCALENDAR"

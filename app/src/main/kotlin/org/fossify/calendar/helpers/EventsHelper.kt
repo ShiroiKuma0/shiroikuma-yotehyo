@@ -16,6 +16,7 @@ import org.fossify.calendar.extensions.eventsDB
 import org.fossify.calendar.extensions.isTsOnProperDay
 import org.fossify.calendar.extensions.isXWeeklyRepetition
 import org.fossify.calendar.extensions.maybeAdjustRepeatLimitCount
+import org.fossify.calendar.extensions.rollOverIncompleteTasks
 import org.fossify.calendar.extensions.scheduleNextEventReminder
 import org.fossify.calendar.extensions.seconds
 import org.fossify.calendar.extensions.updateWidgets
@@ -461,6 +462,10 @@ class EventsHelper(val context: Context) {
         searchQuery: String = "",
         callback: (events: ArrayList<Event>) -> Unit
     ) {
+        // Unfinished tasks move to today before anything is read, so every view and widget that
+        // fetches through here sees them on the current day. Self-guarded to once per day.
+        context.rollOverIncompleteTasks()
+
         val birthDayEventId = getLocalBirthdaysCalendarId(createIfNotExists = false)
         val anniversaryEventId = getAnniversariesCalendarId(createIfNotExists = false)
 

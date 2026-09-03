@@ -56,6 +56,7 @@ import org.fossify.calendar.helpers.PULL_TO_REFRESH
 import org.fossify.calendar.helpers.REMINDER_AUDIO_STREAM
 import org.fossify.calendar.helpers.REMINDER_OFF
 import org.fossify.calendar.helpers.REPLACE_DESCRIPTION
+import org.fossify.calendar.helpers.ROLL_OVER_INCOMPLETE_TASKS
 import org.fossify.calendar.helpers.SHOW_GRID
 import org.fossify.calendar.helpers.SHOW_MIDNIGHT_SPANNING_EVENTS_AT_TOP
 import org.fossify.calendar.helpers.START_WEEKLY_AT
@@ -219,6 +220,7 @@ class SettingsActivity : SimpleActivity() {
         setupViewToOpenFromListWidget()
         setupDimEvents()
         setupDimCompletedTasks()
+        setupRollOverIncompleteTasks()
         setupAllowChangingTimeZones()
         updateTextColors(binding.settingsHolder)
         checkPrimaryColor()
@@ -911,6 +913,18 @@ class SettingsActivity : SimpleActivity() {
         }
     }
 
+    private fun setupRollOverIncompleteTasks() = binding.apply {
+        settingsRollOverIncompleteTasks.isChecked = config.rollOverIncompleteTasks
+        settingsRollOverIncompleteTasksHolder.setOnClickListener {
+            settingsRollOverIncompleteTasks.toggle()
+            config.rollOverIncompleteTasks = settingsRollOverIncompleteTasks.isChecked
+            if (config.rollOverIncompleteTasks) {
+                // drop today's claim so switching it back on catches up straight away
+                config.lastTaskRolloverDayCode = ""
+            }
+        }
+    }
+
     private fun setupAllowChangingTimeZones() = binding.apply {
         settingsAllowChangingTimeZones.isChecked = config.allowChangingTimeZones
         settingsAllowChangingTimeZonesHolder.setOnClickListener {
@@ -1122,6 +1136,7 @@ class SettingsActivity : SimpleActivity() {
                 put(LOOP_REMINDERS, config.loopReminders)
                 put(DIM_PAST_EVENTS, config.dimPastEvents)
                 put(DIM_COMPLETED_TASKS, config.dimCompletedTasks)
+                put(ROLL_OVER_INCOMPLETE_TASKS, config.rollOverIncompleteTasks)
                 put(ALLOW_CHANGING_TIME_ZONES, config.allowChangingTimeZones)
                 put(USE_PREVIOUS_EVENT_REMINDERS, config.usePreviousEventReminders)
                 put(DEFAULT_REMINDER_1, config.defaultReminder1)
@@ -1237,6 +1252,7 @@ class SettingsActivity : SimpleActivity() {
                 LOOP_REMINDERS -> config.loopReminders = value.toBoolean()
                 DIM_PAST_EVENTS -> config.dimPastEvents = value.toBoolean()
                 DIM_COMPLETED_TASKS -> config.dimCompletedTasks = value.toBoolean()
+                ROLL_OVER_INCOMPLETE_TASKS -> config.rollOverIncompleteTasks = value.toBoolean()
                 ALLOW_CHANGING_TIME_ZONES -> config.allowChangingTimeZones = value.toBoolean()
                 USE_PREVIOUS_EVENT_REMINDERS -> config.usePreviousEventReminders = value.toBoolean()
                 DEFAULT_REMINDER_1 -> config.defaultReminder1 = value.toInt()

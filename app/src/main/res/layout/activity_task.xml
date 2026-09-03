@@ -148,11 +148,34 @@
                 android:background="@color/divider_grey"
                 android:importantForAccessibility="no" />
 
+            <!-- A record rather than a to-do: no checkbox anywhere, and the rollover leaves it put. -->
+            <RelativeLayout
+                android:id="@+id/task_fixed_entry_holder"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/task_date_time_divider"
+                android:layout_marginStart="@dimen/normal_margin"
+                android:background="?attr/selectableItemBackground"
+                android:paddingTop="@dimen/medium_margin"
+                android:paddingEnd="@dimen/activity_margin"
+                android:paddingBottom="@dimen/medium_margin">
+
+                <org.fossify.commons.views.MyMaterialSwitch
+                    android:id="@+id/task_fixed_entry"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@null"
+                    android:clickable="false"
+                    android:text="@string/fixed_entry"
+                    android:textSize="@dimen/day_text_size" />
+
+            </RelativeLayout>
+
             <ImageView
                 android:id="@+id/task_reminder_image"
                 android:layout_width="@dimen/smaller_icon_size"
                 android:layout_height="@dimen/smaller_icon_size"
-                android:layout_below="@+id/task_date_time_divider"
+                android:layout_below="@+id/task_fixed_entry_holder"
                 android:layout_alignTop="@+id/task_reminder_1"
                 android:layout_alignBottom="@+id/task_reminder_1"
                 android:layout_marginStart="@dimen/normal_margin"
@@ -163,7 +186,7 @@
                 android:id="@+id/task_reminder_1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@+id/task_date_time_divider"
+                android:layout_below="@+id/task_fixed_entry_holder"
                 android:layout_marginStart="@dimen/small_margin"
                 android:layout_toEndOf="@+id/task_reminder_image"
                 android:background="?attr/selectableItemBackground"

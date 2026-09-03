@@ -19,6 +19,8 @@ data class ListEvent(
     var categoryFontFamily: String = "",
     var categoryFontWeight: Int = 0,
     var categoryFontSize: Int = 0,
+    // A fixed entry is a record: no checkbox, and the rollover never touches it.
+    var isFixedEntry: Boolean = false,
 ) : ListItem() {
 
     fun hasCategoryStyle() = categoryBackgroundColor != Int.MIN_VALUE ||

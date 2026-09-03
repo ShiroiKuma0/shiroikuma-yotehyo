@@ -151,16 +151,56 @@ class DayEventsAdapter(activity: SimpleActivity, val events: ArrayList<Event>, r
             if (event.categoryFontFamily.isNotEmpty() || event.categoryFontWeight > 0 || event.categoryFontSize > 0) {
                 eventItemTitle.applyCategoryFont(event.categoryFontFamily, event.categoryFontWeight, event.categoryFontSize)
             }
+            // Task rows carry a checkbox: tapping it ticks the task off without leaving the list.
+            // a fixed entry is a record, so it gets no checkbox and reads like a plain event
+            val showCheckbox = event.isTask() && !event.isFixedEntry()
+            eventItemTaskImage.beVisibleIf(showCheckbox)
+            if (showCheckbox) {
+                val isCompleted = event.isTaskCompleted()
+                eventItemTaskImage.setImageResource(
+                    if (isCompleted) {
+                        R.drawable.ic_task_checked_vector
+                    } else {
+                        R.drawable.ic_task_unchecked_vector
+                    }
+                )
+                eventItemTaskImage.contentDescription =
+                    activity.getString(if (isCompleted) R.string.mark_incomplete else R.string.mark_completed)
+                eventItemTaskImage.setOnClickListener { toggleTaskCompletion(event) }
+            } else {
+                eventItemTaskImage.setOnClickListener(null)
+                eventItemTaskImage.isClickable = false
+            }
             eventItemTaskImage.applyColorFilter(newTextColor)
-            eventItemTaskImage.beVisibleIf(event.isTask())
 
-            val startMargin = if (event.isTask()) {
+            val startMargin = if (showCheckbox) {
                 0
             } else {
                 mediumMargin
             }
 
             (eventItemTitle.layoutParams as ConstraintLayout.LayoutParams).marginStart = startMargin
+        }
+    }
+
+    /**
+     * Flips the task's completed state straight from the list, keying the completion on the
+     * occurrence actually tapped, and restyles just that row.
+     */
+    private fun toggleTaskCompletion(event: Event) {
+        val completed = !event.isTaskCompleted()
+        ensureBackgroundThread {
+            val task = activity.eventsDB.getTaskWithId(event.id!!)?.copy(startTS = event.startTS)
+                ?: return@ensureBackgroundThread
+            activity.updateTaskCompletion(task, completed)
+            activity.updateWidgets()
+            activity.runOnUiThread {
+                val position = events.indexOfFirst { it.id == event.id && it.startTS == event.startTS }
+                event.flags = task.flags
+                if (position != -1) {
+                    notifyItemChanged(position)
+                }
+            }
         }
     }
 

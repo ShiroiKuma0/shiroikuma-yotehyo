@@ -583,7 +583,7 @@ fun Context.getNotification(
         .setAutoCancel(true)
         .setChannelId(channelId)
         .apply {
-            if (event.isTask() && !event.isTaskCompleted()) {
+            if (event.isTask() && !event.isFixedEntry() && !event.isTaskCompleted()) {
                 addAction(
                     R.drawable.ic_task_vector,
                     getString(R.string.mark_completed),
@@ -901,7 +901,8 @@ fun Context.getEventListItems(
                 it.categoryBackgroundColor,
                 it.categoryFontFamily,
                 it.categoryFontWeight,
-                it.categoryFontSize
+                it.categoryFontSize,
+                it.isFixedEntry()
             )
         listItems.add(listEvent)
     }

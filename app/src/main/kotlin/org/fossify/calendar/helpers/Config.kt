@@ -178,6 +178,18 @@ class Config(context: Context) : BaseConfig(context) {
         set(dimCompletedTasks) = prefs.edit().putBoolean(DIM_COMPLETED_TASKS, dimCompletedTasks)
             .apply()
 
+    // An unfinished task moves to today once its own day is over, so it stays in sight until ticked off.
+    var rollOverIncompleteTasks: Boolean
+        get() = prefs.getBoolean(ROLL_OVER_INCOMPLETE_TASKS, true)
+        set(rollOverIncompleteTasks) = prefs.edit()
+            .putBoolean(ROLL_OVER_INCOMPLETE_TASKS, rollOverIncompleteTasks).apply()
+
+    // Day code the rollover last ran for, so it runs at most once a day however often it is called.
+    var lastTaskRolloverDayCode: String
+        get() = prefs.getString(LAST_TASK_ROLLOVER_DAY_CODE, "")!!
+        set(lastTaskRolloverDayCode) = prefs.edit()
+            .putString(LAST_TASK_ROLLOVER_DAY_CODE, lastTaskRolloverDayCode).apply()
+
     fun getSyncedCalendarIdsAsList() =
         caldavSyncedCalendarIds.split(",").filter { it.trim().isNotEmpty() }
             .map { Integer.parseInt(it) }.toMutableList() as ArrayList<Int>

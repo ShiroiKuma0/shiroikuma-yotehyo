@@ -198,6 +198,7 @@
     <string name="duplicate_task">Duplicate task</string>
     <string name="mark_completed">Mark completed</string>
     <string name="mark_incomplete">Mark incomplete</string>
+    <string name="fixed_entry">Fixed entry (no checkbox, never rolls over)</string>
     <string name="task_color">Task color</string>
 
     <!-- Event Repetition -->
@@ -385,6 +386,7 @@
     <string name="allow_changing_time_zones">Allow changing event time zones</string>
     <string name="manage_quick_filter_event_types">Manage quick filter calendars</string>
     <string name="allow_creating_tasks">Allow creating tasks</string>
+    <string name="roll_over_incomplete_tasks">Roll unfinished tasks over to today</string>
 
     <!-- CalDAV sync -->
     <string name="caldav">CalDAV</string>

@@ -52,6 +52,10 @@ interface EventsDao {
     @Query("SELECT * FROM events WHERE start_ts <= :toTS AND start_ts >= :fromTS AND event_type IN (:calendarIds) AND type = $TYPE_TASK")
     fun getTasksFromTo(fromTS: Long, toTS: Long, calendarIds: List<Long>): List<Event>
 
+    // Non-repeating tasks whose day is already over — the candidates for the unfinished-task rollover.
+    @Query("SELECT * FROM events WHERE type = $TYPE_TASK AND repeat_interval = 0 AND start_ts < :dayStartTS")
+    fun getOneTimeTasksBefore(dayStartTS: Long): List<Event>
+
     @Query("SELECT * FROM events WHERE id = :id AND start_ts <= :toTS AND end_ts >= :fromTS AND repeat_interval = 0")
     fun getOneTimeEventFromToWithId(id: Long, toTS: Long, fromTS: Long): List<Event>
 
