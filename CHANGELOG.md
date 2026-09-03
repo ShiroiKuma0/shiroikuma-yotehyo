@@ -1,3 +1,130 @@
+# Changelog — 白い熊 予定表 (fork) and Fossify Calendar (upstream)
+
+This file carries **both** histories. The 白い熊 予定表 fork releases come first, newest first;
+everything below the `# Changelog` heading further down is Fossify Calendar's own changelog,
+kept verbatim.
+
+## 白い熊 予定表 1.10.3+056 — 2026-09-03
+Built on Fossify Calendar 1.10.3.
+
+### Major features
+- **Tick a task off from the calendar.** The icon on every task row is now a checkbox — an empty
+  box, a ticked box once done. One tap writes the completion and restyles the row in place,
+  struck through and dimmed, with no navigation. Works in both places task rows are drawn, the
+  agenda list and the day view, and keys the completion on the occurrence actually tapped, so a
+  repeating task's other occurrences are untouched.
+- **Unfinished tasks roll over to today.** A one-off task still unticked once its own day is over
+  moves forward to today, keeping its clock time, and keeps moving each day until it is ticked —
+  so a task set for a day is either done or still in front of you. Ticking it freezes it on the
+  day it was completed. It is a real move: `start_ts`/`end_ts` are rewritten, reminders reschedule
+  onto the new day, and a CalDAV task is pushed upstream. Repeating tasks are left alone, since
+  their occurrences come from the repetition rule rather than the stored timestamp.
+- **Fixed entries.** Not everything shaped like a task is a to-do — a record of something that
+  happened on its date should stay on that date. A "Fixed entry" switch in the task editor, under
+  the date and time, marks one: no checkbox in either list, no "Mark completed" button, no
+  mark-completed action on its notification, and the rollover skips it. Turning it on also clears
+  any completion the entry picked up while it was a plain task.
+
+### Behavior
+- The rollover runs at most once a day, from the single fetch path every view and both widgets go
+  through, so it happens whether the app is opened, a widget refreshes, or the day flips while the
+  app sits open. It never unfilters a hidden calendar, and refreshes the widgets once rather than
+  once per moved task.
+- Clock times survive a DST change across a rollover.
+
+### Settings
+- **Settings → Tasks → "Roll unfinished tasks over to today"**, on by default, and carried by
+  settings export/import. Switching it back on catches up immediately instead of waiting a day.
+
+## 白い熊 予定表 1.10.3+053 — 2026-08-01
+Built on Fossify Calendar 1.10.3.
+
+### UI
+- Event and task editors: the calendar (account) selector sits directly under the description —
+  one of the first decisions about an entry, rather than something to scroll past reminders,
+  repetition, attendees and status to reach.
+
+### Packaging
+- The fork build counter is zero-padded to three digits everywhere it is rendered as text — the
+  `versionName`, the APK filename and the release tag (`+001`, `+053`). Unpadded counters sort
+  wrongly in a file list, burying the newest build; three digits fixes the order up to `+999`,
+  which the version-code multiplier already caps the counter at. The `versionCode` keeps the plain
+  integer, so in-place updates keep working. Nothing already built was renamed.
+
+## 白い熊 予定表 1.10.3+50 — 2026-07-31
+Built on Fossify Calendar 1.10.3.
+
+### Integrations
+- `LIST_CATEGORIES` states, per item, whether it should start ticked in the caller's picker,
+  rather than leaving the picker to guess.
+- An export can be **cancelled mid-flight**, and it takes its half-written archive with it, so a
+  cancelled backup leaves the directory exactly as it found it.
+
+## 白い熊 予定表 1.10.3+49 — 2026-07-25
+Built on Fossify Calendar 1.10.3.
+
+### Integrations
+- **Headless backup over a token-gated intent.** The same category export, runnable without
+  touching the phone: a sister automation app broadcasts a token-gated intent, the app exports
+  itself in the background and replies with the written path and its real size. Progress comes
+  back as real counts, never a percentage (`Events 1234/8942`). Off by default; the switch and its
+  token live under Export / Import, and the token never travels inside a backup.
+
+## 白い熊 予定表 1.10.3+48 — 2026-07-25
+Built on Fossify Calendar 1.10.3. First fork release, so this entry lists the fork in full.
+
+### Major features
+- **Granular theming — the 白い熊 予定表 UI page.** One consolidated page controls every colour in
+  the app: around 30 slots with a cascading foundation (background / primary / text), covering the
+  search bar, top-bar chrome, menus, event text, day boxes, today and weekend styling, grid lines
+  and dialogs.
+- **Pimlical-style day-box weekly view.** A selectable weekly view built from day boxes:
+  configurable headers (Japanese date format by default, Japanese era or any custom pattern),
+  per-day-type colours and border thicknesses for today and weekends, and seven individually
+  toggleable grid lines each with its own colour and thickness. Weekly views split into
+  independent toggles; long-press empty space to add an event or task.
+- **Category-based Export / Import.** Pick a persistent export directory (it shows the latest
+  export at a glance), then export or import by category — all calendars (events and tasks, as
+  standard ICS), general settings, UI and theme with imported fonts riding along, widgets, and
+  calendar categories with their styling. Optional in-place app restart after an import.
+- **Per-element fonts.** Any text element — events, day-box headers, menus, the view switcher —
+  can take its own font family (import your own font files), weight and size, with a live sample.
+- **Per-event timezones.** Events carry independent start and end timezones, annotated in the day
+  view.
+- **Rich calendar categories.** A category can carry its own font and background colour, applied
+  throughout the views; Manage calendars shows both the foreground and background colour drops.
+
+### UI & theming
+- Pure yellow `#FFFF00` replaces material yellow `#FFEB3B` as the palette yellow, with a one-time
+  migration of already-stored colours.
+- Dialogs get a configurable accent border and boxed buttons, so they stand out against the black
+  background.
+- Colour pickers gain an alpha slider and recently-used colours.
+- 日週月年 view-switcher buttons in the search bar; a 設定 two-glyph shortcut (設 opens the UI page,
+  定 opens Settings); configurable top-bar icons, menu text and settings title/arrow; long-press
+  the overflow button for the UI page.
+- Swipe up in the left quarter to jump to today, in every view.
+- A keyboard-entry HH:MM time picker instead of the clock face.
+- Configurable event time format, with a Japanese clock/duration style as the default.
+- Black/yellow thin-line launcher icon.
+- The UI settings page is indented by hierarchy level, with kxkb-style headings and spacers.
+
+### Fixes & behavior
+- Day view: long-press empty space to add an event or task.
+- Fixed the week-grid refresh on resume, and event/border overlap.
+
+### Packaging
+- Rebranded fork: app id `shiroikuma.yotehyo`, launcher name 白い熊 予定表, so it installs
+  side-by-side with Fossify Calendar. The code namespace stays `org.fossify.calendar`.
+- Builds against a [patched Fossify Commons](https://github.com/ShiroiKuma0/shiroikuma-commons)
+  (6.1.6-sk2 and later) that removes the anti-tamper "fake version" checks a re-signed fork trips,
+  and fixes the spots where Commons hard-codes `org.fossify.*` — including the private-contacts
+  provider, which had hidden shared contacts' birthdays and anniversaries from this app. The
+  in-app sideloading workaround is gone as a result.
+- Fork versioning: upstream version plus a `+NNN` build counter.
+
+---
+
 # Changelog
 All notable changes to this project will be documented in this file.
 
