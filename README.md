@@ -6,13 +6,18 @@
 
 **A black-and-yellow, fully themeable, Pimlical-style calendar.**
 
-A fork of [Fossify Calendar](https://github.com/FossifyOrg/Calendar) with **major additions**: a granular per-element theming system, a Pimlical-style day-box weekly view, category-based Export/Import of everything (events, settings, fonts, calendars), headless backup over a token-gated intent, per-element fonts, Japanese date/time formats, and one-tap navigation shortcuts.
+A fork of [Fossify Calendar](https://github.com/FossifyOrg/Calendar) with **major additions**: tasks you tick off in the calendar and that roll over until you do, a granular per-element theming system, a Pimlical-style day-box weekly view, category-based Export/Import of everything (events, settings, fonts, calendars), headless backup over a token-gated intent, per-element fonts, Japanese date/time formats, and one-tap navigation shortcuts.
 
 Installs **side-by-side** with Fossify Calendar (app id `shiroikuma.yotehyo`).
 
-**📥 Latest release: [`1.10.3+053`](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases)
+**📥 Latest release: [`1.10.3+056`](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases)
 
 </div>
+
+---
+
+## ✅ Tasks that don't get forgotten
+Every task row carries a checkbox: one tap ticks it off in place, struck through and dimmed, without opening anything. A task still unticked once its own day is over **moves forward to today**, keeping its clock time, and keeps moving each day until it is done — so a task set for a day is either finished or still in front of you. Its reminders follow it to the new day. Not everything shaped like a task is a to-do, so a **Fixed entry** switch marks a record of something that happened on its date: no checkbox, nothing to complete, and the rollover leaves it exactly where it is.
 
 ---
 
