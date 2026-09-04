@@ -13,7 +13,6 @@ import androidx.annotation.StringRes
 import androidx.documentfile.provider.DocumentFile
 import org.fossify.calendar.BuildConfig
 import org.fossify.calendar.R
-import org.fossify.calendar.activities.SimpleActivity
 import org.fossify.calendar.extensions.calendarsDB
 import org.fossify.calendar.extensions.config
 import org.fossify.calendar.extensions.eventsHelper
@@ -162,7 +161,7 @@ object SettingsTransfer {
         PRIMARY_ANDROID_DATA_TREE_URI, OTG_ANDROID_DATA_TREE_URI, SD_ANDROID_DATA_TREE_URI,
         PRIMARY_ANDROID_OBB_TREE_URI, OTG_ANDROID_OBB_TREE_URI, SD_ANDROID_OBB_TREE_URI,
         LAST_EXPORTED_SETTINGS_FOLDER, LAST_EXPORTED_SETTINGS_FILE, AUTO_BACKUP_FOLDER,
-        AUTOMATION_ENABLED, AUTOMATION_TOKEN
+        AUTOMATION_ENABLED, AUTOMATION_REQUIRE_TOKEN, AUTOMATION_TOKEN
     )
 
     // Everything the 白い熊 予定表 UI page controls, plus the stock look keys it writes through to.
@@ -361,41 +360,62 @@ object SettingsTransfer {
         }.toSet()
     }
 
-    /** Apply the selected categories from a ZIP. Missing files are skipped. Returns a human summary. */
-    fun import(activity: SimpleActivity, zip: ByteArray, cats: Set<Category>): String {
+    /**
+     * Apply the selected categories from a ZIP. Missing files are skipped. Returns a human summary.
+     *
+     * Takes a plain [Context], not an Activity: contract v2's data door (§2a) imports from a foreground
+     * service started by a binder call, where there is no Activity and never will be — a clean-phone
+     * restore happens into an app that has deliberately not been launched. Everything below was already
+     * a Context extension; only [IcsImporter] had to widen with it.
+     */
+    fun import(context: Context, zip: ByteArray, cats: Set<Category>): String {
         val files = readZip(zip)
         val parts = mutableListOf<String>()
         for (cat in Category.listed.filter { it in cats }) {
             val count = if (cat == Category.UI_THEME_FONTS) {
-                importFonts(activity, files)
+                importFonts(context, files)
             } else {
                 val data = files[entryName(cat)] ?: continue
                 when (cat) {
-                    Category.EVENTS -> importEventsIcs(activity, data)
-                    Category.CALENDARS -> importCalendars(activity, data.decodeToString())
-                    else -> importPrefs(activity, cat, data.decodeToString())
+                    Category.EVENTS -> importEventsIcs(context, data)
+                    Category.CALENDARS -> importCalendars(context, data.decodeToString())
+                    else -> importPrefs(context, cat, data.decodeToString())
                 }
             }
-            parts.add("${activity.getString(cat.labelRes)}: $count")
+            parts.add("${context.getString(cat.labelRes)}: $count")
         }
         if (Category.UI_THEME in cats || Category.UI_THEME_FONTS in cats || Category.WIDGETS in cats) {
             // Repaint everything with the imported look on the next resume.
-            activity.config.themeRevision = activity.config.themeRevision + 1
+            context.config.themeRevision = context.config.themeRevision + 1
         }
+        flushPrefs(context)
         return if (parts.isEmpty()) "nothing imported" else parts.joinToString("\n")
     }
 
-    // The upstream ICS importer needs a file path and a SimpleActivity; it upserts by import id
-    // (UID), so re-importing the same export does not duplicate events. Returns the number of
-    // entries the file carries.
-    private fun importEventsIcs(activity: SimpleActivity, data: ByteArray): Int {
+    /**
+     * Force every pending SharedPreferences write to disk before we tell anyone the import worked.
+     *
+     * A synchronous commit is a barrier for the asynchronous writes queued before it: SharedPreferences
+     * serialises its disk writes through one worker, so awaiting the latest implies the earlier ones
+     * have run. This catches the writes we do NOT own — commons' BaseConfig setters (themeRevision
+     * above) all use apply(), and a SIGKILL arriving between that apply() and its disk write would lose
+     * it. Everything else on the restore path is already durable when its call returns: Room commits
+     * its transaction, and the font files are written through.
+     */
+    private fun flushPrefs(context: Context) {
+        runCatching { context.getSharedPrefs().edit().commit() }
+    }
+
+    // The upstream ICS importer needs a file path; it upserts by import id (UID), so re-importing the
+    // same export does not duplicate events. Returns the number of entries the file carries.
+    private fun importEventsIcs(context: Context, data: ByteArray): Int {
         if (data.isEmpty()) return 0
-        val file = File(activity.cacheDir, "eim_import_events.ics")
+        val file = File(context.cacheDir, "eim_import_events.ics")
         file.writeBytes(data)
         try {
-            val result = IcsImporter(activity).importEvents(
+            val result = IcsImporter(context).importEvents(
                 path = file.absolutePath,
-                defaultCalendarId = defaultCalendarId(activity),
+                defaultCalendarId = defaultCalendarId(context),
                 calDAVCalendarId = 0,
                 overrideFileCalendars = false
             )
@@ -440,7 +460,12 @@ object SettingsTransfer {
             }
             count++
         }
-        editor.apply()
+        // commit(), NOT apply(). 応用管理 force-stops this app the instant an import reports success —
+        // deliberately, because a live process writes its cached SharedPreferences back out at orderly
+        // shutdown and would silently undo the import. That force-stop is a SIGKILL, so an apply() still
+        // in flight is simply lost and the restore reports success over data that never reached disk.
+        // Synchronous is also fine for the UI path: import always runs off the main thread.
+        editor.commit()
         return count
     }
 

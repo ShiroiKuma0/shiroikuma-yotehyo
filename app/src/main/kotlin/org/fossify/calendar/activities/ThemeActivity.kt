@@ -93,6 +93,9 @@ class ThemeActivity : SimpleActivity() {
     private var indentStepPx = 0
     private var currentRowIndent = 0
 
+    // The automation token row, kept so the "Use authorization token?" switch can show and hide it.
+    private var tokenRow: ItemThemeTokenBinding? = null
+
     private var pendingFontSlot: ThemeSlot? = null
     private var pendingFontBinding: ItemThemeTextBinding? = null
 
@@ -274,12 +277,21 @@ class ThemeActivity : SimpleActivity() {
     // (see receivers/StateExportReceiver) ----
 
     private fun addAutomationRows() {
-        // Two rows, in the order every sister app uses: the master switch (default OFF), then the token.
+        // Three rows, in the order every sister app uses since contract v2 (2026-09-04): the master
+        // switch, which now ships ON; then "Use authorization token?", which ships OFF; then the token
+        // itself, shown ONLY while the second switch is on. A 48-character secret sitting under an off
+        // switch invites 白い熊 to paste it somewhere it will do nothing.
         addToggleRow(R.string.enable_automation, config.automationEnabled) {
             config.automationEnabled = it
         }
         addDescriptionRow(R.string.enable_automation_desc)
+        addToggleRow(R.string.automation_require_token, config.automationRequireToken) {
+            config.automationRequireToken = it
+            showTokenRow(it)
+        }
+        addDescriptionRow(R.string.automation_require_token_desc)
         addTokenRow()
+        showTokenRow(config.automationRequireToken)
 
         // All-files access: needed so an automation broadcast can write to an arbitrary absolute path
         // (白い熊's archive folder) outside Download/ and Documents/. API 30+ only.
@@ -294,9 +306,9 @@ class ThemeActivity : SimpleActivity() {
      */
     private fun addTokenRow() {
         val row = ItemThemeTokenBinding.inflate(layoutInflater, binding.themeHolder, false)
+        tokenRow = row
         row.themeTokenLabel.text = getString(R.string.automation_token)
         row.themeTokenLabel.setTextColor(textColor)
-        row.themeTokenValue.text = abbreviateToken(config.automationToken)
         row.themeTokenValue.setTextColor(textColor.adjustAlpha(0.6f))
         row.themeTokenRegenerate.text = getString(R.string.automation_token_regenerate)
         row.themeTokenRegenerate.setTextColor(primaryColor)
@@ -320,6 +332,21 @@ class ThemeActivity : SimpleActivity() {
         }
         indentView(row.root, currentRowIndent)
         binding.themeHolder.addView(row.root)
+    }
+
+    /**
+     * Show or hide the token row, and fill it in the first time it is actually shown.
+     *
+     * The value is read here rather than when the row is inflated because [Config.automationToken]
+     * generates the secret lazily on first read — so an app whose token is not being asked for never
+     * creates one at all, which is the point of the switch above it.
+     */
+    private fun showTokenRow(visible: Boolean) {
+        val row = tokenRow ?: return
+        row.root.beVisibleIf(visible)
+        if (visible) {
+            row.themeTokenValue.text = abbreviateToken(config.automationToken)
+        }
     }
 
     /** "80922d8c…4c49a87c" — enough to tell two tokens apart without showing the whole secret. */

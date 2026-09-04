@@ -46,12 +46,31 @@
     <!-- Automation: a subgroup of Export / Import, since every automation intent drives that export -->
     <string name="automation">Automation</string>
     <string name="enable_automation">Automation export</string>
-    <string name="enable_automation_desc">Sister-app tasks may trigger this app\'s export through the token-gated intent.</string>
+    <string name="enable_automation_desc">Sister apps may trigger this app\'s export and back its data up. Off closes this app off entirely.</string>
+    <string name="automation_require_token">Use authorization token?</string>
+    <string name="automation_require_token_desc">Off: any sister app may drive the automation. On: a caller must also present the token below. Either way the data door checks the caller\'s package name, uid and signing certificate.</string>
     <string name="automation_token">Automation token — tap to copy</string>
     <string name="automation_token_copied">Token copied to the clipboard</string>
     <string name="automation_token_regenerate">Regenerate</string>
     <string name="automation_token_regenerate_warning">Generate a new token? Copies already pasted into 白い熊 自由作業盤 — or any other task — stop working until the new token is pasted there.</string>
     <string name="automation_token_regenerated">Token regenerated</string>
+
+    <!-- The data door (contract v2 §2a): the foreground service that moves a backup through the
+         caller-supplied file descriptor, so 白い熊 応用管理 can restore this app WITH its data. -->
+    <string name="automation_data_channel">Automation data</string>
+    <string name="automation_data_exporting">Writing the backup…</string>
+    <string name="automation_data_importing">Restoring the backup…</string>
+
+    <!-- "contains" in the describe header, rendered verbatim by 応用管理 under this app's row. A
+         calendar has two halves and only one of them is ours: local events and tasks exist nowhere
+         else, while a synced account\'s calendars come back by themselves once it is signed in. The
+         rows say which is which, so 白い熊 can tell from the list what the backup is really keeping. -->
+    <string name="automation_contains_events">Local events and tasks — reminders and repeat rules</string>
+    <string name="automation_contains_calendars">Local calendar categories and their styling</string>
+    <string name="automation_contains_settings">Settings</string>
+    <string name="automation_contains_appearance">Appearance — colours and imported fonts</string>
+    <string name="automation_contains_widgets">Widgets</string>
+    <string name="automation_contains_synced_excluded">Not preserved: synced-account (CalDAV) calendars — those return from the account itself</string>
     <string name="all_files_access">All files access — for backups outside Download/Documents</string>
     <string name="all_files_access_granted">Granted</string>
     <string name="all_files_access_needed">Not granted — tap to allow</string>
