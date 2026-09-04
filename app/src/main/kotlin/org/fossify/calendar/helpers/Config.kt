@@ -509,13 +509,39 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(WIDGET_SHOW_GRID, false)
         set(widgetShowGrid) = prefs.edit().putBoolean(WIDGET_SHOW_GRID, widgetShowGrid).apply()
 
-    // External-automation intent surface (receivers/StateExportReceiver): a master switch plus a shared
-    // secret that every automation broadcast must carry. Same model as the renrakusaki fork's Config and
-    // the 自由作業盤 fork's AutomationAuth. Both keys are device-local — SettingsTransfer excludes them
-    // from every export, so the token never travels in a backup ZIP.
+    // The external-automation gate — the surface behind receivers/StateExportReceiver (§1) and
+    // automation/AutomationProvider (§2a). Same model as the renrakusaki fork's Config and the
+    // 自由作業盤 fork's AutomationAuth. All three keys are device-local — SettingsTransfer excludes them
+    // from every export, so no restore silently flips automation on and the token never travels in a ZIP.
+    //
+    // Contract v2 (白い熊, 2026-09-04) turned this around: [automationEnabled] now defaults to TRUE and
+    // the token became opt-in through [automationRequireToken], default FALSE. A pasted 48-character
+    // secret cannot survive a wipe, and the case the whole family now exists to serve is 応用管理
+    // restoring apps AND their data onto a clean phone, where nothing has been configured yet. A gate
+    // that only works once the phone is already set up is no gate for setting the phone up.
+    //
+    // The switch stays a switch rather than being deleted: it is the only way to close this app off,
+    // and a feature that can be turned on but never off is one 白い熊 cannot retreat from.
     var automationEnabled: Boolean
-        get() = prefs.getBoolean(AUTOMATION_ENABLED, false)
-        set(automationEnabled) = prefs.edit().putBoolean(AUTOMATION_ENABLED, automationEnabled).apply()
+        get() = prefs.getBoolean(AUTOMATION_ENABLED, true)
+        // commit(), never apply() — THIS GATE NOW FAILS OPEN. v2 flipped the default from false to
+        // true, so a write that never reaches disk does not fall back to "off", it falls back to ON.
+        // And 応用管理 force-stops an app the instant it replies to an import, with killProcess — a
+        // SIGKILL, which leaves an in-flight apply() nowhere to land. Turning automation off is the one
+        // action 白い熊 has for shutting this app out, and it is the action most likely to be taken near
+        // a force-stop; losing it silently reopens the door. One tiny, infrequent write: synchronous is
+        // plainly the right trade.
+        set(automationEnabled) {
+            prefs.edit().putBoolean(AUTOMATION_ENABLED, automationEnabled).commit()
+        }
+
+    /** Whether a caller must also present [automationToken]. Default false — the token is opt-in now. */
+    var automationRequireToken: Boolean
+        get() = prefs.getBoolean(AUTOMATION_REQUIRE_TOKEN, false)
+        // commit(): a lost write here means the door stops asking for the token 白い熊 just switched on.
+        set(require) {
+            prefs.edit().putBoolean(AUTOMATION_REQUIRE_TOKEN, require).commit()
+        }
 
     /** The shared secret; generated on first read so the settings row always shows a value. */
     val automationToken: String
@@ -525,7 +551,9 @@ class Config(context: Context) : BaseConfig(context) {
     fun regenerateAutomationToken(): String {
         val bytes = ByteArray(AUTOMATION_TOKEN_BYTES).also { SecureRandom().nextBytes(it) }
         val token = bytes.joinToString("") { "%02x".format(it) }
-        prefs.edit().putString(AUTOMATION_TOKEN, token).apply()
+        // commit(): the worst of the three to lose, because 白い熊 may already have pasted this value
+        // into a caller — and nothing surfaces the loss. The caller simply starts failing "bad token".
+        prefs.edit().putString(AUTOMATION_TOKEN, token).commit()
         return token
     }
 
@@ -537,5 +565,26 @@ class Config(context: Context) : BaseConfig(context) {
     fun isAutomationTokenValid(token: String?): Boolean {
         if (token.isNullOrEmpty()) return false
         return MessageDigest.isEqual(token.toByteArray(), automationToken.toByteArray())
+    }
+
+    /**
+     * The whole automation gate, in the one place every entry point asks. Returns null to proceed, or
+     * the exact "ERROR:" line to answer with.
+     *
+     * Written as ONE function on purpose: the receiver, the provider and the data service must not each
+     * spell the two checks out in a subtly different order, which is how "disabled" and "bad token"
+     * drift apart across forty-two sister apps. The two stay distinct errors because they debug
+     * differently.
+     *
+     * **A token handed to an app that does not require one is IGNORED, never an error** (contract §2).
+     * Tokens live in task arguments and workspace variables that outlive the setting they were pasted
+     * for — a caller still sending one, because it was configured last year or because another app on
+     * the batch does want one, must be served. Refusing it would turn "白い熊 turned a switch off" into
+     * "half the batch mysteriously fails", which is exactly the friction the switch exists to remove.
+     */
+    fun automationRefusal(candidate: String?): String? = when {
+        !automationEnabled -> "ERROR:automation disabled"
+        automationRequireToken && !isAutomationTokenValid(candidate) -> "ERROR:bad token"
+        else -> null
     }
 }

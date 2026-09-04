@@ -1,7 +1,7 @@
 package org.fossify.calendar.helpers
 
+import android.content.Context
 import android.provider.CalendarContract.Events
-import org.fossify.calendar.activities.SimpleActivity
 import org.fossify.calendar.extensions.eventsDB
 import org.fossify.calendar.extensions.eventsHelper
 import org.fossify.calendar.extensions.updateTaskCompletion
@@ -19,7 +19,15 @@ import org.joda.time.DateTimeZone
 import java.io.File
 import kotlin.math.min
 
-class IcsImporter(val activity: SimpleActivity) {
+/**
+ * [activity] is a plain [Context] rather than a SimpleActivity: every member used through it is a
+ * Context extension, and contract v2's data door (§2a) imports from a foreground service that has no
+ * Activity — a clean-phone restore happens into an app deliberately never launched. Commons' toast
+ * helpers already post to the main looper and fall back to a plain system toast off an Activity, so
+ * the error paths below stay safe from a background thread. The parameter keeps its name so the
+ * hundreds of call sites inside this upstream file are untouched.
+ */
+class IcsImporter(val activity: Context) {
     enum class ImportResult(val value: Int) {
         IMPORT_FAIL(3),
         IMPORT_NOTHING_NEW(2),

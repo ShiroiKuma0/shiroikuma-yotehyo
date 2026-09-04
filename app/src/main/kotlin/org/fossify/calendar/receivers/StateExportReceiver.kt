@@ -9,26 +9,21 @@ import java.io.OutputStream
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
-import org.fossify.calendar.R
 import org.fossify.calendar.extensions.config
 import org.fossify.calendar.helpers.ACTION_CANCEL_EXPORT
 import org.fossify.calendar.helpers.ACTION_EXPORT_STATE
 import org.fossify.calendar.helpers.ACTION_LIST_CATEGORIES
+import org.fossify.calendar.helpers.AUTOMATION_LOG_TAG
+import org.fossify.calendar.helpers.AutomationProgress
 import org.fossify.calendar.helpers.EXTRA_AUTOMATION_TOKEN
 import org.fossify.calendar.helpers.EXTRA_EXPORT_ITEMS
 import org.fossify.calendar.helpers.EXTRA_EXPORT_PATH
 import org.fossify.calendar.helpers.EXTRA_PROGRESS_ACTION
-import org.fossify.calendar.helpers.EXTRA_PROGRESS_APP
-import org.fossify.calendar.helpers.EXTRA_PROGRESS_CURRENT
-import org.fossify.calendar.helpers.EXTRA_PROGRESS_TEXT
-import org.fossify.calendar.helpers.EXTRA_PROGRESS_TOTAL
-import org.fossify.calendar.helpers.EXTRA_PROGRESS_UNIT
 import org.fossify.calendar.helpers.EXTRA_REPLY_ACTION
 import org.fossify.calendar.helpers.EXTRA_REPLY_ID
 import org.fossify.calendar.helpers.EXTRA_REPLY_PACKAGE
 import org.fossify.calendar.helpers.EXTRA_REPLY_RESULT
 import org.fossify.calendar.helpers.PROGRESS_THROTTLE_MS
-import org.fossify.calendar.helpers.ProgressReporter
 import org.fossify.calendar.helpers.SettingsTransfer
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.helpers.isRPlus
@@ -36,7 +31,15 @@ import org.fossify.commons.helpers.isRPlus
 /**
  * The 保存復元 state-export contract, for 白い熊 自由作業盤's one-run backup of every sister app.
  *
- * Three exported, token-gated actions:
+ * Three exported actions, gated by [org.fossify.calendar.helpers.Config.automationRefusal] — the master
+ * switch, which now ships ON, plus a token that is only demanded when 白い熊 has asked for one
+ * (contract v2, 2026-09-04). A token sent to this app while it is not asking for one is IGNORED, never
+ * refused. Everything that moves data through a CALLER-SUPPLIED descriptor lives behind
+ * [org.fossify.calendar.automation.AutomationProvider] instead, which can identify who is calling;
+ * this receiver only ever writes where it was told to and reports what it did, which is why it is safe
+ * for it to be the unauthenticated half of the surface. There is deliberately no import action here:
+ * an import overwrites the app's data, and this receiver is exported with no permission.
+ *
  *  - [ACTION_LIST_CATEGORIES] — instant; replies "OK:" plus one `id<TAB>label<TAB>parent<TAB>on|off`
  *    line per selectable item. A sub-option names its parent in the third field and follows its
  *    parent's line ("ui_theme.fonts" under "ui_theme"), so the caller can render it indented and make
@@ -70,7 +73,7 @@ import org.fossify.commons.helpers.isRPlus
  */
 class StateExportReceiver : BroadcastReceiver() {
     companion object {
-        const val TAG = "YotehyoStateExport"
+        const val TAG = AUTOMATION_LOG_TAG
         private const val KILO = 1024.0
 
         /**
@@ -151,7 +154,7 @@ class StateExportReceiver : BroadcastReceiver() {
         when (request) {
             is Request.Done -> finishWith(request.result)
             is Request.Export -> {
-                val progress = throttledProgress(appContext, progressAction, replyPackage, replyId)
+                val progress = AutomationProgress(appContext, progressAction, replyPackage, replyId)
                 val run = RunningExport(replyId)
                 running.set(run)
                 ensureBackgroundThread {
@@ -178,11 +181,10 @@ class StateExportReceiver : BroadcastReceiver() {
         val config = context.config
         val token = intent.getStringExtra(EXTRA_AUTOMATION_TOKEN)
         val replyId = intent.getStringExtra(EXTRA_REPLY_ID)?.trim().orEmpty()
-        if (!config.automationEnabled || !config.isAutomationTokenValid(token)) {
-            Log.i(
-                TAG,
-                "cancel refused: enabled=${config.automationEnabled}, tokenLen=${token?.length ?: 0}"
-            )
+        // The same one gate the export uses — silent here, because a cancel is fire-and-forget and
+        // there is nothing to report a refusal to.
+        config.automationRefusal(token)?.let {
+            Log.i(TAG, "cancel refused: $it")
             return
         }
 
@@ -209,13 +211,14 @@ class StateExportReceiver : BroadcastReceiver() {
         val cats = parseItems(itemsRaw)
         Log.i(
             TAG,
-            "received $action: enabled=${config.automationEnabled}, tokenLen=${token?.length ?: 0}, " +
+            "received $action: enabled=${config.automationEnabled}, " +
+                "requireToken=${config.automationRequireToken}, tokenLen=${token?.length ?: 0}, " +
                 "items=$itemsRaw, path=$path"
         )
 
+        config.automationRefusal(token)?.let { return Request.Done(it) }
+
         return when {
-            !config.automationEnabled -> Request.Done("ERROR:automation disabled")
-            !config.isAutomationTokenValid(token) -> Request.Done("ERROR:bad token")
             action == ACTION_LIST_CATEGORIES -> Request.Done(categoryList(context))
             cats == null -> Request.Done("ERROR:unknown category in items: $itemsRaw")
             path.isNotEmpty() && !path.startsWith("/") ->
@@ -255,7 +258,7 @@ class StateExportReceiver : BroadcastReceiver() {
         context: Context,
         cats: Set<SettingsTransfer.Category>,
         path: String,
-        progress: ThrottledProgress,
+        progress: AutomationProgress,
         run: RunningExport,
     ): String {
         val target = try {
@@ -307,53 +310,6 @@ class StateExportReceiver : BroadcastReceiver() {
         bytes < KILO * KILO * KILO -> "%.1f MB".format(Locale.ROOT, bytes / (KILO * KILO))
         else -> "%.2f GB".format(Locale.ROOT, bytes / (KILO * KILO * KILO))
     }
-
-    private fun throttledProgress(
-        context: Context,
-        progressAction: String,
-        replyPackage: String,
-        replyId: String,
-    ): ThrottledProgress {
-        val appLabel = context.getString(R.string.app_launcher_name)
-        val unitCategory = context.getString(R.string.state_progress_unit_category)
-
-        fun send(current: Long, total: Long, unit: String, text: String) {
-            try {
-                context.sendBroadcast(
-                    Intent(progressAction)
-                        .setPackage(replyPackage.ifEmpty { null })
-                        .putExtra(EXTRA_REPLY_ID, replyId)
-                        .putExtra(EXTRA_PROGRESS_APP, appLabel)
-                        .putExtra(EXTRA_PROGRESS_TEXT, text)
-                        .putExtra(EXTRA_PROGRESS_CURRENT, current)
-                        .putExtra(EXTRA_PROGRESS_TOTAL, total)
-                        .putExtra(EXTRA_PROGRESS_UNIT, unit)
-                        .addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
-                )
-            } catch (e: Exception) {
-                Log.w(TAG, "progress broadcast failed: $e")
-            }
-        }
-
-        var lastSent = 0L
-        return ThrottledProgress(
-            reporter = { current, total, unit, text ->
-                val now = System.currentTimeMillis()
-                if (progressAction.isNotEmpty() && now - lastSent >= PROGRESS_THROTTLE_MS) {
-                    lastSent = now
-                    send(current, total, unit, text)
-                }
-            },
-            final = { categories ->
-                if (progressAction.isNotEmpty()) {
-                    send(categories, categories, unitCategory, "$unitCategory $categories/$categories")
-                }
-            },
-        )
-    }
-
-    /** The throttled progress channel plus the unthrottled completion broadcast. */
-    private class ThrottledProgress(val reporter: ProgressReporter, val final: (Long) -> Unit)
 
     private class CountingOutputStream(private val out: OutputStream) : OutputStream() {
         var count = 0L

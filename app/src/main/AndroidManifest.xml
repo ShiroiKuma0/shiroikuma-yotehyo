@@ -34,9 +34,12 @@
         android:name="android.permission.ACCESS_NETWORK_STATE"
         tools:node="remove" />
 
-    <uses-permission
-        android:name="android.permission.FOREGROUND_SERVICE"
-        android:maxSdkVersion="32" />
+    <!-- The automation data door (contract v2 §2a) runs its export/import in a foreground service, so
+         this can no longer stop at API 32 the way upstream left it — on 33+ startForeground() without
+         the permission is a SecurityException, and 34+ additionally wants the subtype permission that
+         matches android:foregroundServiceType="specialUse". See automation/AutomationDataService. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 
     <queries>
         <package android:name="org.fossify.contacts.debug" />
@@ -46,6 +49,21 @@
     <queries>
         <package android:name="org.fossify.calendar.debug" />
         <package android:name="org.fossify.calendar" />
+    </queries>
+
+    <!-- The automation callers. WITHOUT THESE the reply broadcast's setPackage() fails silently on
+         Android 11+: the export runs, writes correctly, and is never heard of. Both are named on
+         purpose — §1's 保存復元 batch is driven by 自由作業盤, and §2a's data backup/restore by
+         応用管理, so an app that lists only one is inaudible to the other. Until 2026-09-04 this fork
+         listed NEITHER, which means every §1 reply it has ever sent was discarded by the framework.
+         It is not only the reply that breaks: getPackageInfo and getPackagesForUid are visibility
+         filtered too, so an invisible caller fails AutomationCallers' IDENTITY check and is refused as
+         "signature unreadable" rather than merely going unheard.
+         A third caller is a one line addition here; QUERY_ALL_PACKAGES is a Play-policy-restricted
+         permission and buys nothing this needs. -->
+    <queries>
+        <package android:name="shiroikuma.oyokanri" />
+        <package android:name="shiroikuma.jiyusagyoban" />
     </queries>
 
     <uses-feature
@@ -338,6 +356,43 @@
                 <action android:name="shiroikuma.yotehyo.action.CANCEL_EXPORT" />
             </intent-filter>
         </receiver>
+
+        <!-- The data door (contract v2 §2a): 白い熊 応用管理 backs this app up WITH its data and puts
+             it back on a wiped phone. Exported with no android:permission for a real reason — a custom
+             permission would have to be "normal" (any app may hold it) or "signature" (impossible:
+             every app in this family has its own keystore, 42 of them), and neither buys anything the
+             caller check does not. AutomationCallers verifies the exact package name, cross-checks the
+             uid the kernel reports, and pins the caller's signing certificate. -->
+        <provider
+            android:name=".automation.AutomationProvider"
+            android:authorities="${applicationId}.automation"
+            android:exported="true" />
+
+        <!-- Where an export or import actually runs: a binder call returns in milliseconds, this can
+             take minutes, and a backgrounded app writing for minutes is frozen mid-stream on this
+             EMUI — which would put a truncated archive underneath a success reply. -->
+        <service
+            android:name=".automation.AutomationDataService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Automation data export/import" />
+        </service>
+
+        <!-- Capability discovery, read straight off the manifest rather than asked over an intent:
+             白い熊 freezes apps aggressively, and a frozen app cannot be asked anything. 応用管理 reads
+             these across every installed package at once with MATCH_UNINSTALLED_PACKAGES |
+             MATCH_DISABLED_COMPONENTS. An app without them is simply not offered for data backup. -->
+        <meta-data
+            android:name="shiroikuma.automation.contract"
+            android:value="2" />
+        <meta-data
+            android:name="shiroikuma.automation.format"
+            android:value="1" />
+        <meta-data
+            android:name="shiroikuma.automation.min_format"
+            android:value="1" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

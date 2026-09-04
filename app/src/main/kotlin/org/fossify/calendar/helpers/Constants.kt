@@ -370,13 +370,23 @@ const val EXTRA_PROGRESS_CURRENT = "current"
 const val EXTRA_PROGRESS_TOTAL = "total"
 const val EXTRA_PROGRESS_UNIT = "unit"
 
+// The data door's correlation id (§2a). A job's progress carries it in BOTH "job_id" and "reply_id" so
+// one progress reader on the caller's side serves the broadcast door and the provider door alike.
+const val EXTRA_JOB_ID = "job_id"
+
 // At most one progress broadcast per this many ms (the final one at completion is unthrottled).
 const val PROGRESS_THROTTLE_MS = 500L
 
 // The automation gate, in the app's shared prefs but never exported — see SettingsTransfer's
 // DEVICE_LOCAL_KEYS: each device owns its own security state, so a restore must not flip the switch
 // or overwrite the secret, and the token must never travel in a backup ZIP.
+//
+// Contract v2 (2026-09-04) turned the gate around: the master switch now defaults to ON and the token
+// to NOT REQUIRED. A pasted secret cannot survive a wipe, and the case this family exists to serve is
+// 白い熊 応用管理 restoring apps AND their data onto a clean phone, where nothing has been configured
+// and nobody has pasted anything. See Config.automationRefusal — the one place both checks are made.
 const val AUTOMATION_ENABLED = "automation_enabled"
+const val AUTOMATION_REQUIRE_TOKEN = "automation_require_token"
 const val AUTOMATION_TOKEN = "automation_token"
 
 fun getNowSeconds() = System.currentTimeMillis() / 1000L
