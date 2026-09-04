@@ -4,6 +4,66 @@ This file carries **both** histories. The 白い熊 予定表 fork releases come
 everything below the `# Changelog` heading further down is Fossify Calendar's own changelog,
 kept verbatim.
 
+## 白い熊 予定表 1.10.3+058 — 2026-09-04
+Built on Fossify Calendar 1.10.3.
+
+Sister-app automation moves to contract v2. The headline is that this app can now be backed up
+**with its data** and restored onto a wiped phone, which is what required the gate to open by
+default: a pasted secret cannot survive the wipe it is meant to help you recover from.
+
+### Major features
+- **Automation answers out of the box.** The master switch now ships **on**, and the authorization
+  token became a separate, opt-in switch — 「Use authorization token?」, off by default — so a
+  sister app can drive this app's backup with nothing configured. The token itself still exists,
+  still regenerates, and still never travels inside a backup; its row is hidden until the switch
+  asks for it, and the secret is not even generated until then. Turning automation off remains the
+  way to close this app off entirely.
+- **A token sent to this app while it is not asking for one is ignored, never refused.** Tokens
+  live in task arguments that outlive the setting they were pasted for, so refusing one would turn
+  a single switch into half a batch mysteriously failing.
+- **A data door that can restore this app on a clean phone.** A new `ContentProvider` at
+  `shiroikuma.yotehyo.automation` answers `describe` / `export` / `import` / `cancel`. `describe`
+  reports what this app holds without exporting anything, so a backup app can draw its row and
+  judge compatibility before streaming a byte. The archive itself moves through a
+  `ParcelFileDescriptor` **the caller opens** — not a path — so the backup app can encrypt and
+  checksum it as one of its own files, and the descriptor stops working the moment it is closed.
+- **The door knows who is knocking.** Callers are checked three ways: an exact package name (never
+  a prefix — a package name is not a namespace anyone owns, and a sideloaded app may call itself
+  anything), a cross-check against the uid the kernel reports, and a **pinned signing certificate**,
+  which is what still holds on a phone where the real caller is not installed yet.
+- **Importing is possible only through that door.** The broadcast receiver is exported without a
+  permission, so an import action there would let any app on the phone overwrite this one's data.
+- **The backup says which half of a calendar it is keeping.** The `describe` header names local
+  events and tasks, their reminders and repeat rules as what is preserved, and states plainly that
+  synced-account (CalDAV) calendars are not — those come back from the account itself.
+
+### Fixes
+- **Automation replies were never being delivered.** The manifest's `<queries>` named only
+  `org.fossify.*` packages, so on Android 11+ package-visibility filtering silently discarded every
+  reply broadcast this fork has ever sent: the export ran, wrote correctly, and was never heard of.
+  Both sister callers are now named.
+- **Progress broadcasts had the same fault in a different shape.** They fell back to an implicit
+  broadcast when no reply package was supplied, and since API 26 an implicit broadcast reaches no
+  manifest-declared receiver at all. Progress is now sent only when it can actually be addressed.
+- **A restore could report success over data that never reached disk.** The backup app force-stops
+  an app the instant an import reports success — deliberately, since a live process would write its
+  cached preferences back out and undo the import — and that kill leaves an asynchronous write
+  nowhere to land. The settings import now commits synchronously, and the import ends with a
+  barrier commit that also flushes writes made by shared-library setters this app does not own.
+- **Turning automation off could silently fail to stick.** Now that the switch defaults to on, a
+  lost write reopens the door rather than leaving it shut, so the three gate settings are written
+  synchronously.
+- **A retried backup request could kill the app.** The data service returned early — on a stale job
+  id, or a restart with no request — before calling `startForeground()`, which the platform requires
+  once a foreground start has been requested, on pain of killing the process.
+- An import no longer needs an Activity, so it can run into an app that has deliberately never been
+  launched; and a large archive is spooled to disk and checked for completeness before anything is
+  written.
+
+### Packaging
+- `FOREGROUND_SERVICE` no longer stops at API 32, and `FOREGROUND_SERVICE_SPECIAL_USE` is declared,
+  as the data door's service requires.
+
 ## 白い熊 予定表 1.10.3+056 — 2026-09-03
 Built on Fossify Calendar 1.10.3.
 

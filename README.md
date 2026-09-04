@@ -6,11 +6,11 @@
 
 **A black-and-yellow, fully themeable, Pimlical-style calendar.**
 
-A fork of [Fossify Calendar](https://github.com/FossifyOrg/Calendar) with **major additions**: tasks you tick off in the calendar and that roll over until you do, a granular per-element theming system, a Pimlical-style day-box weekly view, category-based Export/Import of everything (events, settings, fonts, calendars), headless backup over a token-gated intent, per-element fonts, Japanese date/time formats, and one-tap navigation shortcuts.
+A fork of [Fossify Calendar](https://github.com/FossifyOrg/Calendar) with **major additions**: tasks you tick off in the calendar and that roll over until you do, a granular per-element theming system, a Pimlical-style day-box weekly view, category-based Export/Import of everything (events, settings, fonts, calendars), headless backup plus a verified data door that restores this app **with its data** onto a wiped phone, per-element fonts, Japanese date/time formats, and one-tap navigation shortcuts.
 
 Installs **side-by-side** with Fossify Calendar (app id `shiroikuma.yotehyo`).
 
-**📥 Latest release: [`1.10.3+056`](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases)
+**📥 Latest release: [`1.10.3+058`](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases)
 
 </div>
 
@@ -27,8 +27,12 @@ One consolidated page controls every colour in the app — ~30 slots with a casc
 ## 📦 Export / Import everything, by category
 The first section of the UI page: pick a persistent export directory (it shows the latest export at a glance), then export or import by category — **all calendars (all events & tasks, as standard ICS)**, general settings, UI & theme (imported fonts ride along), widgets, and calendar categories with their styling. Round-pill panel buttons, chain-closing success dialogs, optional in-place app restart after import.
 
-## 🤖 Headless backup over a token-gated intent
-The same category export, runnable without touching the phone: a sister automation app broadcasts a token-gated intent, this app exports itself in the background and replies with the written path and its real size. Progress comes back as **real counts, never a percentage** — `Events 1234/8942`. A run can be **stopped mid-flight**, and it takes its half-written archive with it, so a cancelled backup leaves the directory exactly as it found it. The app also **states which items should start ticked** in the caller's picker rather than leaving it to guess. Off by default; the switch and its token live under Export / Import, and the token never travels inside a backup.
+## 🤖 Headless backup, and a restore that survives a wiped phone
+The same category export, runnable without touching the phone: a sister app asks, this app exports itself in the background and replies with the written path and its real size. Progress comes back as **real counts, never a percentage** — `Events 1234/8942`. A run can be **stopped mid-flight**, and it takes its half-written archive with it, so a cancelled backup leaves the directory exactly as it found it. The app also **states which items should start ticked** in the caller's picker rather than leaving it to guess.
+
+It is **on out of the box**, and the authorization token is now optional — a switch under Export / Import, off unless you want it. A pasted secret cannot survive a wipe, and surviving a wipe is the point: a second, **authenticated door** lets the backup app pull this app's data and put it back on a clean phone, before this app has ever been launched. That door checks its caller three ways — the exact package name, a cross-check against the uid the kernel reports, and a **pinned signing certificate** — and moves the archive through a file descriptor the caller opens, so nothing is written into a directory this app cannot see being encrypted and checksummed. Restoring is only ever possible through that door; the open one can write a backup and say what it did, and nothing else.
+
+---
 
 ## 📅 Pimlical-style day-box weekly view
 A selectable weekly view built from day boxes: configurable headers (Japanese date format by default, Japanese era or any custom pattern), per-day-type colours and border thicknesses for today and weekends, and seven individually toggleable grid lines, each with its own colour and thickness. Long-press empty space to add an event or task.
