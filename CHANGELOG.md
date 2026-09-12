@@ -4,6 +4,33 @@ This file carries **both** histories. The 白い熊 予定表 fork releases come
 everything below the `# Changelog` heading further down is Fossify Calendar's own changelog,
 kept verbatim.
 
+## 白い熊 予定表 1.10.3+059 — 2026-09-12
+Built on Fossify Calendar 1.10.3.
+
+A restore onto a new phone no longer loses calendars from view.
+
+### Fixes
+- **Every calendar comes back after a restore onto another phone.** A calendar's id is this
+  phone's auto-increment number, and the old phone's numbers were being applied verbatim: the
+  events import re-created each calendar under a fresh id, then the general settings landed the
+  old phone's "shown calendars" set over them, so any calendar whose number differed — typically
+  after a deleted calendar had left a gap — was filtered out of every view and looked unrestored,
+  its events sitting in the database the whole time. Calendar ids now travel in the export only to
+  be translated: the shown, quick-filter, auto-backup and default-calendar settings are remapped
+  old id → new id **by calendar title** on import.
+- **Import order is now calendars → events → settings**, so every title the export names has been
+  given this phone's id before the settings that refer to it are applied, and events land in
+  calendars that already carry their type, colour and font.
+- **Synced calendars keep their visibility on a same-phone restore.** An id the export does not
+  list (a CalDAV calendar's — those belong to their account) is kept as it is, unless this phone has
+  since handed that very number to one of the listed local calendars, where keeping it would show
+  or hide the wrong one. A default calendar that maps to nothing is left as the phone has it.
+- **A calendar created by the calendars import starts shown.** It now goes through the same helper
+  the app's own "add calendar" uses, so it is visible and quick-filterable at once; the direct
+  database insert left it hidden until an event landed in it.
+- Exports written before ids travelled import exactly as before; for one of those, ticking the
+  missing calendar under the main menu's filter brings its events back.
+
 ## 白い熊 予定表 1.10.3+058 — 2026-09-04
 Built on Fossify Calendar 1.10.3.
 

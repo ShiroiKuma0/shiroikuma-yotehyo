@@ -10,7 +10,7 @@ A fork of [Fossify Calendar](https://github.com/FossifyOrg/Calendar) with **majo
 
 Installs **side-by-side** with Fossify Calendar (app id `shiroikuma.yotehyo`).
 
-**📥 Latest release: [`1.10.3+058`](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases)
+**📥 Latest release: [`1.10.3+059`](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases)
 
 </div>
 
@@ -25,7 +25,7 @@ Every task row carries a checkbox: one tap ticks it off in place, struck through
 One consolidated page controls every colour in the app — ~30 slots with a cascading foundation (background / primary / text), covering the search bar, top-bar chrome, menus, event text, day boxes, today/weekend styling, grid lines, and dialogs. Every colour picker has an alpha slider and recent colours; defaults are pure yellow `#FFFF00` on black. Dialogs get a configurable accent border and boxed buttons so they stand out on the black background.
 
 ## 📦 Export / Import everything, by category
-The first section of the UI page: pick a persistent export directory (it shows the latest export at a glance), then export or import by category — **all calendars (all events & tasks, as standard ICS)**, general settings, UI & theme (imported fonts ride along), widgets, and calendar categories with their styling. Round-pill panel buttons, chain-closing success dialogs, optional in-place app restart after import.
+The first section of the UI page: pick a persistent export directory (it shows the latest export at a glance), then export or import by category — **all calendars (all events & tasks, as standard ICS)**, general settings, UI & theme (imported fonts ride along), widgets, and calendar categories with their styling. Round-pill panel buttons, chain-closing success dialogs, optional in-place app restart after import. An import onto **another phone** keeps every calendar in view: calendar ids are translated by title, so the shown, quick-filter and default-calendar settings follow the calendars they meant rather than whatever numbers the new phone handed out.
 
 ## 🤖 Headless backup, and a restore that survives a wiped phone
 The same category export, runnable without touching the phone: a sister app asks, this app exports itself in the background and replies with the written path and its real size. Progress comes back as **real counts, never a percentage** — `Events 1234/8942`. A run can be **stopped mid-flight**, and it takes its half-written archive with it, so a cancelled backup leaves the directory exactly as it found it. The app also **states which items should start ticked** in the caller's picker rather than leaving it to guess.
