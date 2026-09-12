@@ -75,6 +75,12 @@ typealias ProgressReporter = (current: Long, total: Long, unit: String, text: St
  * [categoryOf] (unknown keys fall into GENERAL so nothing is ever silently dropped), local calendar
  * categories come from the Room DB. Import merges — selected categories only, absent files skipped,
  * unknown keys tolerated, rows upserted by title, never wiped.
+ *
+ * Calendar IDS never travel as meaning: they are this phone's auto-increment numbers, and the prefs
+ * that hold them (which calendars are shown, quick-filtered, auto-backed-up, the default one) are
+ * remapped on import through the calendar TITLES — see [calendarIdMap]. Without that, a restore onto
+ * a new phone re-created every calendar under fresh ids and then applied the old phone's id sets over
+ * them, so any calendar whose number differed was filtered out of every view and looked unrestored.
  */
 object SettingsTransfer {
     const val FORMAT = "yotehyo-export"
@@ -149,6 +155,18 @@ object SettingsTransfer {
         Category.UI_THEME_FONTS -> null // a directory of real font files, not one entry
         else -> "${cat.id}.json"
     }
+
+    // Import order — not [Category.listed]: calendars first, so events land in categories that already
+    // carry their type, colour and font and the id map exists; the prefs that refer to calendar ids last.
+    private val IMPORT_ORDER = listOf(
+        Category.CALENDARS, Category.EVENTS, Category.GENERAL, Category.UI_THEME, Category.UI_THEME_FONTS,
+        Category.WIDGETS
+    )
+
+    // Prefs whose values are calendar ids — a set of them, or the one default calendar. Remapped on
+    // import (see calendarIdMap); everything else in GENERAL is copied verbatim.
+    private val CALENDAR_ID_SET_KEYS = setOf(DISPLAY_CALENDARS, QUICK_FILTER_CALENDARS, AUTO_BACKUP_CALENDARS)
+    private val CALENDAR_ID_KEYS = setOf(DEFAULT_CALENDAR_ID)
 
     // Device-local keys never worth exporting: storage paths/SAF grants, version bookkeeping,
     // sideloading state, the last-used export bookkeeping of the stock mechanism, and the automation
@@ -261,11 +279,13 @@ object SettingsTransfer {
     }
 
     // Local calendar categories only — synced (CalDAV) ones belong to their account, not the export.
+    // The id is written so an import can translate the id-bearing prefs, never to be reused as an id.
     private fun exportCalendars(context: Context): String {
         val arr = JSONArray()
         context.calendarsDB.getCalendars().filter { !it.isSyncedCalendar() }.forEach { cal ->
             arr.put(
                 JSONObject()
+                    .put("id", cal.id)
                     .put("title", cal.title)
                     .put("color", cal.color)
                     .put("type", cal.type)
@@ -371,7 +391,7 @@ object SettingsTransfer {
     fun import(context: Context, zip: ByteArray, cats: Set<Category>): String {
         val files = readZip(zip)
         val parts = mutableListOf<String>()
-        for (cat in Category.listed.filter { it in cats }) {
+        for (cat in IMPORT_ORDER.filter { it in cats }) {
             val count = if (cat == Category.UI_THEME_FONTS) {
                 importFonts(context, files)
             } else {
@@ -379,6 +399,11 @@ object SettingsTransfer {
                 when (cat) {
                     Category.EVENTS -> importEventsIcs(context, data)
                     Category.CALENDARS -> importCalendars(context, data.decodeToString())
+                    // Built here, after calendars and events have been applied, so every title the
+                    // export names has been given this phone's id by one of them.
+                    Category.GENERAL -> importPrefs(
+                        context, cat, data.decodeToString(), calendarIdMap(context, files)
+                    )
                     else -> importPrefs(context, cat, data.decodeToString())
                 }
             }
@@ -435,8 +460,15 @@ object SettingsTransfer {
             ?: 1L
 
     // Merge — never clear, so unrelated/device-local keys survive; keys are re-routed through
-    // categoryOf so a tampered file cannot smuggle values into an unselected category.
-    private fun importPrefs(context: Context, cat: Category, json: String): Int {
+    // categoryOf so a tampered file cannot smuggle values into an unselected category. Calendar ids in
+    // the values are translated through [idMap]; a default calendar that translates to nothing is left
+    // as this phone has it.
+    private fun importPrefs(
+        context: Context,
+        cat: Category,
+        json: String,
+        idMap: Map<Long, Long> = emptyMap(),
+    ): Int {
         val obj = JSONObject(json)
         val editor = context.getSharedPrefs().edit()
         var count = 0
@@ -448,12 +480,26 @@ object SettingsTransfer {
             when (e.optString("t")) {
                 "b" -> editor.putBoolean(key, e.optBoolean("v"))
                 "i" -> editor.putInt(key, e.optInt("v"))
-                "l" -> editor.putLong(key, e.optLong("v"))
+                "l" -> {
+                    val value = e.optLong("v")
+                    if (key in CALENDAR_ID_KEYS) {
+                        editor.putLong(key, remapCalendarId(value, idMap) ?: continue)
+                    } else {
+                        editor.putLong(key, value)
+                    }
+                }
+
                 "f" -> editor.putFloat(key, e.optDouble("v").toFloat())
                 "s" -> editor.putString(key, e.optString("v"))
                 "ss" -> {
                     val arr = e.optJSONArray("v") ?: JSONArray()
-                    editor.putStringSet(key, (0 until arr.length()).map { arr.optString(it) }.toSet())
+                    var values = (0 until arr.length()).map { arr.optString(it) }.toSet()
+                    if (key in CALENDAR_ID_SET_KEYS) {
+                        values = values.mapNotNull { id ->
+                            id.toLongOrNull()?.let { remapCalendarId(it, idMap) }?.toString()
+                        }.toSet()
+                    }
+                    editor.putStringSet(key, values)
                 }
 
                 else -> continue
@@ -469,7 +515,42 @@ object SettingsTransfer {
         return count
     }
 
-    // Upsert local calendar categories by title; existing ones keep their id (and their events).
+    /**
+     * The exporting phone's id → this phone's id, for every local calendar the export lists, matched by
+     * title (the same lookup the ICS importer files events under). Empty for an export written before
+     * ids travelled — the id-bearing prefs are then applied verbatim, as they always were.
+     */
+    private fun calendarIdMap(context: Context, files: Map<String, ByteArray>): Map<Long, Long> {
+        val json = files[entryName(Category.CALENDARS)]?.decodeToString() ?: return emptyMap()
+        val arr = runCatching { JSONArray(json) }.getOrNull() ?: return emptyMap()
+        val map = HashMap<Long, Long>()
+        for (i in 0 until arr.length()) {
+            val o = arr.optJSONObject(i) ?: continue
+            val oldId = o.optLong("id", -1L)
+            val title = o.optString("title")
+            if (oldId <= 0L || title.isEmpty()) continue
+            val newId = context.calendarsDB.getCalendarIdWithTitle(title) ?: continue
+            map[oldId] = newId
+        }
+        return map
+    }
+
+    /**
+     * Where an exported calendar id points on this phone, or null for "nowhere". An id the export does
+     * not list (a synced calendar's — those belong to their account, not the export) is kept as it is,
+     * so a same-phone restore leaves the synced calendars exactly as visible as they were; unless this
+     * phone has since handed that very number to one of the listed local calendars, where keeping it
+     * would show or hide the wrong one.
+     */
+    private fun remapCalendarId(id: Long, idMap: Map<Long, Long>): Long? = when {
+        idMap.containsKey(id) -> idMap.getValue(id)
+        idMap.containsValue(id) -> null
+        else -> id
+    }
+
+    // Upsert local calendar categories by title; existing ones keep their id (and their events). A new
+    // one goes through the helper the app's own "add calendar" uses, so it starts shown and quick-
+    // filterable like any other — plain DB insert left it invisible until an event landed in it.
     private fun importCalendars(context: Context, json: String): Int {
         val arr = JSONArray(json)
         var count = 0
@@ -485,7 +566,7 @@ object SettingsTransfer {
             entity.fontFamily = o.optString("fontFamily", "")
             entity.fontWeight = o.optInt("fontWeight", 0)
             entity.fontSize = o.optInt("fontSize", 0)
-            context.calendarsDB.insertOrUpdate(entity)
+            context.eventsHelper.insertOrUpdateCalendarSync(entity)
             count++
         }
         return count
