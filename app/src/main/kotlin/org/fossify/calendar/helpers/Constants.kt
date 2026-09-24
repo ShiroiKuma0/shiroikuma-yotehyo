@@ -174,11 +174,15 @@ const val LAST_USED_EVENT_SPAN = "last_used_event_span"
 const val THEME_V1_SEEDED = "theme_v1_seeded"
 const val DIALOG_STYLE_SEEDED = "dialog_style_seeded" // one-time seed of the yellow dialog border/buttons
 const val PURE_YELLOW_MIGRATED = "pure_yellow_migrated" // one-time #FFEB3B → #FFFF00 rewrite of persisted colors
+const val TODAY_BOX_BORDER_SEEDED = "today_box_border_seeded" // one-time seed of the blue today box border
+const val TODAY_BOX_BORDER_THICKNESS_DEFAULT = 3 // dp, thick enough to spot today's cell at a glance
 const val DIALOG_BORDER_WIDTH_DEFAULT = 2 // dp
 const val THEME_REVISION = "theme_revision" // bumped on any UI-override change so views repaint
 const val THEME_UNSET = Int.MIN_VALUE // a slot with this stored value follows its inherited default
 const val PALETTE_BLACK = 0xFF000000.toInt()
 const val PALETTE_YELLOW = 0xFFFFFF00.toInt()
+// The one hue the black/yellow palette leaves unused, so it reads as "today" and nothing else.
+const val PALETTE_BLUE = 0xFF2979FF.toInt()
 
 // Per-element fonts: one entry per text slot, keyed by the slot key.
 const val FONT_FAMILY_PREFIX = "font_family_" // String, "" = system/global default

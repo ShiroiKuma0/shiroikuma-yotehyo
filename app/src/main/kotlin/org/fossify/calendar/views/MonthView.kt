@@ -10,6 +10,7 @@ import android.view.View
 import org.fossify.calendar.R
 import org.fossify.calendar.extensions.*
 import org.fossify.calendar.helpers.COLUMN_COUNT
+import org.fossify.calendar.helpers.DAY_BOX_THICKNESS_INHERIT
 import org.fossify.calendar.helpers.Formatter
 import org.fossify.calendar.helpers.ROW_COUNT
 import org.fossify.calendar.models.DayMonthly
@@ -21,8 +22,10 @@ import org.fossify.commons.helpers.LOWER_ALPHA
 import org.fossify.commons.helpers.MEDIUM_ALPHA
 import org.joda.time.DateTime
 import org.joda.time.Days
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 // used in the Monthly view fragment, 1 view per screen
 class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(context, attrs, defStyle) {
@@ -30,12 +33,17 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
         private const val BG_CORNER_RADIUS = 8f
         private const val EVENT_DOT_COLUMN_COUNT = 3
         private const val EVENT_DOT_ROW_COUNT = 1
+
+        // Summed per-channel distance (0..765) below which a color is considered indistinguishable
+        // from the background it is drawn on, i.e. effectively invisible.
+        private const val MIN_VISIBLE_COLOR_DISTANCE = 60
     }
 
     private var textPaint: Paint
     private var eventTitlePaint: TextPaint
     private var gridPaint: Paint
     private var circleStrokePaint: Paint
+    private var todayBoxBorderPaint: Paint
     private var plusTextPaint: Paint
     private var eventDotPaint: Paint
     private var config = context.config
@@ -43,6 +51,9 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
     private var dayHeight = 0f
     private var primaryColor = 0
     private var todayColor = 0
+    private var todayBoxBorderColor = 0
+    private var todayBoxBorderWidth = 0f
+    private var backgroundColor = 0
     private var textColor = 0
     private var weekendsTextColor = 0
     private var weekDaysLetterHeight = 0
@@ -59,6 +70,7 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
     private var isMonthDayView = false
     private var allEvents = ArrayList<MonthViewEvent>()
     private var bgRectF = RectF()
+    private var todayBoxRectF = RectF()
     private var dayTextRect = Rect()
     private var dayLetters = ArrayList<String>()
     private var days = ArrayList<DayMonthly>()
@@ -70,6 +82,7 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
     init {
         primaryColor = context.getProperPrimaryColor()
         todayColor = context.themeColor(ThemeSlot.TODAY_HIGHLIGHT)
+        backgroundColor = context.themeColor(ThemeSlot.BACKGROUND)
         textColor = context.getProperTextColor()
         weekendsTextColor = config.highlightWeekendsColor
         showWeekNumbers = config.showWeekNumbers
@@ -107,6 +120,11 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
             color = primaryColor
         }
 
+        todayBoxBorderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+        }
+        refreshTodayBoxBorder()
+
         val smallerTextSize = resources.getDimensionPixelSize(org.fossify.commons.R.dimen.smaller_text_size)
         eventTitleHeight = smallerTextSize
         eventTitlePaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -125,6 +143,7 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
         days = newDays
         showWeekNumbers = config.showWeekNumbers
         horizontalOffset = context.getWeekNumberWidth()
+        refreshTodayBoxBorder()
         initWeekDayLetters()
         setupCurrentDayOfWeekIndex()
         groupAllEvents()
@@ -277,6 +296,9 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
             for (event in allEvents) {
                 drawEvent(event, canvas)
             }
+
+            // last, so the opaque event backgrounds cannot paint over it
+            drawTodayBoxBorder(canvas)
         }
     }
 
@@ -316,7 +338,8 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
 
         for (i in 0 until ROW_COUNT) {
             val weekDays = days.subList(i * 7, i * 7 + 7)
-            weekNumberPaint.color = if (weekDays.any { it.isToday && !isPrintVersion }) todayColor else textColor
+            val isCurrentWeek = weekDays.any { it.isToday && !isPrintVersion }
+            weekNumberPaint.color = if (isCurrentWeek) getCurrentWeekNumberColor() else textColor
 
             // fourth day of the week determines the week of the year number
             val weekOfYear = days.getOrNull(i * 7 + 3)?.weekOfYear ?: 1
@@ -326,6 +349,74 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
             val yPos = i * dayHeight + weekDaysLetterHeight
             canvas.drawText(id, xPos, yPos + textPaint.textSize, weekNumberPaint)
         }
+    }
+
+    // Marks today by stroking its whole cell, using the very slots the weekly grid already uses for
+    // its day boxes (TODAY_BOX_BORDER + the today/general thickness rows), so 月 and 週 mark today
+    // identically and one setting drives both. A circle around a single glyph is too easy to lose in
+    // a cell carrying three or four event bars.
+    private fun drawTodayBoxBorder(canvas: Canvas) {
+        if (isPrintVersion || todayBoxBorderWidth <= 0f) {
+            return
+        }
+
+        val todayIndex = days.indexOfFirst { it.isToday }
+        if (todayIndex < 0) {
+            return
+        }
+
+        val x = todayIndex % COLUMN_COUNT
+        val y = todayIndex / COLUMN_COUNT
+        val left = x * dayWidth + horizontalOffset
+        val top = y * dayHeight + weekDaysLetterHeight
+        // inset by half the stroke so its full thickness stays inside the cell instead of being
+        // split across the neighbouring grid line
+        val inset = todayBoxBorderWidth / 2
+        todayBoxRectF.set(left + inset, top + inset, left + dayWidth - inset, top + dayHeight - inset)
+
+        todayBoxBorderPaint.strokeWidth = todayBoxBorderWidth
+        todayBoxBorderPaint.color = if (days[todayIndex].isThisMonth) {
+            todayBoxBorderColor
+        } else {
+            todayBoxBorderColor.adjustAlpha(MEDIUM_ALPHA)
+        }
+        canvas.drawRect(todayBoxRectF, todayBoxBorderPaint)
+    }
+
+    private fun refreshTodayBoxBorder() {
+        todayBoxBorderColor = context.themeColor(ThemeSlot.TODAY_BOX_BORDER)
+        val thicknessDp = if (config.todayBoxBorderThickness != DAY_BOX_THICKNESS_INHERIT) {
+            config.todayBoxBorderThickness
+        } else {
+            config.dayBoxBorderThickness
+        }
+        todayBoxBorderWidth = thicknessDp * resources.displayMetrics.density
+    }
+
+    // The current week's number used to be painted in the today highlight alone, so the whole label
+    // ("39:") vanished whenever that slot sat close to the background - a black today highlight on a
+    // black background took the row marker with it. Prefer the today highlight, fall back to the
+    // today box border accent, and finally to the regular text color, so the number is never lost.
+    private fun getCurrentWeekNumberColor(): Int {
+        return listOf(todayColor, todayBoxBorderColor).firstOrNull { it.isDistinguishableFrom(backgroundColor) } ?: textColor
+    }
+
+    /** Whether this color can still be told apart from [background] once drawn over it. */
+    private fun Int.isDistinguishableFrom(background: Int): Boolean {
+        val blended = blendOver(background)
+        val distance = abs(Color.red(blended) - Color.red(background)) +
+            abs(Color.green(blended) - Color.green(background)) +
+            abs(Color.blue(blended) - Color.blue(background))
+        return distance >= MIN_VISIBLE_COLOR_DISTANCE
+    }
+
+    /** This color as it actually appears once drawn over [background], taking its alpha into account. */
+    private fun Int.blendOver(background: Int): Int {
+        val alpha = Color.alpha(this) / 255f
+        val red = (Color.red(this) * alpha + Color.red(background) * (1 - alpha)).roundToInt()
+        val green = (Color.green(this) * alpha + Color.green(background) * (1 - alpha)).roundToInt()
+        val blue = (Color.blue(this) * alpha + Color.blue(background) * (1 - alpha)).roundToInt()
+        return Color.rgb(red, green, blue)
     }
 
     private fun measureDaySize(canvas: Canvas) {
