@@ -4,6 +4,38 @@ This file carries **both** histories. The 白い熊 予定表 fork releases come
 everything below the `# Changelog` heading further down is Fossify Calendar's own changelog,
 kept verbatim.
 
+## 白い熊 予定表 1.10.3+060 — 2026-09-24
+Built on Fossify Calendar 1.10.3.
+
+Today is findable again in the monthly view.
+
+### UI & theming
+- **Today's cell now carries a border.** The monthly view marked today with a filled circle behind
+  the day number, painted in the today-highlight colour — with that slot set to black on a black
+  background the circle is invisible and the day number merely turns white, which is easy to lose
+  in a cell carrying three or four event bars. Today's whole cell is stroked instead: drawn after
+  the event bars, because their backgrounds are opaque and a multi-day bar runs edge to edge, and
+  inset by half its stroke so the full thickness stays inside the cell rather than straddling the
+  neighbouring grid line. It dims when today falls in a greyed adjacent month, and is skipped in
+  the compact 月+日 grid, which draws no boxes at all.
+- **One setting marks today in both views.** The border takes its colour and thickness from the
+  very slots the weekly view already draws its day boxes with — 今日のボックスの枠線 and its
+  thickness row — so 月 and 週 mark today identically and no new setting appeared. Both were still
+  at their inherited defaults (the dim grid-line colour at 1 dp, which would have read as one more
+  grid line), so a one-time seed sets them to blue `#2979FF` at 3 dp, blue being the one hue the
+  black/yellow palette leaves unused. It writes only while the slot and its thickness are
+  untouched, so a customisation already made is never overwritten, and both stay editable under
+  今日のボックス.
+
+### Fixes
+- **The current week's number stopped disappearing.** The week column read 36, 37, 38, nothing,
+  40, 41 — the label for the week holding today was painted in the today-highlight colour too,
+  black on black. That colour is now picked by visibility: the today highlight first, then the
+  today box border accent, and the plain text colour as a last resort, judged after blending the
+  colour's alpha over the background rather than on its raw RGB, so the label cannot be lost again.
+- The circle behind the day number is untouched and still follows the today highlight, so setting
+  that slot to a visible colour gives both cues at once.
+
 ## 白い熊 予定表 1.10.3+059 — 2026-09-12
 Built on Fossify Calendar 1.10.3.
 
