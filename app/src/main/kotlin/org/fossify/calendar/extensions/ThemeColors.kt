@@ -3,10 +3,13 @@ package org.fossify.calendar.extensions
 import android.content.Context
 import androidx.annotation.StringRes
 import org.fossify.calendar.R
+import org.fossify.calendar.helpers.DAY_BOX_THICKNESS_INHERIT
 import org.fossify.calendar.helpers.DIALOG_BORDER_WIDTH_DEFAULT
 import org.fossify.calendar.helpers.PALETTE_BLACK
+import org.fossify.calendar.helpers.PALETTE_BLUE
 import org.fossify.calendar.helpers.PALETTE_YELLOW
 import org.fossify.calendar.helpers.THEME_UNSET
+import org.fossify.calendar.helpers.TODAY_BOX_BORDER_THICKNESS_DEFAULT
 import org.fossify.commons.extensions.adjustAlpha
 import org.fossify.commons.extensions.getContrastColor
 import org.fossify.commons.extensions.getProperBackgroundColor
@@ -193,6 +196,29 @@ fun Context.seedDialogStyleIfNeeded() {
     config.dialogBorderWidth = DIALOG_BORDER_WIDTH_DEFAULT
     config.styledDialogButtons = true
     config.dialogStyleSeeded = true
+}
+
+/**
+ * One-time seed of the today box border: a blue stroke around today's day box, thick enough to find
+ * at a glance against the black/yellow palette. The monthly and the weekly view share these two
+ * settings, so today is marked the same way in both. Seeded only while the slot and its thickness
+ * are still untouched, so an existing customization is never overwritten; adjustable afterwards
+ * under 今日のボックス in 白い熊 予定表 UI.
+ */
+fun Context.seedTodayBoxBorderIfNeeded() {
+    if (config.todayBoxBorderSeeded) {
+        return
+    }
+
+    config.todayBoxBorderSeeded = true
+    val isUntouched = config.getThemeOverride(ThemeSlot.TODAY_BOX_BORDER.key) == THEME_UNSET &&
+        config.todayBoxBorderThickness == DAY_BOX_THICKNESS_INHERIT
+    if (!isUntouched) {
+        return
+    }
+
+    setThemeColor(ThemeSlot.TODAY_BOX_BORDER, PALETTE_BLUE)
+    config.todayBoxBorderThickness = TODAY_BOX_BORDER_THICKNESS_DEFAULT
 }
 
 /**
