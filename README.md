@@ -10,7 +10,7 @@ A fork of [Fossify Calendar](https://github.com/FossifyOrg/Calendar) with **majo
 
 Installs **side-by-side** with Fossify Calendar (app id `shiroikuma.yotehyo`).
 
-**📥 Latest release: [`1.10.3+060`](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases)
+**📥 Latest release: [`1.10.3+061`](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases)
 
 </div>
 
@@ -22,7 +22,7 @@ Every task row carries a checkbox: one tap ticks it off in place, struck through
 ---
 
 ## 🎨 Granular black/yellow theming — the 白い熊 予定表 UI page
-One consolidated page controls every colour in the app — ~30 slots with a cascading foundation (background / primary / text), covering the search bar, top-bar chrome, menus, event text, day boxes, today/weekend styling, grid lines, and dialogs. Every colour picker has an alpha slider and recent colours; defaults are pure yellow `#FFFF00` on black. Dialogs get a configurable accent border and boxed buttons so they stand out on the black background. Today's day box is stroked in blue — the one hue the palette leaves unused — in **both** the monthly and the weekly view, from one shared colour and thickness, so today is never lost among the event bars.
+One consolidated page controls every colour in the app — ~30 slots with a cascading foundation (background / primary / text), covering the search bar, top-bar chrome, menus, event text, day boxes, today/weekend styling, grid lines, and dialogs. Every colour picker has an alpha slider and recent colours; defaults are pure yellow `#FFFF00` on black. Dialogs get a configurable accent border and boxed buttons so they stand out on the black background, and the transient flash messages are drawn in the same colours — black with yellow text and a rounded yellow border — as is the contextual action bar raised by selecting an entry, overflow menus included. Today's day box is stroked in blue — the one hue the palette leaves unused — in **both** the monthly and the weekly view, from one shared colour and thickness, so today is never lost among the event bars.
 
 ## 📦 Export / Import everything, by category
 The first section of the UI page: pick a persistent export directory (it shows the latest export at a glance), then export or import by category — **all calendars (all events & tasks, as standard ICS)**, general settings, UI & theme (imported fonts ride along), widgets, and calendar categories with their styling. Round-pill panel buttons, chain-closing success dialogs, optional in-place app restart after import. An import onto **another phone** keeps every calendar in view: calendar ids are translated by title, so the shown, quick-filter and default-calendar settings follow the calendars they meant rather than whatever numbers the new phone handed out.
