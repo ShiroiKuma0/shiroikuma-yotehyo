@@ -4,6 +4,34 @@ This file carries **both** histories. The 白い熊 予定表 fork releases come
 everything below the `# Changelog` heading further down is Fossify Calendar's own changelog,
 kept verbatim.
 
+## 白い熊 予定表 1.10.3+061 — 2026-10-11
+Built on Fossify Calendar 1.10.3.
+
+The last white surface in the app is gone: every flash message is now black with yellow text and a
+rounded yellow border.
+
+### UI & theming
+- **Flash messages follow the palette.** Saving a new entry flashed 「Saving…」 as the stock Android
+  toast — black text on a white bubble, the one piece of white left in a black-and-yellow app. Every
+  flash the app raises is one of those, the app's own and the ones raised for it by dialogs, file
+  pickers and permission refusals alike, so they were all white. They are now drawn with the app's
+  own colours: a background fill in the background slot, text in the primary slot, a 2 dp stroke in
+  the same accent and an 8 dp corner radius — black with yellow text and a rounded yellow border on
+  the default palette, and whatever you have set those slots to otherwise.
+- One limit is Android's, not ours: a flash raised while **nothing of the app is on screen** — from
+  a reminder receiver or a background worker — stays the system bubble, because Android 11 and up
+  silently drops a custom flash view from a backgrounded app and a themed one would show nothing at
+  all. With the app on screen, every flash is themed, wherever in the app it comes from.
+- **The contextual action bar is black with yellow controls.** Long-pressing an event, a day's entry
+  or a calendar to select it used to raise a grey bar with a white title and a grey back arrow. The
+  bar, its title, its icons, the back arrow and the overflow button now take the app's own colours in
+  every theme mode, and the overflow and popup menus behind it are pure black with a 2 dp yellow
+  border instead of the platform's grey card.
+
+### Packaging
+- Built against the patched Fossify Commons `6.1.6-sk9` (from `-sk3`), which is where the themed
+  flashes and the black/yellow action bar live; this app needed no code of its own for either.
+
 ## 白い熊 予定表 1.10.3+060 — 2026-09-24
 Built on Fossify Calendar 1.10.3.
 
