@@ -168,7 +168,7 @@ colors") whenever the installed app id is not `org.fossify.*` — always the cas
 - **Source:** the `shiroikuma-commons` fork (`~/git/shiroikuma-commons`, branch `custom`), which strips
   Commons' anti-tamper "fake version" / sideloading checks out entirely **and** carries fork-package
   fixes for spots where Commons hard-codes `org.fossify.*` (documented in that repo's CLAUDE.md).
-- **Delivery:** published to the local Maven repo, consumed as `commons = "6.1.6-sk3"` in
+- **Delivery:** published to the local Maven repo, consumed as `commons = "6.1.6-sk9"` in
   `gradle/libs.versions.toml` (`mavenLocal()` is already a repository in `settings.gradle.kts`).
 - Because Commons itself no longer nags, this app carries **no** in-app workaround — no `getPackageName`
   spoof, no `SIDELOADING_FALSE`, no `res/raw/keep.xml`.
@@ -185,6 +185,20 @@ black app background. This app seeds the defaults once (`seedDialogStyleIfNeeded
 `#FFFF00` / 2 dp / on) and exposes them under the "Dialogs" section of 白い熊 予定表 UI
 (`ThemeActivity`).
 
+**Black/yellow CAB + popup menus (`-sk4`/`-sk5`, `-sk8`):** the contextual action bar is colored in
+code (`MyRecyclerViewAdapter`, and `MyRecyclerViewListAdapter` as of `-sk8`) — black bar with
+accent-colored title, icons, back arrow and overflow — and the dark / You popup-menu backgrounds get a
+pure-black fill with a 2 dp accent border. Nothing to do in this repo beyond the pin.
+
+**Theme-styled toasts (`-sk6`, `-sk9`):** every toast raised through Commons' `Context.toast()` /
+`showErrorToast()` — which is *all* of them, this app never builds a `Toast` itself — is drawn with a
+custom view instead of the system's white bubble: `getProperBackgroundColor()` fill,
+`getProperPrimaryColor()` text, a 2 dp primary-color stroke and an 8 dp corner radius, i.e. black with
+yellow text and a rounded yellow border on our palette. A non-activity context (receiver, service,
+worker) borrows the resumed activity via `helpers/ForegroundActivity` when the app is on screen
+(`-sk9`); with nothing on screen it falls back to the plain system toast, because API 30+ silently
+drops custom toast views from a backgrounded app. So the "Saving…" flash on saving an event is themed.
+
 **UI default palette:** black `#000000` + **pure yellow `#FFFF00`** (`PALETTE_BLACK` /
 `PALETTE_YELLOW` in `helpers/Constants.kt`, mirrored by `yotehyo_time_picker_fg` in
 `res/values/colors.xml`). Never material yellow `#FFEB3B`.
@@ -197,7 +211,7 @@ git checkout <new-commons-tag>     # then re-apply all patches (anti-tamper stri
 JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 ./gradlew :commons:publishToMavenLocal -PVERSION=<ver>-skN
 ```
 
-Then set this app's `commons` pin to the same `<ver>-skN` (currently `6.1.6-sk3`; `-skN` is our patch
+Then set this app's `commons` pin to the same `<ver>-skN` (currently `6.1.6-sk9`; `-skN` is our patch
 revision — see the commons fork's CLAUDE.md). The patched AAR lives only in `~/.m2`, not in the repo.
 
 ## Commit convention — no Claude attribution
