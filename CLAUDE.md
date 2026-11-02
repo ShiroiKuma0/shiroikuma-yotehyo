@@ -182,10 +182,14 @@ this repo beyond the pin.
 `org.fossify.commons.contactsprovider`, which nothing on 白い熊's phone serves, so this app never saw
 shiroikuma-renrakusaki's private ("Phone storage (not visible by other apps)") contacts or their
 birthdays/anniversaries. `-sk10` asks `shiroikuma.renrakusaki[.debug].contactsprovider` first, and the
-library manifest adds the `<queries>` packages and the `uses-permission` for renrakusaki's
-signature-level `READ_PRIVATE_DATA` — granted here because this app signs with `shiroikuma-denwa.jks`,
-renrakusaki's key. renrakusaki answers only while its "Show private contacts…" setting is on. Nothing
-to change in this repo beyond the pin.
+library manifest adds the `<queries>` packages that make renrakusaki visible to this app.
+**Access is renrakusaki's decision, by package name:** since renrakusaki 1.6.0+091 its provider admits
+the callers on its own list (renrakusaki → UI settings → Private contacts → "Apps allowed to read
+them"). `shiroikuma.yotehyo` is on that list by default, and a `.debug` build is let in when its release
+id is. The `uses-permission` entries for renrakusaki's `READ_PRIVATE_DATA` that sk10's manifest also
+merges in are not what grants access — neither is the shared `shiroikuma-denwa.jks` key. renrakusaki
+answers only while its "Show private contacts…" setting is on. Nothing to change in this repo beyond
+the pin.
 
 **Dialog accent border (`-sk3`):** the commons fork adds opt-in `BaseConfig` settings
 (`dialogBorderColor`, `dialogBorderWidth`, `styledDialogButtons`) that `setupDialogStuff` uses to draw a
