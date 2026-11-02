@@ -4,6 +4,58 @@ This file carries **both** histories. The 白い熊 予定表 fork releases come
 everything below the `# Changelog` heading further down is Fossify Calendar's own changelog,
 kept verbatim.
 
+## 白い熊 予定表 1.10.3+072 — 2026-11-02
+Built on Fossify Calendar 1.10.3.
+
+The monthly view gets real day boxes and visible weekends, both views frame weekends, days off and
+holidays the same way, 休み becomes fully configurable, and the app reads private contacts from our
+Contacts fork.
+
+### Major features
+- **Boxed days in the monthly view.** Every day sits in a thin 1 dp yellow box, drawn as one shared
+  grid so each line is drawn once and two neighbours can never cover each other's edge; the weekday
+  name row is part of the grid. The box takes the day-box border colour when you have set one, the
+  accent otherwise — that slot's inherited default is the dim grid-line colour, which read as no box.
+- **Framed special days, in both views.** A weekend, a day off (休み) or a holiday gets a 2 dp frame
+  in its colour drawn 2 dp *inside* the yellow box, and its date strip filled in the same colour with
+  the date on it — so the yellow box and the coloured frame both stay visible. The weekly view's day
+  boxes draw the same: yellow outline, inner coloured frame, filled date header. In the monthly view
+  the Sat/Sun weekday names are filled too. Today keeps its thick border; a special today carries its
+  coloured frame and strip inside it.
+- **Whole-day frame per calendar.** The calendar editor has a new **Whole-day frame** swatch: every
+  day holding an entry of that calendar is framed and its date strip filled in that colour — red for
+  国民祝日. "Default" means no frame. It travels with the category export / import.
+- **休み, configurable and calendar-independent.** A new **休み (days off)** subsection of 白い熊
+  予定表 UI: an on/off switch, the entry title to match (default 休み, exact, surrounding spaces
+  ignored), the entry's text colour and font, its background, the day's frame and date-strip colour,
+  and the date colour. A 休み entry looks the same whichever calendar it is filed under — the week,
+  month and day views and the event list all follow — and it never brings in its calendar's frame.
+  On one day a framed calendar outranks 休み, and 休み outranks a weekend.
+- **Private contacts from our Contacts fork.** Birthdays and anniversaries of contacts kept private in
+  shiroikuma-renrakusaki ("Phone storage (not visible by other apps)") now reach the contact-events
+  calendars; until now no fork could see them. renrakusaki decides who may read them, by package
+  name — this app is on its list by default.
+
+### UI & theming
+- **Weekends are visible in the monthly view.** The Sat/Sun letters and day numbers were painted in
+  the weekend highlight colour, which is also the weekly view's weekend *header background* — black
+  on black on this palette. They now use that colour only while it shows on the background, and the
+  weekend text colour otherwise.
+- **Today's weekday name no longer vanishes** into a black today highlight in the monthly header row.
+- **Monthly bars use the category styling** the other views already had: with a category background
+  set, the bar is filled with it and the title takes the category's colour (yellow on blue for 休み);
+  the category's font family and weight apply too. Long titles are cut with the font they are drawn in.
+
+### Fixes & behaviour
+- **Views refresh after a calendar edit.** Saving a calendar in Manage calendars, or changing a 休み
+  setting, makes the monthly and weekly views reload on return; they used to keep the old styling
+  until the app was restarted.
+
+### Packaging
+- Built against the patched Fossify Commons `6.1.6-sk10` (from `-sk9`), which reads private contacts
+  from shiroikuma-renrakusaki first.
+- Database version 13 → 14 (one new column on calendars, migrated in place; no data is touched).
+
 ## 白い熊 予定表 1.10.3+061 — 2026-10-11
 Built on Fossify Calendar 1.10.3.
 

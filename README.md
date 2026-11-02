@@ -6,11 +6,11 @@
 
 **A black-and-yellow, fully themeable, Pimlical-style calendar.**
 
-A fork of [Fossify Calendar](https://github.com/FossifyOrg/Calendar) with **major additions**: tasks you tick off in the calendar and that roll over until you do, a granular per-element theming system, a Pimlical-style day-box weekly view, category-based Export/Import of everything (events, settings, fonts, calendars), headless backup plus a verified data door that restores this app **with its data** onto a wiped phone, per-element fonts, Japanese date/time formats, and one-tap navigation shortcuts.
+A fork of [Fossify Calendar](https://github.com/FossifyOrg/Calendar) with **major additions**: tasks you tick off in the calendar and that roll over until you do, a granular per-element theming system, a Pimlical-style day-box weekly view, boxed monthly days with framed weekends, days off (休み) and holidays, category-based Export/Import of everything (events, settings, fonts, calendars), headless backup plus a verified data door that restores this app **with its data** onto a wiped phone, per-element fonts, Japanese date/time formats, and one-tap navigation shortcuts.
 
 Installs **side-by-side** with Fossify Calendar (app id `shiroikuma.yotehyo`).
 
-**📥 Latest release: [`1.10.3+061`](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases)
+**📥 Latest release: [`1.10.3+072`](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases)
 
 </div>
 
@@ -22,7 +22,7 @@ Every task row carries a checkbox: one tap ticks it off in place, struck through
 ---
 
 ## 🎨 Granular black/yellow theming — the 白い熊 予定表 UI page
-One consolidated page controls every colour in the app — ~30 slots with a cascading foundation (background / primary / text), covering the search bar, top-bar chrome, menus, event text, day boxes, today/weekend styling, grid lines, and dialogs. Every colour picker has an alpha slider and recent colours; defaults are pure yellow `#FFFF00` on black. Dialogs get a configurable accent border and boxed buttons so they stand out on the black background, and the transient flash messages are drawn in the same colours — black with yellow text and a rounded yellow border — as is the contextual action bar raised by selecting an entry, overflow menus included. Today's day box is stroked in blue — the one hue the palette leaves unused — in **both** the monthly and the weekly view, from one shared colour and thickness, so today is never lost among the event bars.
+One consolidated page controls every colour in the app — ~30 slots with a cascading foundation (background / primary / text), covering the search bar, top-bar chrome, menus, event text, day boxes, today/weekend styling, grid lines, and dialogs. Every colour picker has an alpha slider and recent colours; defaults are pure yellow `#FFFF00` on black. Dialogs get a configurable accent border and boxed buttons so they stand out on the black background, and the transient flash messages are drawn in the same colours — black with yellow text and a rounded yellow border — as is the contextual action bar raised by selecting an entry, overflow menus included. Today's day box carries a thick border in **both** the monthly and the weekly view, from one shared colour and thickness, so today is never lost among the event bars.
 
 ## 📦 Export / Import everything, by category
 The first section of the UI page: pick a persistent export directory (it shows the latest export at a glance), then export or import by category — **all calendars (all events & tasks, as standard ICS)**, general settings, UI & theme (imported fonts ride along), widgets, and calendar categories with their styling. Round-pill panel buttons, chain-closing success dialogs, optional in-place app restart after import. An import onto **another phone** keeps every calendar in view: calendar ids are translated by title, so the shown, quick-filter and default-calendar settings follow the calendars they meant rather than whatever numbers the new phone handed out.
@@ -31,6 +31,15 @@ The first section of the UI page: pick a persistent export directory (it shows t
 The same category export, runnable without touching the phone: a sister app asks, this app exports itself in the background and replies with the written path and its real size. Progress comes back as **real counts, never a percentage** — `Events 1234/8942`. A run can be **stopped mid-flight**, and it takes its half-written archive with it, so a cancelled backup leaves the directory exactly as it found it. The app also **states which items should start ticked** in the caller's picker rather than leaving it to guess.
 
 It is **on out of the box**, and the authorization token is now optional — a switch under Export / Import, off unless you want it. A pasted secret cannot survive a wipe, and surviving a wipe is the point: a second, **authenticated door** lets the backup app pull this app's data and put it back on a clean phone, before this app has ever been launched. That door checks its caller three ways — the exact package name, a cross-check against the uid the kernel reports, and a **pinned signing certificate** — and moves the archive through a file descriptor the caller opens, so nothing is written into a directory this app cannot see being encrypted and checksummed. Restoring is only ever possible through that door; the open one can write a backup and say what it did, and nothing else.
+
+---
+
+## 🗓️ Boxed days, framed weekends, days off and holidays
+Every day in the monthly and the weekly view sits in a thin yellow box — in the monthly view one shared grid, each line drawn once, the weekday names included. A **weekend**, a **day off** and a **holiday** each get a second, coloured frame drawn just *inside* that box, with the day's date strip filled in the same colour, so the yellow grid and the coloured frame never hide each other: blue for weekends, blue for 休み, red for national holidays.
+
+- **Holidays — a whole-day frame per calendar.** Any calendar can carry a frame colour (国民祝日 → red): every day holding one of its entries is framed and its date strip filled in that colour.
+- **Days off — 休み, wherever it is filed.** An entry titled 休み styles itself and its day the same way whichever calendar holds it. The title, the entry's text colour, font and background, the day's frame and the date colour are all set under 休み on the UI page, with an on/off switch. A holiday outranks a day off, a day off outranks a weekend.
+- **Monthly bars wear their category colours** — background fill with the category's text colour and font, exactly as the weekly view draws them.
 
 ---
 
