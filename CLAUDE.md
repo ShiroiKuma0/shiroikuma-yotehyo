@@ -168,7 +168,7 @@ colors") whenever the installed app id is not `org.fossify.*` — always the cas
 - **Source:** the `shiroikuma-commons` fork (`~/git/shiroikuma-commons`, branch `custom`), which strips
   Commons' anti-tamper "fake version" / sideloading checks out entirely **and** carries fork-package
   fixes for spots where Commons hard-codes `org.fossify.*` (documented in that repo's CLAUDE.md).
-- **Delivery:** published to the local Maven repo, consumed as `commons = "6.1.6-sk9"` in
+- **Delivery:** published to the local Maven repo, consumed as `commons = "6.1.6-sk10"` in
   `gradle/libs.versions.toml` (`mavenLocal()` is already a repository in `settings.gradle.kts`).
 - Because Commons itself no longer nags, this app carries **no** in-app workaround — no `getPackageName`
   spoof, no `SIDELOADING_FALSE`, no `res/raw/keep.xml`.
@@ -177,6 +177,15 @@ colors") whenever the installed app id is not `org.fossify.*` — always the cas
 non-`org.fossify.*` consumers, hiding the Contacts app's shared private/local contacts (and their
 birthdays/anniversaries) from this app. Fixed in the commons fork as of `-sk2` — nothing to change in
 this repo beyond the pin.
+
+**Private contacts from our Contacts fork (`-sk10`):** stock `getMyContactsCursor()` asked only
+`org.fossify.commons.contactsprovider`, which nothing on 白い熊's phone serves, so this app never saw
+shiroikuma-renrakusaki's private ("Phone storage (not visible by other apps)") contacts or their
+birthdays/anniversaries. `-sk10` asks `shiroikuma.renrakusaki[.debug].contactsprovider` first, and the
+library manifest adds the `<queries>` packages and the `uses-permission` for renrakusaki's
+signature-level `READ_PRIVATE_DATA` — granted here because this app signs with `shiroikuma-denwa.jks`,
+renrakusaki's key. renrakusaki answers only while its "Show private contacts…" setting is on. Nothing
+to change in this repo beyond the pin.
 
 **Dialog accent border (`-sk3`):** the commons fork adds opt-in `BaseConfig` settings
 (`dialogBorderColor`, `dialogBorderWidth`, `styledDialogButtons`) that `setupDialogStuff` uses to draw a
@@ -211,7 +220,7 @@ git checkout <new-commons-tag>     # then re-apply all patches (anti-tamper stri
 JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 ./gradlew :commons:publishToMavenLocal -PVERSION=<ver>-skN
 ```
 
-Then set this app's `commons` pin to the same `<ver>-skN` (currently `6.1.6-sk9`; `-skN` is our patch
+Then set this app's `commons` pin to the same `<ver>-skN` (currently `6.1.6-sk10`; `-skN` is our patch
 revision — see the commons fork's CLAUDE.md). The patched AAR lives only in `~/.m2`, not in the repo.
 
 ## Commit convention — no Claude attribution
