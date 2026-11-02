@@ -22,6 +22,9 @@ data class CalendarEntity(
     @ColumnInfo(name = "font_family") var fontFamily: String = "",
     @ColumnInfo(name = "font_weight") var fontWeight: Int = 0,
     @ColumnInfo(name = "font_size") var fontSize: Int = 0,
+    // Colour of a frame drawn round the WHOLE day box of any day holding an entry of this category
+    // (e.g. red for national holidays), in the weekly box grid and the monthly view. THEME_UNSET = none.
+    @ColumnInfo(name = "day_frame_color") var dayFrameColor: Int = THEME_UNSET,
 ) {
     fun getDisplayTitle() =
         if (caldavCalendarId == 0) title else "$caldavDisplayName ($caldavEmail)"

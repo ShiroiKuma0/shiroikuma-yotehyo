@@ -5,6 +5,8 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.LayerDrawable
+import android.graphics.Color
 import android.os.Bundle
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -25,6 +27,8 @@ import org.fossify.calendar.extensions.eventsHelper
 import org.fossify.calendar.extensions.formatEventClock
 import org.fossify.calendar.extensions.launchNewEventIntent
 import org.fossify.calendar.extensions.launchNewTaskIntent
+import org.fossify.calendar.extensions.readableOn
+import org.fossify.calendar.extensions.regularDayBoxBorderColor
 import org.fossify.calendar.extensions.themeColor
 import org.fossify.calendar.helpers.DAY_BOX_ALIGN_CENTER
 import org.fossify.calendar.helpers.DAY_BOX_ALIGN_START
@@ -32,7 +36,12 @@ import org.fossify.calendar.helpers.EVENT_ID
 import org.fossify.calendar.helpers.EVENT_OCCURRENCE_TS
 import org.fossify.calendar.helpers.Formatter
 import org.fossify.calendar.helpers.formatDayBoxHeader
+import org.fossify.calendar.helpers.dayFrameColor
+import org.fossify.calendar.helpers.hasDayOff
 import org.fossify.calendar.helpers.IS_TASK_COMPLETED
+import org.fossify.calendar.helpers.REGULAR_DAY_BOX_BORDER_DP
+import org.fossify.calendar.helpers.SPECIAL_DAY_FRAME_DP
+import org.fossify.calendar.helpers.SPECIAL_DAY_FRAME_GAP_DP
 import org.fossify.calendar.helpers.THEME_UNSET
 import org.fossify.calendar.helpers.TYPE_EVENT
 import org.fossify.calendar.helpers.TYPE_TASK
@@ -46,6 +55,7 @@ import org.fossify.commons.helpers.MEDIUM_ALPHA
 import org.fossify.commons.models.RadioItem
 import org.joda.time.DateTime
 import org.joda.time.DateTimeConstants
+import kotlin.math.roundToInt
 
 // One week rendered as the Pimlical-style "day box" grid: days 0-4 get full-height boxes,
 // the last two days share the bottom-right cell (split). Each box is a header bar (date) plus a
@@ -56,6 +66,11 @@ class WeekGridFragment : Fragment() {
     private var weekStartDateTime = DateTime()
     private var dayCells = listOf<WeekGridDayBinding>()
     private var mWasDestroyed = false
+
+    // Per-day marks from the last fetch (a 休み entry, a category's whole-day frame colour). Kept
+    // between fetches so a refresh restyles the boxes with the known marks instead of flashing plain.
+    private val dayOffs = BooleanArray(7)
+    private val dayFrameColors = IntArray(7) { THEME_UNSET }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -110,45 +125,60 @@ class WeekGridFragment : Fragment() {
         val density = ctx.resources.displayMetrics.density
         val generalBoxBorderDp = ctx.config.dayBoxBorderThickness
         val generalHeaderBorderDp = ctx.config.dayBoxHeaderBorderThickness
+        val regularOutlineColor = ctx.regularDayBoxBorderColor()
+        val regularOutlinePx = (REGULAR_DAY_BOX_BORDER_DP * density).roundToInt().coerceAtLeast(1)
+        val specialFramePx = (SPECIAL_DAY_FRAME_DP * density).roundToInt()
+        val specialFrameGapPx = (SPECIAL_DAY_FRAME_GAP_DP * density).roundToInt()
 
         for (i in 0 until 7) {
             val dayDateTime = weekStartDateTime.plusDays(i)
             val dayCode = Formatter.getDayCodeFromDateTime(dayDateTime)
             val isToday = dayCode == todayCode
             val dayOfWeek = dayDateTime.dayOfWeek
-            val isWeekend = (dayOfWeek == DateTimeConstants.SATURDAY || dayOfWeek == DateTimeConstants.SUNDAY) && highlightWeekends
+            val isWeekendDay = dayOfWeek == DateTimeConstants.SATURDAY || dayOfWeek == DateTimeConstants.SUNDAY
+            val isWeekend = isWeekendDay && highlightWeekends
+            // A day off (休み entry) has its own frame / date colours under 休み in 白い熊 予定表 UI.
+            val isDayOff = dayOffs[i]
+            val frameColor = dayFrameColors[i]
+            val isFramed = frameColor != THEME_UNSET
             val cell = dayCells[i]
 
-            // Each box type (today / styled-weekend / normal) resolves its own header bg, text,
-            // header border and box border slots; the today/weekend slots inherit the general ones.
+            // Variant C (see helpers/DayMarks): every box has the same thin yellow outline (today's is
+            // the thick today border). A weekend / 休み / framed (holiday) day additionally gets a thin
+            // frame in its colour a little inside that outline, and its date header filled in that
+            // colour with the date in the weekend text colour — today included.
+            val specialColor = when {
+                isFramed -> frameColor
+                isDayOff -> ctx.themeColor(ThemeSlot.DAY_OFF_FRAME)
+                isWeekend -> ctx.themeColor(ThemeSlot.WEEKEND_BOX_BORDER)
+                else -> null
+            }
             val headerColor = when {
+                specialColor != null -> specialColor
                 isToday -> ctx.themeColor(ThemeSlot.TODAY_HIGHLIGHT)
-                isWeekend -> ctx.themeColor(ThemeSlot.WEEKEND)
                 else -> ctx.themeColor(ThemeSlot.DAY_BOX_HEADER)
             }
             val textSlot = when {
+                specialColor != null -> ThemeSlot.WEEKEND_TEXT
                 isToday -> ThemeSlot.TODAY_TEXT
-                isWeekend -> ThemeSlot.WEEKEND_TEXT
                 else -> ThemeSlot.DAY_BOX_HEADER_TEXT
             }
             // Color resolves through the slot system: today/weekend text inherits the day-box header
             // text (its default) until given an explicit override of its own.
-            val headerTextColor = ctx.themeColor(textSlot)
+            val headerTextColor = (if (isDayOff && !isFramed) ctx.themeColor(ThemeSlot.DAY_OFF_DATE_TEXT) else ctx.themeColor(textSlot)).let { if (specialColor != null) it.readableOn(specialColor) else it }
             val headerBorderColor = when {
+                specialColor != null -> specialColor
                 isToday -> ctx.themeColor(ThemeSlot.TODAY_HEADER_BORDER)
-                isWeekend -> ctx.themeColor(ThemeSlot.WEEKEND_HEADER_BORDER)
                 else -> ctx.themeColor(ThemeSlot.DAY_BOX_HEADER_BORDER)
             }
-            val boxBorderColor = when {
-                isToday -> ctx.themeColor(ThemeSlot.TODAY_BOX_BORDER)
-                isWeekend -> ctx.themeColor(ThemeSlot.WEEKEND_BOX_BORDER)
-                else -> ctx.themeColor(ThemeSlot.DAY_BOX_BORDER)
+            val outlineColor = if (isToday) ctx.themeColor(ThemeSlot.TODAY_BOX_BORDER) else regularOutlineColor
+            val outlinePx = if (isToday) {
+                (resolveThickness(true, false, ctx.config.todayBoxBorderThickness, 0, generalBoxBorderDp) * density).toInt()
+            } else {
+                regularOutlinePx
             }
-            val boxBorderPx = (resolveThickness(
-                isToday, isWeekend, ctx.config.todayBoxBorderThickness, ctx.config.weekendBoxBorderThickness, generalBoxBorderDp
-            ) * density).toInt()
             val headerBorderPx = (resolveThickness(
-                isToday, isWeekend, ctx.config.todayHeaderBorderThickness, ctx.config.weekendHeaderBorderThickness, generalHeaderBorderDp
+                isToday && specialColor == null, false, ctx.config.todayHeaderBorderThickness, 0, generalHeaderBorderDp
             ) * density).toInt()
 
             cell.weekGridDayHeader.text = formatDayBoxHeader(dayDateTime.millis, ctx.config.dayBoxHeaderDateFormat)
@@ -163,15 +193,29 @@ class WeekGridFragment : Fragment() {
             cell.weekGridDayHeader.applyThemeFont(textSlot, Typeface.BOLD)
 
             val boxFill = if (isToday) ctx.themeColor(ThemeSlot.TODAY_BOX_FILL) else backgroundColor
-            cell.weekGridDayBox.background = GradientDrawable().apply {
+            val outline = GradientDrawable().apply {
                 setColor(boxFill)
-                if (boxBorderPx > 0) {
-                    setStroke(boxBorderPx, boxBorderColor)
+                if (outlinePx > 0) {
+                    setStroke(outlinePx, outlineColor)
                 }
             }
-            // Inset the box content by the border thickness so opaque event backgrounds
-            // (category colors) and the header don't paint over the box's border stroke.
-            cell.weekGridDayBox.setPadding(boxBorderPx, boxBorderPx, boxBorderPx, boxBorderPx)
+            // Inset the box content past every stroke so opaque event backgrounds (category colors) and
+            // the header don't paint over the outline or the inner frame.
+            var contentInset = outlinePx
+            cell.weekGridDayBox.background = if (specialColor != null) {
+                val frameInset = outlinePx + specialFrameGapPx
+                val frame = GradientDrawable().apply {
+                    setColor(Color.TRANSPARENT)
+                    setStroke(specialFramePx, specialColor)
+                }
+                contentInset = frameInset + specialFramePx
+                LayerDrawable(arrayOf(outline, frame)).apply {
+                    setLayerInset(1, frameInset, frameInset, frameInset, frameInset)
+                }
+            } else {
+                outline
+            }
+            cell.weekGridDayBox.setPadding(contentInset, contentInset, contentInset, contentInset)
             cell.weekGridDayEvents.removeAllViews()
             // Tap the box / header / empty space -> open this day's day view (back returns here).
             // Long-press the header or empty space -> add a new event/task. (Per-event tap/long-press
@@ -218,16 +262,34 @@ class WeekGridFragment : Fragment() {
         val dimPastEvents = ctx.config.dimPastEvents
         val dimCompletedTasks = ctx.config.dimCompletedTasks
 
-        for (i in 0 until 7) {
-            val dayDateTime = weekStartDateTime.plusDays(i)
-            val dayCode = Formatter.getDayCodeFromDateTime(dayDateTime)
+        val eventsPerDay = (0 until 7).map { i ->
+            val dayCode = Formatter.getDayCodeFromDateTime(weekStartDateTime.plusDays(i))
             val dayStart = Formatter.getDayStartTS(dayCode)
             val dayEnd = Formatter.getDayEndTS(dayCode)
+            events.filter { it.startTS <= dayEnd && it.endTS >= dayStart }
+        }
+
+        // Restyle the boxes first when a day's marks changed (a 休み entry, a framed category).
+        var marksChanged = false
+        eventsPerDay.forEachIndexed { i, dayEvents ->
+            val isDayOff = dayEvents.hasDayOff()
+            val frameColor = dayEvents.dayFrameColor()
+            if (dayOffs[i] != isDayOff || dayFrameColors[i] != frameColor) {
+                dayOffs[i] = isDayOff
+                dayFrameColors[i] = frameColor
+                marksChanged = true
+            }
+        }
+        if (marksChanged) {
+            setupDayBoxes()
+        }
+
+        for (i in 0 until 7) {
+            val dayDateTime = weekStartDateTime.plusDays(i)
             val container = dayCells[i].weekGridDayEvents
             container.removeAllViews()
 
-            events.asSequence()
-                .filter { it.startTS <= dayEnd && it.endTS >= dayStart }
+            eventsPerDay[i].asSequence()
                 .sortedWith(compareBy({ !it.getIsAllDay() }, { it.startTS }, { it.title }))
                 .forEach { addEventLine(container, it, dayDateTime, dimPastEvents, dimCompletedTasks) }
         }

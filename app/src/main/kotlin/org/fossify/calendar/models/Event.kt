@@ -86,6 +86,14 @@ data class Event(
     @Ignore
     var categoryFontSize: Int = 0
 
+    // The category's whole-day frame colour (THEME_UNSET = the category frames nothing).
+    @Ignore
+    var categoryDayFrameColor: Int = Int.MIN_VALUE
+
+    // True when this entry's title is the configured 休み title (resolved at fetch time, not persisted).
+    @Ignore
+    var isDayOffEntry: Boolean = false
+
     // True once the assigned category carries styling beyond its colour, so views can restyle the event.
     fun hasCategoryStyle() = categoryBackgroundColor != Int.MIN_VALUE ||
         categoryFontFamily.isNotEmpty() || categoryFontWeight > 0 || categoryFontSize > 0

@@ -132,6 +132,8 @@
     <string name="theme_event_time_format">Event time format</string>
     <string name="theme_category_background">Background colour</string>
     <string name="category_add_font_hint">Import new fonts from the 白い熊 予定表 UI settings page.</string>
+    <string name="category_day_frame">Whole-day frame</string>
+    <string name="category_day_frame_hint">Every day holding an entry of this category gets its whole box framed in this colour, in the week and month views. Default = no frame.</string>
     <string name="theme_event_time_japanese">Japanese (午前…)</string>
     <string name="theme_time_pattern_hint">Time pattern</string>
     <string name="theme_time_format_legend">Pattern letters: H 24-hour, h 12-hour, m minute, a AM/PM. Example: HH:mm. Any other characters appear literally.</string>
@@ -170,6 +172,15 @@
     <string name="theme_sub_day_boxes">Day boxes</string>
     <string name="theme_sub_today_boxes">Today boxes</string>
     <string name="theme_sub_weekend_boxes">Weekend boxes</string>
+    <string name="theme_sub_day_off">休み (days off)</string>
+    <string name="theme_day_off_description">An entry with this title marks its day as a day off. The entry keeps these colours whatever calendar it is filed under, and its day gets the 休み frame and date strip in the week and month views. A holiday calendar\'s whole-day frame outranks it.</string>
+    <string name="theme_day_off_enabled">Style days off</string>
+    <string name="theme_day_off_title">Day-off entry title</string>
+    <string name="theme_day_off_title_legend">Exact title, surrounding spaces ignored. Empty = 休み.</string>
+    <string name="theme_day_off_entry_text">休み entry text</string>
+    <string name="theme_day_off_entry_background">休み entry background</string>
+    <string name="theme_day_off_frame">休み day frame and date strip</string>
+    <string name="theme_day_off_date_text">休み date</string>
     <string name="theme_sub_highlights_grid">Highlights &amp; grid</string>
     <!-- Day-box (Pimlical-style) week view -->
     <string name="weekly_grid_view">Weekly grid (day boxes)</string>

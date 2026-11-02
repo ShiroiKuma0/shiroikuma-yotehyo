@@ -61,6 +61,31 @@
             android:layout_marginStart="@dimen/small_margin"
             android:layout_marginTop="@dimen/medium_margin" />
 
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/type_day_frame_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/small_margin"
+            android:layout_marginTop="@dimen/activity_margin"
+            android:text="@string/category_day_frame" />
+
+        <ImageView
+            android:id="@+id/type_day_frame_color"
+            android:layout_width="@dimen/color_sample_size"
+            android:layout_height="@dimen/color_sample_size"
+            android:layout_marginStart="@dimen/small_margin"
+            android:layout_marginTop="@dimen/medium_margin" />
+
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/type_day_frame_hint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/small_margin"
+            android:layout_marginTop="@dimen/tiny_margin"
+            android:alpha="0.7"
+            android:text="@string/category_day_frame_hint"
+            android:textSize="@dimen/smaller_text_size" />
+
         <RelativeLayout
             android:id="@+id/type_font_row"
             android:layout_width="match_parent"
