@@ -20,6 +20,11 @@ import org.fossify.calendar.extensions.rollOverIncompleteTasks
 import org.fossify.calendar.extensions.scheduleNextEventReminder
 import org.fossify.calendar.extensions.seconds
 import org.fossify.calendar.extensions.updateWidgets
+import org.fossify.calendar.extensions.ThemeSlot
+import org.fossify.calendar.extensions.themeColor
+import org.fossify.calendar.extensions.effectiveFontFamily
+import org.fossify.calendar.extensions.effectiveFontWeight
+import org.fossify.calendar.extensions.effectiveFontSize
 import org.fossify.calendar.models.CalendarEntity
 import org.fossify.calendar.models.Event
 import org.fossify.commons.extensions.getProperPrimaryColor
@@ -524,6 +529,12 @@ class EventsHelper(val context: Context) {
 
         val calendarColors = getCalendarColors()
         val calendarsById = getCalendarsSync().associateBy { it.id }
+        val dayOffTitle = config.dayOffTitleOrNull
+        val dayOffText = context.themeColor(ThemeSlot.DAY_OFF_ENTRY_TEXT)
+        val dayOffBackground = context.themeColor(ThemeSlot.DAY_OFF_ENTRY_BACKGROUND)
+        val dayOffFontFamily = context.effectiveFontFamily(ThemeSlot.DAY_OFF_ENTRY_TEXT)
+        val dayOffFontWeight = context.effectiveFontWeight(ThemeSlot.DAY_OFF_ENTRY_TEXT)
+        val dayOffFontSize = context.effectiveFontSize(ThemeSlot.DAY_OFF_ENTRY_TEXT)
 
         events.forEach {
             if (it.isTask()) {
@@ -556,6 +567,18 @@ class EventsHelper(val context: Context) {
                 it.categoryFontFamily = category.fontFamily
                 it.categoryFontWeight = category.fontWeight
                 it.categoryFontSize = category.fontSize
+                it.categoryDayFrameColor = category.dayFrameColor
+            }
+
+            // A 休み entry looks the same whatever calendar it is filed under: its colours (and font,
+            // when one is set) come from the 休み rows of 白い熊 予定表 UI, not from its category.
+            if (dayOffTitle != null && it.title.trim() == dayOffTitle) {
+                it.isDayOffEntry = true
+                it.color = dayOffText
+                it.categoryBackgroundColor = dayOffBackground
+                if (dayOffFontFamily.isNotEmpty()) it.categoryFontFamily = dayOffFontFamily
+                if (dayOffFontWeight > 0) it.categoryFontWeight = dayOffFontWeight
+                if (dayOffFontSize > 0) it.categoryFontSize = dayOffFontSize
             }
         }
 

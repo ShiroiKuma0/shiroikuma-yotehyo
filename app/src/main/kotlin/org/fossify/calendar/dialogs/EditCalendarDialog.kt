@@ -7,6 +7,7 @@ import org.fossify.calendar.R
 import org.fossify.calendar.databinding.DialogCalendarBinding
 import org.fossify.calendar.extensions.FontWeightOption
 import org.fossify.calendar.extensions.calDAVHelper
+import org.fossify.calendar.extensions.config
 import org.fossify.calendar.extensions.eventsHelper
 import org.fossify.calendar.extensions.fontDisplayName
 import org.fossify.calendar.extensions.showFontSample
@@ -43,6 +44,7 @@ class EditCalendarDialog(
         binding.apply {
             setupColor(typeColor)
             setupBackgroundColor(typeBackgroundColor)
+            setupDayFrameColor(typeDayFrameColor)
             typeTitle.setText(calendar!!.title)
             typeColor.setOnClickListener {
                 if (calendar?.caldavCalendarId == 0) {
@@ -82,6 +84,20 @@ class EditCalendarDialog(
                     calendar!!.backgroundColor = if (wasPositive) color else THEME_UNSET
                     setupBackgroundColor(typeBackgroundColor)
                     refreshSample()
+                }
+            }
+
+            // Default = no frame. A fresh pick starts from the category's background (else its colour),
+            // which is usually the colour the frame should carry anyway.
+            typeDayFrameColor.setOnClickListener {
+                val current = when {
+                    calendar!!.dayFrameColor != THEME_UNSET -> calendar!!.dayFrameColor
+                    calendar!!.backgroundColor != THEME_UNSET -> calendar!!.backgroundColor
+                    else -> calendar!!.color
+                }
+                AlphaColorPickerDialog(activity, current, addDefaultColorButton = true) { wasPositive, color ->
+                    calendar!!.dayFrameColor = if (wasPositive) color else THEME_UNSET
+                    setupDayFrameColor(typeDayFrameColor)
                 }
             }
 
@@ -154,6 +170,15 @@ class EditCalendarDialog(
         view.setFillWithStroke(shown, activity.getProperBackgroundColor())
     }
 
+    private fun setupDayFrameColor(view: ImageView) {
+        val shown = if (calendar!!.dayFrameColor == THEME_UNSET) {
+            activity.getProperBackgroundColor()
+        } else {
+            calendar!!.dayFrameColor
+        }
+        view.setFillWithStroke(shown, activity.getProperBackgroundColor())
+    }
+
     private fun sizeLabel(sp: Int) = if (sp > 0) "$sp sp" else activity.getString(R.string.theme_size_default)
 
     // Preview the category's text in its own colour + font on its background.
@@ -200,6 +225,8 @@ class EditCalendarDialog(
         calendar!!.id = activity.eventsHelper.insertOrUpdateCalendarSync(calendar!!)
 
         if (calendar!!.id != -1L) {
+            // the month / week views cache their days; make them re-fetch with the new styling
+            activity.config.markCalendarStylingChanged()
             activity.runOnUiThread {
                 dialog.dismiss()
                 callback(calendar!!)

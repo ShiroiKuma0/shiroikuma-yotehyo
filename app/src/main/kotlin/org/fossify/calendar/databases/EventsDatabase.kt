@@ -25,7 +25,7 @@ import java.util.concurrent.Executors
 
 @Database(
     entities = [Event::class, CalendarEntity::class, Widget::class, Task::class],
-    version = 13
+    version = 14
 )
 @TypeConverters(Converters::class)
 abstract class EventsDatabase : RoomDatabase() {
@@ -68,6 +68,7 @@ abstract class EventsDatabase : RoomDatabase() {
                             .addMigrations(MIGRATION_10_11)
                             .addMigrations(MIGRATION_11_12)
                             .addMigrations(MIGRATION_12_13)
+                            .addMigrations(MIGRATION_13_14)
                             .build()
                         db!!.openHelper.setWriteAheadLoggingEnabled(true)
                     }
@@ -202,6 +203,12 @@ abstract class EventsDatabase : RoomDatabase() {
                     execSQL("ALTER TABLE event_types ADD COLUMN font_weight INTEGER NOT NULL DEFAULT 0")
                     execSQL("ALTER TABLE event_types ADD COLUMN font_size INTEGER NOT NULL DEFAULT 0")
                 }
+            }
+        }
+
+        private val MIGRATION_13_14 = object : Migration(13, 14) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE event_types ADD COLUMN day_frame_color INTEGER NOT NULL DEFAULT $THEME_UNSET")
             }
         }
     }

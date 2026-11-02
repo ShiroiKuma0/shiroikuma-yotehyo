@@ -78,6 +78,12 @@ enum class ThemeSlot(
     WEEKEND_TEXT("theme_weekend_text", ThemeGroup.CALENDAR, R.string.theme_weekend_text, hasFont = true),
     WEEKEND_HEADER_BORDER("theme_weekend_header_border", ThemeGroup.CALENDAR, R.string.theme_weekend_header_border),
     WEEKEND_BOX_BORDER("theme_weekend_box_border", ThemeGroup.CALENDAR, R.string.theme_weekend_box_border),
+
+    // 休み (days off): the entry itself, whatever calendar it is filed under, and its day's frame + date
+    DAY_OFF_ENTRY_TEXT("theme_day_off_entry_text", ThemeGroup.CALENDAR, R.string.theme_day_off_entry_text, hasFont = true),
+    DAY_OFF_ENTRY_BACKGROUND("theme_day_off_entry_background", ThemeGroup.CALENDAR, R.string.theme_day_off_entry_background),
+    DAY_OFF_FRAME("theme_day_off_frame", ThemeGroup.CALENDAR, R.string.theme_day_off_frame),
+    DAY_OFF_DATE_TEXT("theme_day_off_date_text", ThemeGroup.CALENDAR, R.string.theme_day_off_date_text),
 }
 
 /** The effective color for a slot: the user's override if set, otherwise its inherited default. */
@@ -130,6 +136,12 @@ private fun Context.themeDefault(slot: ThemeSlot): Int = when (slot) {
     ThemeSlot.WEEKEND_TEXT -> themeColor(ThemeSlot.DAY_BOX_HEADER_TEXT)
     ThemeSlot.WEEKEND_HEADER_BORDER -> themeColor(ThemeSlot.DAY_BOX_HEADER_BORDER)
     ThemeSlot.WEEKEND_BOX_BORDER -> themeColor(ThemeSlot.DAY_BOX_BORDER)
+
+    // 休み defaults: yellow text on the weekend blue, and a day drawn exactly like a weekend day
+    ThemeSlot.DAY_OFF_ENTRY_TEXT -> themeColor(ThemeSlot.PRIMARY)
+    ThemeSlot.DAY_OFF_ENTRY_BACKGROUND -> themeColor(ThemeSlot.WEEKEND_BOX_BORDER)
+    ThemeSlot.DAY_OFF_FRAME -> themeColor(ThemeSlot.WEEKEND_BOX_BORDER)
+    ThemeSlot.DAY_OFF_DATE_TEXT -> themeColor(ThemeSlot.WEEKEND_TEXT)
 }
 
 /** Set an explicit override for a slot. Write-through slots persist to the stock commons/config colors. */
@@ -269,3 +281,14 @@ fun Context.migrateToPureYellowIfNeeded() {
     config.themeRevision = config.themeRevision + 1
     config.pureYellowMigrated = true
 }
+
+/**
+ * The thin box round every day in 週 and 月: the day box border slot when it carries an explicit
+ * override, else the accent. Its inherited default is the dim grid-line colour, which reads as no box.
+ */
+fun Context.regularDayBoxBorderColor(): Int =
+    if (config.getThemeOverride(ThemeSlot.DAY_BOX_BORDER.key) != THEME_UNSET) {
+        themeColor(ThemeSlot.DAY_BOX_BORDER)
+    } else {
+        themeColor(ThemeSlot.PRIMARY)
+    }

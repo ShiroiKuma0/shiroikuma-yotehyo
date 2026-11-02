@@ -186,7 +186,7 @@ object SettingsTransfer {
     private val UI_KEYS = setOf(
         TEXT_COLOR, BACKGROUND_COLOR, PRIMARY_COLOR, ACCENT_COLOR, APP_ICON_COLOR,
         IS_SYSTEM_THEME_ENABLED, IS_GLOBAL_THEME_ENABLED,
-        SHOW_TIME_GRID_WEEKLY, SHOW_BOX_GRID_WEEKLY, EVENT_TIME_FORMAT,
+        SHOW_TIME_GRID_WEEKLY, SHOW_BOX_GRID_WEEKLY, EVENT_TIME_FORMAT, DAY_OFF_ENABLED, DAY_OFF_TITLE,
         HIGHLIGHT_WEEKENDS, HIGHLIGHT_WEEKENDS_COLOR,
         TODAY_BOX_BORDER_THICKNESS, TODAY_HEADER_BORDER_THICKNESS,
         WEEKEND_BOX_BORDER_THICKNESS, WEEKEND_HEADER_BORDER_THICKNESS,
@@ -293,6 +293,7 @@ object SettingsTransfer {
                     .put("fontFamily", cal.fontFamily)
                     .put("fontWeight", cal.fontWeight)
                     .put("fontSize", cal.fontSize)
+                    .put("dayFrameColor", cal.dayFrameColor)
             )
         }
         return arr.toString(2)
@@ -566,6 +567,7 @@ object SettingsTransfer {
             entity.fontFamily = o.optString("fontFamily", "")
             entity.fontWeight = o.optInt("fontWeight", 0)
             entity.fontSize = o.optInt("fontSize", 0)
+            entity.dayFrameColor = o.optInt("dayFrameColor", THEME_UNSET)
             context.eventsHelper.insertOrUpdateCalendarSync(entity)
             count++
         }

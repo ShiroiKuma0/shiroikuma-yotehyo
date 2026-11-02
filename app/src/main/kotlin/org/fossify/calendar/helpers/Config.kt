@@ -311,6 +311,24 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(SHOW_BOX_GRID_WEEKLY, true)
         set(showBoxGridWeekly) = prefs.edit().putBoolean(SHOW_BOX_GRID_WEEKLY, showBoxGridWeekly).apply()
 
+    var dayOffEnabled: Boolean
+        get() = prefs.getBoolean(DAY_OFF_ENABLED, true)
+        set(value) {
+            prefs.edit().putBoolean(DAY_OFF_ENABLED, value).apply()
+            bumpThemeRevision() // re-fetch so entries and days are restyled on return to the calendar
+        }
+
+    var dayOffTitle: String
+        get() = prefs.getString(DAY_OFF_TITLE, DAY_OFF_TITLE_DEFAULT) ?: DAY_OFF_TITLE_DEFAULT
+        set(value) {
+            prefs.edit().putString(DAY_OFF_TITLE, value).apply()
+            bumpThemeRevision()
+        }
+
+    /** The title that marks a day off, or null while the 休み rule is switched off or the title is blank. */
+    val dayOffTitleOrNull: String?
+        get() = dayOffTitle.trim().takeIf { dayOffEnabled && it.isNotEmpty() }
+
     // Date format for the box-grid week view headers: a preset sentinel (japanese / japanese_era) or a literal ICU pattern.
     var dayBoxHeaderDateFormat: String
         get() = prefs.getString(DAY_BOX_HEADER_DATE_FORMAT, DAY_BOX_HEADER_FORMAT_JAPANESE)!!
@@ -383,6 +401,9 @@ class Config(context: Context) : BaseConfig(context) {
         set(value) = prefs.edit().putInt(THEME_REVISION, value).apply()
 
     private fun bumpThemeRevision() = prefs.edit().putInt(THEME_REVISION, themeRevision + 1).apply()
+
+    /** A calendar's colours / frame changed: make the calendar views re-fetch and repaint on return. */
+    fun markCalendarStylingChanged() = bumpThemeRevision()
 
     fun getThemeOverride(key: String): Int = prefs.getInt(key, THEME_UNSET)
 

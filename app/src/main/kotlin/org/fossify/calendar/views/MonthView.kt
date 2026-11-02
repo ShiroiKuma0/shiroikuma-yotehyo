@@ -13,6 +13,12 @@ import org.fossify.calendar.helpers.COLUMN_COUNT
 import org.fossify.calendar.helpers.DAY_BOX_THICKNESS_INHERIT
 import org.fossify.calendar.helpers.Formatter
 import org.fossify.calendar.helpers.ROW_COUNT
+import org.fossify.calendar.helpers.REGULAR_DAY_BOX_BORDER_DP
+import org.fossify.calendar.helpers.SPECIAL_DAY_FRAME_DP
+import org.fossify.calendar.helpers.SPECIAL_DAY_FRAME_GAP_DP
+import org.fossify.calendar.helpers.THEME_UNSET
+import org.fossify.calendar.helpers.dayFrameColor
+import org.fossify.calendar.helpers.hasDayOff
 import org.fossify.calendar.models.DayMonthly
 import org.fossify.calendar.models.Event
 import org.fossify.calendar.models.MonthViewEvent
@@ -33,17 +39,13 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
         private const val BG_CORNER_RADIUS = 8f
         private const val EVENT_DOT_COLUMN_COUNT = 3
         private const val EVENT_DOT_ROW_COUNT = 1
-
-        // Summed per-channel distance (0..765) below which a color is considered indistinguishable
-        // from the background it is drawn on, i.e. effectively invisible.
-        private const val MIN_VISIBLE_COLOR_DISTANCE = 60
     }
 
     private var textPaint: Paint
     private var eventTitlePaint: TextPaint
     private var gridPaint: Paint
     private var circleStrokePaint: Paint
-    private var todayBoxBorderPaint: Paint
+    private var dayBoxBorderPaint: Paint
     private var plusTextPaint: Paint
     private var eventDotPaint: Paint
     private var config = context.config
@@ -53,9 +55,17 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
     private var todayColor = 0
     private var todayBoxBorderColor = 0
     private var todayBoxBorderWidth = 0f
+    private var dayBoxBorderColor = 0
+    private var dayBoxBorderWidth = 0f
+    private var weekendBoxBorderColor = 0
+    private var weekendBoxBorderWidth = 0f
+    private var specialFrameWidth = 0f
+    private var specialFrameGap = 0f
     private var backgroundColor = 0
     private var textColor = 0
     private var weekendsTextColor = 0
+    private var dayOffFrameColor = 0
+    private var dayOffDateTextColor = 0
     private var weekDaysLetterHeight = 0
     private var eventTitleHeight = 0
     private var currDayOfWeek = 0
@@ -70,7 +80,11 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
     private var isMonthDayView = false
     private var allEvents = ArrayList<MonthViewEvent>()
     private var bgRectF = RectF()
-    private var todayBoxRectF = RectF()
+    private var dayBoxRectF = RectF()
+    // per day index: whether it is a day off (休み entry), and its category whole-day frame colour
+    private var dayOffs = BooleanArray(0)
+    private var dayFrameColors = IntArray(0)
+    private var dayHeaderPaint = Paint()
     private var dayTextRect = Rect()
     private var dayLetters = ArrayList<String>()
     private var days = ArrayList<DayMonthly>()
@@ -84,7 +98,7 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
         todayColor = context.themeColor(ThemeSlot.TODAY_HIGHLIGHT)
         backgroundColor = context.themeColor(ThemeSlot.BACKGROUND)
         textColor = context.getProperTextColor()
-        weekendsTextColor = config.highlightWeekendsColor
+        weekendsTextColor = resolveWeekendsTextColor()
         showWeekNumbers = config.showWeekNumbers
         dimPastEvents = config.dimPastEvents
         dimCompletedTasks = config.dimCompletedTasks
@@ -120,10 +134,11 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
             color = primaryColor
         }
 
-        todayBoxBorderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        dayBoxBorderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
         }
         refreshTodayBoxBorder()
+        refreshDayBoxBorders()
 
         val smallerTextSize = resources.getDimensionPixelSize(org.fossify.commons.R.dimen.smaller_text_size)
         eventTitleHeight = smallerTextSize
@@ -144,6 +159,9 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
         showWeekNumbers = config.showWeekNumbers
         horizontalOffset = context.getWeekNumberWidth()
         refreshTodayBoxBorder()
+        refreshDayBoxBorders()
+        weekendsTextColor = resolveWeekendsTextColor()
+        computeDayMarks()
         initWeekDayLetters()
         setupCurrentDayOfWeekIndex()
         groupAllEvents()
@@ -181,7 +199,10 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
                         isTask = event.isTask(),
                         isTaskCompleted = event.isTaskCompleted(),
                         isAttendeeInviteDeclined = event.isAttendeeInviteDeclined(),
-                        isEventCanceled = event.isEventCanceled()
+                        isEventCanceled = event.isEventCanceled(),
+                        categoryBackgroundColor = event.categoryBackgroundColor,
+                        categoryFontFamily = event.categoryFontFamily,
+                        categoryFontWeight = event.categoryFontWeight
                     )
                     allEvents.add(monthViewEvent)
                 }
@@ -222,6 +243,18 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
                     val textY = yPos + textPaint.textSize
                     val xPosCenter = xPos + dayWidth / 2
 
+                    // A weekend / 休み / framed (holiday) day fills its date header (the day number's
+                    // row, down to the first event bar) with its frame colour, as the weekly grid does.
+                    val headerFill = getDayHeaderFill(day)
+                    if (headerFill != null) {
+                        // inside the inner frame, flush with it, so strip and frame read as one shape
+                        val inset = getSpecialFrameInset(day)
+                        val cellTop = y * dayHeight + weekDaysLetterHeight
+                        val stripBottom = cellTop + textPaint.textSize * 2 - eventTitleHeight
+                        dayHeaderPaint.color = if (day.isThisMonth) headerFill else headerFill.adjustAlpha(MEDIUM_ALPHA)
+                        canvas.drawRect(xPos + inset, cellTop + inset, xPos + dayWidth - inset, stripBottom, dayHeaderPaint)
+                    }
+
                     val isDaySelected = selectedDayCoords.x != -1 && x == selectedDayCoords.x && y == selectedDayCoords.y
                     if (isDaySelected) {
                         canvas.drawCircle(
@@ -233,7 +266,7 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
                         if (day.isToday) {
                             textPaint.color = textColor
                         }
-                    } else if (day.isToday && !isPrintVersion) {
+                    } else if (day.isToday && !isPrintVersion && headerFill == null) {
                         canvas.drawCircle(
                             xPosCenter,
                             textY - dayTextRect.height() / 2,
@@ -297,8 +330,8 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
                 drawEvent(event, canvas)
             }
 
-            // last, so the opaque event backgrounds cannot paint over it
-            drawTodayBoxBorder(canvas)
+            // last, so the opaque event backgrounds cannot paint over them
+            drawDayBoxBorders(canvas)
         }
     }
 
@@ -325,9 +358,19 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
             val xPos = horizontalOffset + (i + 1) * dayWidth - dayWidth / 2
             var weekDayLetterPaint = textPaint
             if (i == currDayOfWeek && !isPrintVersion) {
-                weekDayLetterPaint = getColoredPaint(todayColor)
+                // the today highlight alone can be black on black, which took the letter with it
+                weekDayLetterPaint = getColoredPaint(getCurrentWeekNumberColor())
             } else if (highlightWeekends && context.isWeekendIndex(i)) {
                 weekDayLetterPaint = getColoredPaint(weekendsTextColor)
+            }
+
+            // a weekend column's name sits on a header filled with the weekend frame colour, like the
+            // weekend days' date headers below it
+            if (highlightWeekends && context.isWeekendIndex(i) && !isPrintVersion && !isMonthDayView) {
+                val left = horizontalOffset + i * dayWidth
+                dayHeaderPaint.color = weekendBoxBorderColor
+                canvas.drawRect(left, 0f, left + dayWidth, weekDaysLetterHeight.toFloat(), dayHeaderPaint)
+                weekDayLetterPaint = getColoredPaint(weekDayLetterPaint.color.readableOn(weekendBoxBorderColor))
             }
             canvas.drawText(dayLetters[i], xPos, weekDaysLetterHeight * 0.7f, weekDayLetterPaint)
         }
@@ -351,36 +394,141 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
         }
     }
 
-    // Marks today by stroking its whole cell, using the very slots the weekly grid already uses for
-    // its day boxes (TODAY_BOX_BORDER + the today/general thickness rows), so 月 and 週 mark today
-    // identically and one setting drives both. A circle around a single glyph is too easy to lose in
-    // a cell carrying three or four event bars.
-    private fun drawTodayBoxBorder(canvas: Canvas) {
-        if (isPrintVersion || todayBoxBorderWidth <= 0f) {
+    // Variant C (see helpers/DayMarks), in three layers:
+    //  1. one thin yellow grid round every day and weekday header, each line drawn once, so two
+    //     neighbours never fight over a shared edge;
+    //  2. a weekend / 休み / framed (holiday) day's thin coloured frame, a little INSIDE its grid box,
+    //     so the yellow line and the coloured frame both stay visible (its date strip is filled in
+    //     onDraw);
+    //  3. today's thick border (TODAY_BOX_BORDER + the today thickness, shared with 週) on top.
+    private fun drawDayBoxBorders(canvas: Canvas) {
+        if (isPrintVersion) {
             return
         }
 
+        // 1. the shared grid
+        if (dayBoxBorderWidth > 0f) {
+            dayBoxBorderPaint.strokeWidth = dayBoxBorderWidth
+            dayBoxBorderPaint.color = dayBoxBorderColor
+            val half = dayBoxBorderWidth / 2
+            val gridLeft = horizontalOffset + half
+            val gridRight = canvas.width - half
+            val gridBottom = weekDaysLetterHeight + ROW_COUNT * dayHeight
+            for (column in 0..COLUMN_COUNT) {
+                val x = (horizontalOffset + column * dayWidth).coerceIn(gridLeft, gridRight)
+                canvas.drawLine(x, 0f, x, gridBottom, dayBoxBorderPaint)
+            }
+            canvas.drawLine(horizontalOffset.toFloat(), half, canvas.width.toFloat(), half, dayBoxBorderPaint)
+            for (row in 0..ROW_COUNT) {
+                val y = (weekDaysLetterHeight + row * dayHeight).coerceAtMost(canvas.height - half)
+                canvas.drawLine(horizontalOffset.toFloat(), y, canvas.width.toFloat(), y, dayBoxBorderPaint)
+            }
+        }
+
+        // 2. the special days' inner frames
+        for (index in days.indices) {
+            val day = days[index]
+            val color = getSpecialDayColor(day) ?: continue
+            val shown = if (day.isThisMonth) color else color.adjustAlpha(MEDIUM_ALPHA)
+            val inset = getSpecialFrameInset(day)
+            val left = index % COLUMN_COUNT * dayWidth + horizontalOffset
+            val top = index / COLUMN_COUNT * dayHeight + weekDaysLetterHeight
+            val half = specialFrameWidth / 2
+            dayBoxRectF.set(left + inset + half, top + inset + half, left + dayWidth - inset - half, top + dayHeight - inset - half)
+            dayBoxBorderPaint.strokeWidth = specialFrameWidth
+            dayBoxBorderPaint.color = shown
+            canvas.drawRect(dayBoxRectF, dayBoxBorderPaint)
+        }
+
+        // 3. today, inside its own grid box and over the grid lines round it
         val todayIndex = days.indexOfFirst { it.isToday }
-        if (todayIndex < 0) {
-            return
+        if (todayIndex >= 0 && todayBoxBorderWidth > 0f) {
+            val left = todayIndex % COLUMN_COUNT * dayWidth + horizontalOffset
+            val top = todayIndex / COLUMN_COUNT * dayHeight + weekDaysLetterHeight
+            val half = todayBoxBorderWidth / 2
+            dayBoxRectF.set(left + half, top + half, left + dayWidth - half, top + dayHeight - half)
+            dayBoxBorderPaint.strokeWidth = todayBoxBorderWidth
+            dayBoxBorderPaint.color = if (days[todayIndex].isThisMonth) todayBoxBorderColor else todayBoxBorderColor.adjustAlpha(MEDIUM_ALPHA)
+            canvas.drawRect(dayBoxRectF, dayBoxBorderPaint)
         }
+    }
 
-        val x = todayIndex % COLUMN_COUNT
-        val y = todayIndex / COLUMN_COUNT
-        val left = x * dayWidth + horizontalOffset
-        val top = y * dayHeight + weekDaysLetterHeight
-        // inset by half the stroke so its full thickness stays inside the cell instead of being
-        // split across the neighbouring grid line
-        val inset = todayBoxBorderWidth / 2
-        todayBoxRectF.set(left + inset, top + inset, left + dayWidth - inset, top + dayHeight - inset)
+    // A weekend / 休み / framed (holiday) day's colour: the category frame colour first, else the
+    // weekend box border colour. Null for a regular day.
+    private fun getSpecialDayColor(day: DayMonthly): Int? {
+        val frameColor = dayFrameColors.getOrElse(day.indexOnMonthView) { THEME_UNSET }
+        return when {
+            frameColor != THEME_UNSET -> frameColor
+            dayOffs.getOrElse(day.indexOnMonthView) { false } -> dayOffFrameColor
+            isWeekendStyled(day) -> weekendBoxBorderColor
+            else -> null
+        }
+    }
 
-        todayBoxBorderPaint.strokeWidth = todayBoxBorderWidth
-        todayBoxBorderPaint.color = if (days[todayIndex].isThisMonth) {
-            todayBoxBorderColor
+    // How far a special day's inner frame sits inside its cell: past the cell's own outline (the grid
+    // line, or today's thick border) plus a small gap.
+    private fun getSpecialFrameInset(day: DayMonthly): Float {
+        val outline = if (day.isToday && todayBoxBorderWidth > 0f) todayBoxBorderWidth else dayBoxBorderWidth
+        return outline + specialFrameGap
+    }
+
+    private fun refreshDayBoxBorders() {
+        val density = resources.displayMetrics.density
+        // A regular day gets a thin box in the accent (yellow on our palette). The weekly grid's own
+        // day box border slot defaults to the dim grid-line colour, which reads as no box at all here.
+        dayBoxBorderColor = context.regularDayBoxBorderColor()
+        dayBoxBorderWidth = max(REGULAR_DAY_BOX_BORDER_DP * density, 1f)
+        specialFrameWidth = SPECIAL_DAY_FRAME_DP * density
+        specialFrameGap = SPECIAL_DAY_FRAME_GAP_DP * density
+        weekendBoxBorderColor = context.themeColor(ThemeSlot.WEEKEND_BOX_BORDER)
+        dayOffFrameColor = context.themeColor(ThemeSlot.DAY_OFF_FRAME)
+        dayOffDateTextColor = context.themeColor(ThemeSlot.DAY_OFF_DATE_TEXT)
+        val weekendDp = if (config.weekendBoxBorderThickness != DAY_BOX_THICKNESS_INHERIT) {
+            config.weekendBoxBorderThickness
         } else {
-            todayBoxBorderColor.adjustAlpha(MEDIUM_ALPHA)
+            config.dayBoxBorderThickness
         }
-        canvas.drawRect(todayBoxRectF, todayBoxBorderPaint)
+        weekendBoxBorderWidth = weekendDp * density
+    }
+
+    // Same day/event matching as the event bars: an entry ending exactly at a day's midnight does
+    // not belong to that day.
+    private fun computeDayMarks() {
+        dayOffs = BooleanArray(days.size)
+        dayFrameColors = IntArray(days.size) { THEME_UNSET }
+        days.forEachIndexed { index, day ->
+            val dayEvents = day.dayEvents.filter { !isDayValid(it, day.code) }
+            dayOffs[index] = dayEvents.hasDayOff()
+            dayFrameColors[index] = dayEvents.dayFrameColor()
+        }
+    }
+
+    // The date header fill of a weekend / 休み / framed day: its colour (today included). Null for a
+    // regular day, in print mode and in the compact 月+日 grid.
+    private fun getDayHeaderFill(day: DayMonthly): Int? =
+        if (isPrintVersion || isMonthDayView) null else getSpecialDayColor(day)
+
+    // Weekend days, when weekends are highlighted. Days off (休み) have their own colours.
+    private fun isWeekendStyled(day: DayMonthly) = highlightWeekends && day.isWeekend
+
+    // The date colour on a special day's filled strip: the 休み date colour on a day off (unless a
+    // framed category, e.g. a holiday, outranks it), else the weekend text colour.
+    private fun getSpecialDayTextColor(day: DayMonthly): Int {
+        val isFramed = dayFrameColors.getOrElse(day.indexOnMonthView) { THEME_UNSET } != THEME_UNSET
+        val isDayOff = dayOffs.getOrElse(day.indexOnMonthView) { false }
+        return if (isDayOff && !isFramed) dayOffDateTextColor else weekendsTextColor
+    }
+
+    // The weekend highlight slot is the weekly grid's weekend HEADER BACKGROUND, so on the black
+    // palette it is black — as a text colour it made every weekend letter and number vanish. Use it
+    // only while it stays visible on the background; otherwise take the weekend text slot.
+    private fun resolveWeekendsTextColor(): Int {
+        val highlight = config.highlightWeekendsColor
+        return if (highlight.isDistinguishableFrom(backgroundColor)) {
+            highlight
+        } else {
+            context.themeColor(ThemeSlot.WEEKEND_TEXT)
+        }
     }
 
     private fun refreshTodayBoxBorder() {
@@ -399,24 +547,6 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
     // today box border accent, and finally to the regular text color, so the number is never lost.
     private fun getCurrentWeekNumberColor(): Int {
         return listOf(todayColor, todayBoxBorderColor).firstOrNull { it.isDistinguishableFrom(backgroundColor) } ?: textColor
-    }
-
-    /** Whether this color can still be told apart from [background] once drawn over it. */
-    private fun Int.isDistinguishableFrom(background: Int): Boolean {
-        val blended = blendOver(background)
-        val distance = abs(Color.red(blended) - Color.red(background)) +
-            abs(Color.green(blended) - Color.green(background)) +
-            abs(Color.blue(blended) - Color.blue(background))
-        return distance >= MIN_VISIBLE_COLOR_DISTANCE
-    }
-
-    /** This color as it actually appears once drawn over [background], taking its alpha into account. */
-    private fun Int.blendOver(background: Int): Int {
-        val alpha = Color.alpha(this) / 255f
-        val red = (Color.red(this) * alpha + Color.red(background) * (1 - alpha)).roundToInt()
-        val green = (Color.green(this) * alpha + Color.green(background) * (1 - alpha)).roundToInt()
-        val blue = (Color.blue(this) * alpha + Color.blue(background) * (1 - alpha)).roundToInt()
-        return Color.rgb(red, green, blue)
     }
 
     private fun measureDaySize(canvas: Canvas) {
@@ -478,14 +608,17 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
     }
 
     private fun drawEventTitle(event: MonthViewEvent, canvas: Canvas, x: Float, y: Float, availableWidth: Float, paint: Paint) {
-        val ellipsized = TextUtils.ellipsize(event.title, eventTitlePaint, availableWidth - smallPadding, TextUtils.TruncateAt.END)
+        // measured with the paint it is drawn with, so a category font cuts at the right place
+        val ellipsized = TextUtils.ellipsize(event.title, TextPaint(paint), availableWidth - smallPadding, TextUtils.TruncateAt.END)
         canvas.drawText(event.title, 0, ellipsized.length, x + smallPadding * 2, y, paint)
     }
 
     private fun getTextPaint(startDay: DayMonthly): Paint {
+        val headerFill = getDayHeaderFill(startDay)
         var paintColor = when {
+            headerFill != null -> getSpecialDayTextColor(startDay).readableOn(headerFill)
             !isPrintVersion && startDay.isToday -> todayColor.getContrastColor()
-            highlightWeekends && startDay.isWeekend -> weekendsTextColor
+            isWeekendStyled(startDay) -> weekendsTextColor
             else -> textColor
         }
 
@@ -503,7 +636,7 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
     }
 
     private fun getEventBackgroundColor(event: MonthViewEvent): Paint {
-        var paintColor = event.color
+        var paintColor = if (event.hasCategoryBackground()) event.categoryBackgroundColor else event.color
 
         val adjustAlpha = when {
             event.isTask -> dimCompletedTasks && event.isTaskCompleted
@@ -517,8 +650,10 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
         return getColoredPaint(paintColor)
     }
 
+    // A category with a background draws its title in its own colour, as the weekly grid does; the
+    // category font family + weight apply too. Its size does not: the bars have a fixed row height.
     private fun getEventTitlePaint(event: MonthViewEvent): Paint {
-        var paintColor = event.color.getContrastColor()
+        var paintColor = if (event.hasCategoryBackground()) event.color else event.color.getContrastColor()
         val adjustAlpha = when {
             event.isTask -> dimCompletedTasks && event.isTaskCompleted
             else -> dimPastEvents && event.isPastEvent && !isPrintVersion
@@ -531,6 +666,9 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
         val curPaint = Paint(eventTitlePaint)
         curPaint.color = paintColor
         curPaint.isStrikeThruText = event.shouldStrikeThrough()
+        if (event.categoryFontFamily.isNotEmpty() || event.categoryFontWeight > 0) {
+            curPaint.typeface = context.themeTypeface(event.categoryFontFamily, event.categoryFontWeight)
+        }
         return curPaint
     }
 

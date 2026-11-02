@@ -16,6 +16,7 @@ import androidx.annotation.StringRes
 import org.fossify.calendar.R
 import org.fossify.calendar.databinding.ActivityThemeBinding
 import org.fossify.calendar.databinding.DialogDayBoxDateFormatBinding
+import org.fossify.calendar.databinding.DialogDayOffTitleBinding
 import org.fossify.calendar.databinding.ItemThemeColorBinding
 import org.fossify.calendar.databinding.ItemThemeSectionBinding
 import org.fossify.calendar.databinding.ItemThemeSliderBinding
@@ -43,6 +44,7 @@ import org.fossify.calendar.extensions.resetThemeColor
 import org.fossify.calendar.extensions.setThemeColor
 import org.fossify.calendar.extensions.showFontSample
 import org.fossify.calendar.extensions.themeColor
+import org.fossify.calendar.helpers.DAY_OFF_TITLE_DEFAULT
 import org.fossify.calendar.helpers.DAY_BOX_ALIGN_CENTER
 import org.fossify.calendar.helpers.DAY_BOX_ALIGN_END
 import org.fossify.calendar.helpers.DAY_BOX_ALIGN_START
@@ -50,6 +52,7 @@ import org.fossify.calendar.helpers.DAY_BOX_HEADER_FORMAT_JAPANESE
 import org.fossify.calendar.helpers.DAY_BOX_HEADER_FORMAT_JAPANESE_ERA
 import org.fossify.calendar.helpers.EVENT_TIME_FORMAT_JAPANESE
 import org.fossify.calendar.helpers.DAY_BOX_THICKNESS_INHERIT
+import org.fossify.calendar.helpers.DAY_OFF_TITLE_DEFAULT
 import org.fossify.calendar.helpers.MAX_FONT_SIZE_SP
 import org.fossify.calendar.helpers.PALETTE_YELLOW
 import org.fossify.calendar.helpers.SettingsTransfer
@@ -213,6 +216,18 @@ class ThemeActivity : SimpleActivity() {
         addThicknessRow(R.string.theme_weekend_box_border_thickness, config.weekendBoxBorderThickness, DAY_BOX_THICKNESS_INHERIT) {
             config.weekendBoxBorderThickness = it
         }
+        // 休み (days off): an entry with this title styles itself and its whole day, whatever calendar
+        // it is filed under.
+        addSubsection(R.string.theme_sub_day_off)
+        addDescriptionRow(R.string.theme_day_off_description)
+        addToggleRow(R.string.theme_day_off_enabled, config.dayOffEnabled) {
+            config.dayOffEnabled = it
+        }
+        addDayOffTitleRow()
+        addSlot(ThemeSlot.DAY_OFF_ENTRY_TEXT)
+        addSlot(ThemeSlot.DAY_OFF_ENTRY_BACKGROUND)
+        addSlot(ThemeSlot.DAY_OFF_FRAME)
+        addSlot(ThemeSlot.DAY_OFF_DATE_TEXT)
         addSubsection(R.string.theme_sub_grid_lines)
         addSlot(ThemeSlot.GRID_LINES)
         WeekGridLine.entries.forEach { addGridLineRows(it) }
@@ -756,6 +771,33 @@ class ThemeActivity : SimpleActivity() {
             .setNegativeButton(org.fossify.commons.R.string.cancel, null)
             .apply {
                 setupDialogStuff(dialogBinding.root, this, R.string.theme_date_header_format)
+            }
+    }
+
+    // The title that marks a day off (exact match, surrounding spaces ignored).
+    private fun addDayOffTitleRow() {
+        val row = ItemThemeValueBinding.inflate(layoutInflater, binding.themeHolder, false)
+        row.themeValueLabel.text = getString(R.string.theme_day_off_title)
+        row.themeValueLabel.setTextColor(textColor)
+        row.themeValueValue.setTextColor(textColor.adjustAlpha(0.6f))
+        row.themeValueValue.text = config.dayOffTitle
+        row.root.setOnClickListener { openDayOffTitleDialog(row.themeValueValue) }
+        indentView(row.root, currentRowIndent)
+        binding.themeHolder.addView(row.root)
+    }
+
+    private fun openDayOffTitleDialog(valueView: TextView) {
+        val dialogBinding = DialogDayOffTitleBinding.inflate(layoutInflater)
+        dialogBinding.dayOffTitle.setText(config.dayOffTitle)
+        getAlertDialogBuilder()
+            .setPositiveButton(org.fossify.commons.R.string.ok) { _, _ ->
+                val title = dialogBinding.dayOffTitle.text.toString().trim()
+                config.dayOffTitle = title.ifEmpty { DAY_OFF_TITLE_DEFAULT }
+                valueView.text = config.dayOffTitle
+            }
+            .setNegativeButton(org.fossify.commons.R.string.cancel, null)
+            .apply {
+                setupDialogStuff(dialogBinding.root, this, R.string.theme_day_off_title)
             }
     }
 

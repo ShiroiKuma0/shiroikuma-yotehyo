@@ -61,6 +61,8 @@
     <string name="theme_event_time_format">予定の時刻形式</string>
     <string name="theme_category_background">背景色</string>
     <string name="category_add_font_hint">新しいフォントは「白い熊 予定表 UI」設定から読み込めます。</string>
+    <string name="category_day_frame">一日全体の枠</string>
+    <string name="category_day_frame_hint">この区分の予定がある日は、週表示と月表示で日のボックス全体がこの色で囲まれます。既定値＝枠なし。</string>
     <string name="theme_event_time_japanese">和風（午前…）</string>
     <string name="theme_time_pattern_hint">時刻パターン</string>
     <string name="theme_time_format_legend">パターン文字: H 24時間、h 12時間、m 分、a 午前/午後。例: HH:mm。その他の文字はそのまま表示されます。</string>
@@ -99,6 +101,15 @@
     <string name="theme_sub_day_boxes">日ボックス</string>
     <string name="theme_sub_today_boxes">今日のボックス</string>
     <string name="theme_sub_weekend_boxes">週末のボックス</string>
+    <string name="theme_sub_day_off">休み（休日）</string>
+    <string name="theme_day_off_description">この題名の予定がある日は休日になります。予定はどのカレンダーに入っていてもこの色で表示され、週表示と月表示でその日に休みの枠と日付帯が付きます。祝日カレンダーの一日全体の枠が優先されます。</string>
+    <string name="theme_day_off_enabled">休日を装飾する</string>
+    <string name="theme_day_off_title">休日の予定の題名</string>
+    <string name="theme_day_off_title_legend">題名の完全一致（前後の空白は無視）。空欄＝休み。</string>
+    <string name="theme_day_off_entry_text">休みの予定の文字</string>
+    <string name="theme_day_off_entry_background">休みの予定の背景</string>
+    <string name="theme_day_off_frame">休みの日の枠と日付帯</string>
+    <string name="theme_day_off_date_text">休みの日付</string>
     <string name="theme_sub_highlights_grid">強調とグリッド</string>
     <!-- Day-box (Pimlical-style) week view -->
     <string name="weekly_grid_view">週グリッド（日ボックス）</string>
