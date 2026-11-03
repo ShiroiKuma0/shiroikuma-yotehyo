@@ -6,11 +6,11 @@
 
 **A black-and-yellow, fully themeable, Pimlical-style calendar.**
 
-A fork of [Fossify Calendar](https://github.com/FossifyOrg/Calendar) with **major additions**: tasks you tick off in the calendar and that roll over until you do, a granular per-element theming system, a Pimlical-style day-box weekly view, boxed monthly days with framed weekends, days off (休み) and holidays, category-based Export/Import of everything (events, settings, fonts, calendars), headless backup plus a verified data door that restores this app **with its data** onto a wiped phone, per-element fonts, Japanese date/time formats, and one-tap navigation shortcuts.
+A fork of [Fossify Calendar](https://github.com/FossifyOrg/Calendar) with **major additions**: tasks you tick off in the calendar and that roll over until you do, a granular per-element theming system, a Pimlical-style day-box weekly view, boxed monthly days with framed weekends, days off (休み) and holidays, category-based Export/Import of everything (events, settings, fonts, calendars), headless backup plus a verified data door that restores this app **with its data** onto a wiped phone, per-element fonts, Japanese date/time formats, flight-ready time zones (departure and arrival zones, 発 / 着 lines, airport-code search, a travel banner), outlined-pill controls throughout, and one-tap navigation shortcuts.
 
 Installs **side-by-side** with Fossify Calendar (app id `shiroikuma.yotehyo`).
 
-**📥 Latest release: [`1.10.3+072`](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases)
+**📥 Latest release: [`1.10.3+078`](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases)
 
 </div>
 
@@ -52,8 +52,11 @@ Any text element — events, day-box headers, menus, the view switcher — can g
 ## 🇯🇵 Japanese time formats & quick navigation
 Event times in a Japanese clock/duration style (or any custom pattern), 日週月年 view-switcher glyphs in the search bar, a 設定 two-glyph shortcut (設 opens the UI page, 定 opens Settings), long-press the overflow button for the UI page, swipe up in the left quarter to jump to today, and a keyboard-entry HH:MM time picker instead of the clock face.
 
-## 🌐 Per-event timezones
-Events can carry independent start and end timezones, annotated in the day view.
+## ✈️ Time zones that understand a flight
+An event can leave in one zone and land in another. Type the times as the ticket prints them — each is read on its own zone's clock — and the editor shows start and end in their own framed cards with a live line between them: the real flight time, the arrival on the departure clock, the 時差, and a red warning if the arrival would come before the departure. In the day view and the event list the device-clock times are followed by 発 / 着 lines with the city, the local time, an outlined zone tag, the time difference and 翌日 when it lands on another date; an event in one foreign zone gets a single 現地 line. Find a zone by city, by its code or by the airport code on the boarding pass (`PRG`, `IST`, `NRT`…), with your recent zones on top. Set a home zone and, while you are away from it, the day view shows where you are and what time it is at home. The arrival zone syncs over CalDAV and survives ICS export / import, and a ✈ marks such events in the month and week grids.
+
+## 💊 Outlined pills, a centred month
+Every action is an unfilled pill with a yellow frame — the date, time and zone fields, the calendar, reminder, repetition and status rows, the + button (a round 3 dp ring) and its Event / Task menu in a framed panel. The month grid sits centred with even margins, the week number tucked into each week's first date strip, under a slimmer search bar.
 
 ## 📝 Editor layout
 In both the event and task editors the calendar (account) selector sits directly under the description — it is one of the first decisions about an entry, not something to scroll past reminders, repetition, attendees and status to reach.

@@ -4,6 +4,60 @@ This file carries **both** histories. The 白い熊 予定表 fork releases come
 everything below the `# Changelog` heading further down is Fossify Calendar's own changelog,
 kept verbatim.
 
+## 白い熊 予定表 1.10.3+078 — 2026-11-03
+Built on Fossify Calendar 1.10.3.
+
+Time zones are now built for travel — a flight can leave in one zone and land in another, and every
+view says so clearly — and the controls across the app become outlined pills.
+
+### Major features
+- **Departure and arrival zones, done properly.** Each of an event's two wall clocks is read in its
+  own zone, at the event's own date — so a summer flight entered in November gets the summer offset —
+  and what you type is what the ticket prints. Moving the start keeps the real duration, shown on the
+  end zone's clock. Rotating the screen no longer shifts a two-zone event's times.
+- **Day view and event list: 発 / 着 lines.** The title is no longer cluttered with a zone note. Under
+  the start–end on the device clock come two aligned lines — 発 with the departure city, its local
+  time and an outlined zone tag (CET, TRT, JST…), 着 with the arrival city, local time, tag, the time
+  difference (時差＋二時間) and 翌日 / 前日 when it lands on another local date. An event in a single
+  foreign zone gets one 現地 line with its local start–end and its difference from here. City names
+  come from ICU in the display language (プラハ, イスタンブール), the times follow the event-time format.
+- **Editor: start and end cards.** Start (発) and end (着) each sit in a thin dim-gold frame holding
+  their date, time and zone, so a zone visibly belongs to its own time. The zone rows read
+  "イスタンブール · TRT · UTC+3". The end zone follows the start until you set it apart; "⟲ same as
+  start" brings it back. Between the cards a live line gives the real duration, the arrival on the
+  departure clock and the 時差 — or, red with ⚠, warns that the arrival falls before the departure.
+- **Zone picker.** Recently picked zones on top; search by city name (English, device language,
+  Japanese), zone code, GMT offset, or one of ~350 IATA airport codes (`PRG`, `IST`, `TFS`…), and
+  airport cities that are not zone cities ("tenerife"). Rows show city · code · UTC offset.
+- **Home time zone and travel banner.** A new setting under the timezone option. While the device
+  clock reads differently from it, the day view shows a framed banner: where you are, home with its
+  current time, and the 時差. Included in settings export / import.
+- **Grid markers.** ✈ before the title of a two-zone event, 🌐 before one in a foreign zone, in the
+  month view, both week views and the day boxes.
+- **Reminders say where.** A reminder for an event in another zone carries the 発 / 着 / 現地 lines.
+- **The arrival zone travels.** CalDAV reads and writes the provider's end-timezone column (the sync
+  adapter turns it into `DTEND;TZID`); ICS export writes a two-zone event as `DTSTART;TZID=…` /
+  `DTEND;TZID=…`, and ICS import takes both zones from their TZIDs (it used to give every imported
+  event the device zone).
+
+### UI & theming
+- **Outlined pills in the event editor:** date, time and zone fields, and the calendar, reminder,
+  repetition (rule and limit), status, access-level, availability and colour rows.
+- **The + menu** is a yellow-framed panel with Event (main pill, 3 dp, bold) and Task (regular pill);
+  tapping either opens it and closes the menu. **The + button** is an unfilled round pill with a 3 dp
+  ring and a yellow icon, no shadow.
+- **Centred month grid.** The week number moved from its own column into the top-left corner of each
+  week's first date strip (small, dim gold; today's week in the today colour), and the grid has an
+  even margin left, right and below, with outer lines on every edge.
+- **More room for the month.** No padding above or below the month name; the search bar is 40 dp high
+  (from 56) with 15 sp text (unless a Search-text size is set), and the grid takes the freed height.
+- New colour roles in 白い熊 予定表 UI → Time zones: **Time zone lines** (dim gold, with font) and
+  **Time zone tags and next-day marker** (accent).
+
+### Packaging
+- No database change: the existing `end_time_zone` column is used; an end zone equal to the start is
+  now stored empty, so it follows the start.
+
 ## 白い熊 予定表 1.10.3+072 — 2026-11-02
 Built on Fossify Calendar 1.10.3.
 
