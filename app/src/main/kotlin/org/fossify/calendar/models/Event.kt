@@ -29,7 +29,7 @@ import org.fossify.calendar.helpers.TYPE_EVENT
 import org.fossify.calendar.helpers.TYPE_TASK
 import org.fossify.calendar.helpers.WEEK
 import org.fossify.calendar.helpers.YEAR
-import org.fossify.calendar.helpers.getAllTimeZones
+import org.fossify.calendar.helpers.ALL_TIME_ZONE_IDS
 import org.fossify.calendar.helpers.getNowSeconds
 import org.fossify.commons.extensions.addBitIf
 import org.joda.time.DateTime
@@ -285,8 +285,7 @@ data class Event(
         }
 
     fun getTimeZoneString(): String {
-        return if (timeZone.isNotEmpty() && getAllTimeZones().map { it.zoneName }
-                .contains(timeZone)) {
+        return if (timeZone.isNotEmpty() && ALL_TIME_ZONE_IDS.contains(timeZone)) {
             timeZone
         } else {
             DateTimeZone.getDefault().id
@@ -296,8 +295,7 @@ data class Event(
     // The end-of-event timezone (e.g. a flight's arrival zone). Falls back to the start timezone
     // (which itself falls back to the device zone) so existing single-timezone events are unchanged.
     fun getEndTimeZoneString(): String {
-        return if (endTimeZone.isNotEmpty() && getAllTimeZones().map { it.zoneName }
-                .contains(endTimeZone)) {
+        return if (endTimeZone.isNotEmpty() && ALL_TIME_ZONE_IDS.contains(endTimeZone)) {
             endTimeZone
         } else {
             getTimeZoneString()

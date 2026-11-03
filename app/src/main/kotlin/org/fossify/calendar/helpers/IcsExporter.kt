@@ -182,6 +182,10 @@ class IcsExporter(private val context: Context) {
                         )
                     }"
                 )
+            } else if (event.getTimeZoneString() != event.getEndTimeZoneString()) {
+                // a two-zone event (a flight) keeps both zones: each end on its own zone's wall clock
+                writeLn("$DTSTART;$TZID=${event.getTimeZoneString()}:${zonedLocalTime(event.startTS, event.getTimeZoneString())}")
+                writeLn("$DTEND;$TZID=${event.getEndTimeZoneString()}:${zonedLocalTime(event.endTS, event.getEndTimeZoneString())}")
             } else {
                 writeLn("$DTSTART:${Formatter.getExportedTime(event.startTS * 1000L)}")
                 writeLn("$DTEND:${Formatter.getExportedTime(event.endTS * 1000L)}")
@@ -240,4 +244,8 @@ class IcsExporter(private val context: Context) {
             writeLn(END_TASK)
         }
     }
+
+    // 20261202T192000 — the instant as the zone's wall clock, for a DTSTART/DTEND with a TZID.
+    private fun zonedLocalTime(tsSeconds: Long, zoneId: String): String =
+        org.joda.time.DateTime(tsSeconds * 1000L, DateTimeZone.forID(zoneId)).toString("yyyyMMdd'T'HHmmss")
 }

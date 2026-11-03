@@ -138,6 +138,9 @@ class MonthFragment : Fragment(), MonthlyCalendar {
         }
 
         topNavigationBinding.topValue.apply {
+            // no padding above or below the month name: the grid takes that height
+            setPadding(paddingLeft, 0, paddingRight, 0)
+            includeFontPadding = false
             setTextColor(requireContext().getProperTextColor())
             setOnClickListener {
                 (activity as MainActivity).showGoToDateDialog()

@@ -42,6 +42,7 @@ class EventListAdapter(
     private var currentItemsHash = listItems.hashCode()
     private var isPrintVersion = false
     private val mediumMargin = activity.resources.getDimension(org.fossify.commons.R.dimen.medium_margin).toInt()
+    private val zoneLinesWidth = activity.zoneLinesAvailableWidth()
 
     init {
         setupDragListener(true)
@@ -185,6 +186,24 @@ class EventListAdapter(
             eventItemTitle.applyThemeFont(ThemeSlot.EVENT_TEXT)
             eventItemTime.applyThemeFont(ThemeSlot.TEXT_SECONDARY)
             eventItemDescription.applyThemeFont(ThemeSlot.TEXT_SECONDARY)
+            // 発 / 着 / 現地 lines for an event whose own zone reads differently from the device
+            eventItemZones.applyThemeFont(ThemeSlot.TIME_ZONE_TEXT)
+            val isDimmed = newTextColor != textColor && newTextColor != todayColor
+            val zoneTextColor = if (isPrintVersion) newTextColor else activity.themeColor(ThemeSlot.TIME_ZONE_TEXT)
+            val zoneTagColor = if (isPrintVersion) newTextColor else activity.themeColor(ThemeSlot.TIME_ZONE_TAG)
+            eventItemZones.showZoneLines(
+                eventZoneLines(
+                    listEvent.startTS,
+                    listEvent.endTS,
+                    listEvent.timeZone.ifEmpty { java.time.ZoneId.systemDefault().id },
+                    listEvent.endTimeZone.ifEmpty { listEvent.timeZone.ifEmpty { java.time.ZoneId.systemDefault().id } },
+                    listEvent.isAllDay,
+                    activity.config.eventTimeFormat,
+                ),
+                if (isDimmed) zoneTextColor.adjustAlpha(MEDIUM_ALPHA) else zoneTextColor,
+                if (isDimmed) zoneTagColor.adjustAlpha(MEDIUM_ALPHA) else zoneTagColor,
+                zoneLinesWidth,
+            )
             // The event title takes its category (event type) colour, and the category font when set.
             eventItemTitle.setTextColor(listEvent.color)
             if (listEvent.categoryFontFamily.isNotEmpty() || listEvent.categoryFontWeight > 0 || listEvent.categoryFontSize > 0) {

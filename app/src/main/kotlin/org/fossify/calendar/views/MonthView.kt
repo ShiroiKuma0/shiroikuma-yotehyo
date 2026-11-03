@@ -157,7 +157,7 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
         this.isMonthDayView = isMonthDayView
         days = newDays
         showWeekNumbers = config.showWeekNumbers
-        horizontalOffset = context.getWeekNumberWidth()
+        horizontalOffset = context.monthGridInset()
         refreshTodayBoxBorder()
         refreshDayBoxBorders()
         weekendsTextColor = resolveWeekendsTextColor()
@@ -187,7 +187,7 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
 
                     val monthViewEvent = MonthViewEvent(
                         id = event.id!!,
-                        title = event.title,
+                        title = event.gridZoneMarker() + event.title,
                         startTS = event.startTS,
                         endTS = event.endTS,
                         color = event.color,
@@ -224,9 +224,6 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
         }
 
         addWeekDayLetters(canvas)
-        if (showWeekNumbers && days.isNotEmpty()) {
-            addWeekNumbers(canvas)
-        }
 
         var curId = 0
         for (y in 0 until ROW_COUNT) {
@@ -325,6 +322,11 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
             }
         }
 
+        // after the date strips, so a filled (weekend / 休み / holiday) strip does not cover them
+        if (showWeekNumbers && days.isNotEmpty()) {
+            addWeekNumbers(canvas)
+        }
+
         if (!isMonthDayView) {
             for (event in allEvents) {
                 drawEvent(event, canvas)
@@ -335,22 +337,25 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
         }
     }
 
+    private fun gridRight() = horizontalOffset + COLUMN_COUNT * dayWidth
+
+    private fun gridBottom() = weekDaysLetterHeight + ROW_COUNT * dayHeight
+
     private fun drawGrid(canvas: Canvas) {
-        // vertical lines
-        for (i in 0 until COLUMN_COUNT) {
-            var lineX = i * dayWidth
-            if (showWeekNumbers) {
-                lineX += horizontalOffset
-            }
-            canvas.drawLine(lineX, 0f, lineX, canvas.height.toFloat(), gridPaint)
+        val left = horizontalOffset.toFloat()
+        val right = gridRight()
+        val bottom = gridBottom()
+        // vertical lines, both outer edges included
+        for (i in 0..COLUMN_COUNT) {
+            val lineX = left + i * dayWidth
+            canvas.drawLine(lineX, 0f, lineX, bottom, gridPaint)
         }
 
         // horizontal lines
-        canvas.drawLine(0f, 0f, canvas.width.toFloat(), 0f, gridPaint)
-        for (i in 0 until ROW_COUNT) {
-            canvas.drawLine(0f, i * dayHeight + weekDaysLetterHeight, canvas.width.toFloat(), i * dayHeight + weekDaysLetterHeight, gridPaint)
+        canvas.drawLine(left, 0f, right, 0f, gridPaint)
+        for (i in 0..ROW_COUNT) {
+            canvas.drawLine(left, i * dayHeight + weekDaysLetterHeight, right, i * dayHeight + weekDaysLetterHeight, gridPaint)
         }
-        canvas.drawLine(0f, canvas.height.toFloat(), canvas.width.toFloat(), canvas.height.toFloat(), gridPaint)
     }
 
     private fun addWeekDayLetters(canvas: Canvas) {
@@ -376,21 +381,26 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
         }
     }
 
+    // The week number, small and dim gold, in the top-left corner of the week's first date strip
+    // (the current week's in the today colour), clear of the centred day number.
     private fun addWeekNumbers(canvas: Canvas) {
-        val weekNumberPaint = Paint(textPaint)
+        val weekNumberPaint = Paint(textPaint).apply {
+            textAlign = Paint.Align.LEFT
+            textSize = textPaint.textSize * 0.5f
+            typeface = android.graphics.Typeface.create(textPaint.typeface, android.graphics.Typeface.BOLD)
+        }
+        val inset = max(dayBoxBorderWidth, specialFrameWidth) + smallPadding * 1.5f
 
         for (i in 0 until ROW_COUNT) {
             val weekDays = days.subList(i * 7, i * 7 + 7)
             val isCurrentWeek = weekDays.any { it.isToday && !isPrintVersion }
-            weekNumberPaint.color = if (isCurrentWeek) getCurrentWeekNumberColor() else textColor
+            weekNumberPaint.color = if (isCurrentWeek) getCurrentWeekNumberColor() else dimmedColor(textColor)
 
             // fourth day of the week determines the week of the year number
             val weekOfYear = days.getOrNull(i * 7 + 3)?.weekOfYear ?: 1
-            val id = "$weekOfYear:"
-            val horizontalMarginFactor = 0.5f
-            val xPos = horizontalOffset * horizontalMarginFactor
-            val yPos = i * dayHeight + weekDaysLetterHeight
-            canvas.drawText(id, xPos, yPos + textPaint.textSize, weekNumberPaint)
+            val xPos = horizontalOffset + inset
+            val yPos = i * dayHeight + weekDaysLetterHeight + inset
+            canvas.drawText(weekOfYear.toString(), xPos, yPos - weekNumberPaint.ascent(), weekNumberPaint)
         }
     }
 
@@ -412,16 +422,16 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
             dayBoxBorderPaint.color = dayBoxBorderColor
             val half = dayBoxBorderWidth / 2
             val gridLeft = horizontalOffset + half
-            val gridRight = canvas.width - half
-            val gridBottom = weekDaysLetterHeight + ROW_COUNT * dayHeight
+            val gridRight = gridRight() - half
+            val gridBottom = gridBottom()
             for (column in 0..COLUMN_COUNT) {
                 val x = (horizontalOffset + column * dayWidth).coerceIn(gridLeft, gridRight)
                 canvas.drawLine(x, 0f, x, gridBottom, dayBoxBorderPaint)
             }
-            canvas.drawLine(horizontalOffset.toFloat(), half, canvas.width.toFloat(), half, dayBoxBorderPaint)
+            canvas.drawLine(horizontalOffset.toFloat(), half, gridRight(), half, dayBoxBorderPaint)
             for (row in 0..ROW_COUNT) {
-                val y = (weekDaysLetterHeight + row * dayHeight).coerceAtMost(canvas.height - half)
-                canvas.drawLine(horizontalOffset.toFloat(), y, canvas.width.toFloat(), y, dayBoxBorderPaint)
+                val y = (weekDaysLetterHeight + row * dayHeight).coerceAtMost(gridBottom - half)
+                canvas.drawLine(horizontalOffset.toFloat(), y, gridRight(), y, dayBoxBorderPaint)
             }
         }
 
@@ -550,8 +560,9 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
     }
 
     private fun measureDaySize(canvas: Canvas) {
-        dayWidth = (canvas.width - horizontalOffset) / 7f
-        dayHeight = (canvas.height - weekDaysLetterHeight) / ROW_COUNT.toFloat()
+        // an even margin left, right and below the grid; the week numbers live inside the cells
+        dayWidth = (canvas.width - 2 * horizontalOffset) / 7f
+        dayHeight = (canvas.height - weekDaysLetterHeight - horizontalOffset) / ROW_COUNT.toFloat()
         val availableHeightForEvents = dayHeight.toInt() - weekDaysLetterHeight
         maxEventsPerDay = availableHeightForEvents / eventTitleHeight
     }
@@ -578,8 +589,8 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
         val bgTop = backgroundY + smallPadding - eventTitleHeight
         var bgRight = xPos - smallPadding + dayWidth * event.daysCnt
         val bgBottom = backgroundY + smallPadding * 2
-        if (bgRight > canvas.width.toFloat()) {
-            bgRight = canvas.width.toFloat() - smallPadding
+        if (bgRight > gridRight()) {
+            bgRight = gridRight() - smallPadding
             val newStartDayIndex = (event.startDayIndex / 7 + 1) * 7
             if (newStartDayIndex < 42) {
                 val newEvent = event.copy(startDayIndex = newStartDayIndex, daysCnt = event.daysCnt - (newStartDayIndex - event.startDayIndex))

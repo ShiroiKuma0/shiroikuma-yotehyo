@@ -3,6 +3,9 @@ package org.fossify.calendar.helpers
 import org.fossify.calendar.models.MyTimeZone
 
 // timezones fetched from https://www.joda.org/joda-time/timezones.html
+/** Every zone id the app offers, as a set — the membership test runs per event row, so it is built once. */
+val ALL_TIME_ZONE_IDS: Set<String> by lazy { getAllTimeZones().map { it.zoneName }.toHashSet() }
+
 fun getAllTimeZones() = arrayListOf(
     MyTimeZone("GMT-12", "Etc/GMT+12"),
     MyTimeZone("GMT-11", "Etc/GMT+11"),

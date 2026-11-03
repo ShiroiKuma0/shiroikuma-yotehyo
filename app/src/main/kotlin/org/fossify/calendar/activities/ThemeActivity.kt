@@ -228,6 +228,9 @@ class ThemeActivity : SimpleActivity() {
         addSlot(ThemeSlot.DAY_OFF_ENTRY_BACKGROUND)
         addSlot(ThemeSlot.DAY_OFF_FRAME)
         addSlot(ThemeSlot.DAY_OFF_DATE_TEXT)
+        addSubsection(R.string.theme_sub_time_zones)
+        addSlot(ThemeSlot.TIME_ZONE_TEXT)
+        addSlot(ThemeSlot.TIME_ZONE_TAG)
         addSubsection(R.string.theme_sub_grid_lines)
         addSlot(ThemeSlot.GRID_LINES)
         WeekGridLine.entries.forEach { addGridLineRows(it) }

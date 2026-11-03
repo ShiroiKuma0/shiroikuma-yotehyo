@@ -31,6 +31,7 @@ import org.fossify.calendar.databinding.WeekNowMarkerBinding
 import org.fossify.calendar.databinding.WeeklyViewDayColumnBinding
 import org.fossify.calendar.databinding.WeeklyViewDayLetterBinding
 import org.fossify.calendar.dialogs.EditRepeatingEventDialog
+import org.fossify.calendar.extensions.gridZoneMarker
 import org.fossify.calendar.extensions.checkViewStrikeThrough
 import org.fossify.calendar.extensions.config
 import org.fossify.calendar.extensions.eventsDB
@@ -805,7 +806,7 @@ class WeekFragment : Fragment(), WeeklyCalendar {
                                 3
                             }
 
-                            text = event.title
+                            text = event.gridZoneMarker() + event.title
                             checkViewStrikeThrough(event.shouldStrikeThrough())
                             contentDescription = text
 
@@ -958,7 +959,7 @@ class WeekFragment : Fragment(), WeeklyCalendar {
                 setTextColor(textColor)
                 applyThemeFont(ThemeSlot.EVENT_TEXT)
                 maxLines = if (event.isTask()) 1 else 2
-                text = event.title
+                text = event.gridZoneMarker() + event.title
                 checkViewStrikeThrough(event.shouldStrikeThrough())
                 contentDescription = text
             }

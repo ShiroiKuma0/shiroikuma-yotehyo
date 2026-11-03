@@ -488,7 +488,13 @@ fun Context.notifyEvent(originalEvent: Event) {
         endTime
     )
     val descriptionOrLocation = if (config.replaceDescription) event.location else event.description
-    val content = "$displayedStartDate $timeRange $descriptionOrLocation".trim()
+    // An event in another zone also says when it starts there: 発 プラハ 午後七時二十分 CET / 着 …
+    val zoneText = event.zoneLines(config.eventTimeFormat).toPlainText()
+    val content = if (zoneText.isEmpty()) {
+        "$displayedStartDate $timeRange $descriptionOrLocation".trim()
+    } else {
+        "$displayedStartDate $timeRange\n$zoneText\n$descriptionOrLocation".trim()
+    }
     ensureBackgroundThread {
         if (event.isTask()) eventsHelper.updateIsTaskCompleted(event)
         val notification = getNotification(pendingIntent, event, content)
@@ -902,7 +908,9 @@ fun Context.getEventListItems(
                 it.categoryFontFamily,
                 it.categoryFontWeight,
                 it.categoryFontSize,
-                it.isFixedEntry()
+                it.isFixedEntry(),
+                it.getTimeZoneString(),
+                it.getEndTimeZoneString()
             )
         listItems.add(listEvent)
     }
@@ -1177,6 +1185,12 @@ fun Context.setExactAlarm(
         showErrorToast(e)
     }
 }
+
+/**
+ * The month grid's even outer margin (left, right and bottom). The week numbers no longer take a
+ * column of their own — they sit inside each week's first date strip — so the grid is centred.
+ */
+fun Context.monthGridInset(): Int = (6 * resources.displayMetrics.density).roundToInt()
 
 /**
  * Returns the width of the week number text.

@@ -21,6 +21,9 @@ data class ListEvent(
     var categoryFontSize: Int = 0,
     // A fixed entry is a record: no checkbox, and the rollover never touches it.
     var isFixedEntry: Boolean = false,
+    // The event's own start / end zones (resolved, never empty for a real event) for the zone lines.
+    var timeZone: String = "",
+    var endTimeZone: String = "",
 ) : ListItem() {
 
     fun hasCategoryStyle() = categoryBackgroundColor != Int.MIN_VALUE ||

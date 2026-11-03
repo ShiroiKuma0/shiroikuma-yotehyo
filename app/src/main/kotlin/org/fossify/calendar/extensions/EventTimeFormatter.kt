@@ -14,17 +14,21 @@ import java.util.Date
 // (e.g. 午前八時); any other stored value is a literal ICU time pattern (e.g. "HH:mm", "h:mm a")
 // rendered in the device locale. All timestamps here are the calendar's epoch-seconds.
 
-/** A single start/end time token. */
-fun formatEventClock(tsSeconds: Long, format: String): String {
+/** A single start/end time token, on the device clock or — with [zoneId] — on that zone's wall clock. */
+fun formatEventClock(tsSeconds: Long, format: String, zoneId: String? = null): String {
     val millis = tsSeconds * 1000L
     return if (format == EVENT_TIME_FORMAT_JAPANESE) {
-        millis.toJapaneseClockString()
+        if (zoneId == null) millis.toJapaneseClockString() else millis.toJapaneseClockString(zoneOf(zoneId))
     } else {
-        try {
-            SimpleDateFormat(format, ULocale.getDefault()).format(Date(millis))
+        val formatter = try {
+            SimpleDateFormat(format, ULocale.getDefault())
         } catch (e: Exception) {
-            SimpleDateFormat("HH:mm", ULocale.getDefault()).format(Date(millis))
+            SimpleDateFormat("HH:mm", ULocale.getDefault())
         }
+        if (zoneId != null) {
+            formatter.timeZone = TimeZone.getTimeZone(zoneId)
+        }
+        formatter.format(Date(millis))
     }
 }
 
@@ -42,23 +46,7 @@ fun formatEventTimeRange(startTSSeconds: Long, endTSSeconds: Long, format: Strin
 
 // --- Sino-Japanese clock + duration, mirrored from shiroikuma-denwa ---
 
-// After the title in the day view, when the start or end zone differs from the device zone, the
-// event's own start/end times in the Sino-Japanese format, each prefixed (no space) with its zone
-// code, separated by the Japanese dash and wrapped in full-width parens: （CET午前八時ーHST午前九時）.
-// Returns null when both zones match the device zone. All timestamps are the calendar's epoch-seconds.
-fun eventTimeZoneAnnotation(startTSSeconds: Long, endTSSeconds: Long, startZoneId: String, endZoneId: String): String? {
-    val deviceId = ZoneId.systemDefault().id
-    if (startZoneId == deviceId && endZoneId == deviceId) {
-        return null
-    }
-    val startMillis = startTSSeconds * 1000L
-    val endMillis = endTSSeconds * 1000L
-    val startText = zoneCode(startZoneId, startMillis) + startMillis.toJapaneseClockString(zoneOf(startZoneId))
-    val endText = zoneCode(endZoneId, endMillis) + endMillis.toJapaneseClockString(zoneOf(endZoneId))
-    return "（$startText" + "ー" + "$endText）"
-}
-
-private fun zoneOf(id: String): ZoneId = try {
+internal fun zoneOf(id: String): ZoneId = try {
     ZoneId.of(id)
 } catch (e: Exception) {
     ZoneId.systemDefault()
@@ -93,6 +81,48 @@ private val METAZONE_CODES = mapOf(
     "Africa_Southern" to Pair("SAST", "SAST"),
     "Africa_Eastern" to Pair("EAT", "EAT"),
     "Africa_Western" to Pair("WAT", "WAST"),
+    "Africa_Central" to Pair("CAT", "CAT"),
+    "Turkey" to Pair("TRT", "TRT"),
+    "Europe_Further_Eastern" to Pair("FET", "FET"),
+    "Israel" to Pair("IST", "IDT"),
+    "Arabian" to Pair("AST", "ADT"),
+    "Iran" to Pair("IRST", "IRDT"),
+    "India" to Pair("IST", "IST"),
+    "Pakistan" to Pair("PKT", "PKT"),
+    "Nepal" to Pair("NPT", "NPT"),
+    "Bangladesh" to Pair("BST", "BST"),
+    "Hong_Kong" to Pair("HKT", "HKST"),
+    "Taipei" to Pair("CST", "CDT"),
+    "Philippines" to Pair("PHT", "PHT"),
+    "Malaysia" to Pair("MYT", "MYT"),
+    "Indonesia_Western" to Pair("WIB", "WIB"),
+    "Indonesia_Central" to Pair("WITA", "WITA"),
+    "Indonesia_Eastern" to Pair("WIT", "WIT"),
+    "Argentina" to Pair("ART", "ARST"),
+    "Chile" to Pair("CLT", "CLST"),
+    "Colombia" to Pair("COT", "COT"),
+    "Peru" to Pair("PET", "PET"),
+    "Venezuela" to Pair("VET", "VET"),
+    "Uruguay" to Pair("UYT", "UYST"),
+    "Azores" to Pair("AZOT", "AZOST"),
+    "Cape_Verde" to Pair("CVT", "CVT"),
+    "Newfoundland" to Pair("NST", "NDT"),
+    "Mexico_Pacific" to Pair("MST", "MDT"),
+    "Hawaii" to Pair("HST", "HST"),
+    "Samoa" to Pair("SST", "SST"),
+    "Fiji" to Pair("FJT", "FJST"),
+    "Kamchatka" to Pair("PETT", "PETST"),
+    "Vladivostok" to Pair("VLAT", "VLAST"),
+    "Yekaterinburg" to Pair("YEKT", "YEKST"),
+    "Uzbekistan" to Pair("UZT", "UZST"),
+    "Kazakhstan_Eastern" to Pair("ALMT", "ALMT"),
+    "Georgia" to Pair("GET", "GET"),
+    "Armenia" to Pair("AMT", "AMT"),
+    "Azerbaijan" to Pair("AZT", "AZT"),
+    "Mauritius" to Pair("MUT", "MUT"),
+    "Maldives" to Pair("MVT", "MVT"),
+    "Myanmar" to Pair("MMT", "MMT"),
+    "Mongolia" to Pair("ULAT", "ULAST"),
 )
 
 // Zones ICU has no metazone for; map their id directly (none of these observe DST).
@@ -102,13 +132,15 @@ private val DIRECT_ZONE_CODES = mapOf(
     "Etc/GMT" to "GMT",
     "Asia/Kolkata" to "IST",
     "Asia/Calcutta" to "IST",
+    "Europe/Istanbul" to "TRT",
+    "Asia/Istanbul" to "TRT",
 )
 
 private val ICU_TZ_NAMES: TimeZoneNames by lazy { TimeZoneNames.getInstance(ULocale.ENGLISH) }
 
 // DST-aware short zone code for the instant: CET/CEST, HST, PST/PDT, JST, … with a compact GMT
 // offset (e.g. GMT+5:30) for zones not in the table.
-private fun zoneCode(id: String, millis: Long): String {
+internal fun zoneCode(id: String, millis: Long): String {
     DIRECT_ZONE_CODES[id]?.let { return it }
     val tz = TimeZone.getTimeZone(id)
     val daylight = tz.inDaylightTime(Date(millis))

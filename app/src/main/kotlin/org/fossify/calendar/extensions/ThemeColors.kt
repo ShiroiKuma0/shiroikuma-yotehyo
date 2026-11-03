@@ -84,6 +84,11 @@ enum class ThemeSlot(
     DAY_OFF_ENTRY_BACKGROUND("theme_day_off_entry_background", ThemeGroup.CALENDAR, R.string.theme_day_off_entry_background),
     DAY_OFF_FRAME("theme_day_off_frame", ThemeGroup.CALENDAR, R.string.theme_day_off_frame),
     DAY_OFF_DATE_TEXT("theme_day_off_date_text", ThemeGroup.CALENDAR, R.string.theme_day_off_date_text),
+
+    // Time zones: the 発 / 着 / 現地 lines under an event, the editor summary and the travel banner
+    // (dim gold), and the outlined zone tags plus 翌日 (accent)
+    TIME_ZONE_TEXT("theme_time_zone_text", ThemeGroup.CALENDAR, R.string.theme_time_zone_text, hasFont = true),
+    TIME_ZONE_TAG("theme_time_zone_tag", ThemeGroup.CALENDAR, R.string.theme_time_zone_tag),
 }
 
 /** The effective color for a slot: the user's override if set, otherwise its inherited default. */
@@ -142,6 +147,9 @@ private fun Context.themeDefault(slot: ThemeSlot): Int = when (slot) {
     ThemeSlot.DAY_OFF_ENTRY_BACKGROUND -> themeColor(ThemeSlot.WEEKEND_BOX_BORDER)
     ThemeSlot.DAY_OFF_FRAME -> themeColor(ThemeSlot.WEEKEND_BOX_BORDER)
     ThemeSlot.DAY_OFF_DATE_TEXT -> themeColor(ThemeSlot.WEEKEND_TEXT)
+
+    ThemeSlot.TIME_ZONE_TEXT -> dimmedColor(themeColor(ThemeSlot.TEXT))
+    ThemeSlot.TIME_ZONE_TAG -> themeColor(ThemeSlot.PRIMARY)
 }
 
 /** Set an explicit override for a slot. Write-through slots persist to the stock commons/config colors. */

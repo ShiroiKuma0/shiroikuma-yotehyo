@@ -96,6 +96,7 @@ fun Context.themeTypeface(family: String, weight: Int, baseStyle: Int = Typeface
 // per field until they are given their own — matching the inherited text color (see themeDefault).
 private fun ThemeSlot.fontParent(): ThemeSlot? = when (this) {
     ThemeSlot.TODAY_TEXT, ThemeSlot.WEEKEND_TEXT -> ThemeSlot.DAY_BOX_HEADER_TEXT
+    ThemeSlot.TIME_ZONE_TEXT -> ThemeSlot.TEXT_SECONDARY
     else -> null
 }
 
