@@ -80,6 +80,24 @@
             app:layout_constraintTop_toBottomOf="@+id/event_item_title"
             tools:text="13:00" />
 
+        <!-- 発 / 着 / 現地 zone lines, only for an event whose own zone reads differently from the device. -->
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/event_item_zones"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/medium_margin"
+            android:includeFontPadding="false"
+            android:lineSpacingExtra="3dp"
+            android:paddingEnd="@dimen/activity_margin"
+            android:paddingBottom="@dimen/small_margin"
+            android:textSize="@dimen/normal_text_size"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/event_item_color_bar"
+            app:layout_constraintTop_toBottomOf="@+id/event_item_time"
+            tools:text="発 プラハ\t午後七時二十分\tCET"
+            tools:visibility="visible" />
+
         <org.fossify.commons.views.MyTextView
             android:id="@+id/event_item_description"
             android:layout_width="0dp"
@@ -96,7 +114,7 @@
             android:textSize="@dimen/normal_text_size"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/event_item_color_bar"
-            app:layout_constraintTop_toBottomOf="@+id/event_item_time"
+            app:layout_constraintTop_toBottomOf="@+id/event_item_zones"
             tools:text="Event description" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>

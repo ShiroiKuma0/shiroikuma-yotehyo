@@ -35,7 +35,21 @@ import org.fossify.calendar.dialogs.RepeatLimitTypePickerDialog
 import org.fossify.calendar.dialogs.RepeatRuleWeeklyDialog
 import org.fossify.calendar.dialogs.SelectCalendarDialog
 import org.fossify.calendar.dialogs.SelectEventColorDialog
+import org.fossify.calendar.extensions.ThemeSlot
+import org.fossify.calendar.extensions.applyThemeFont
 import org.fossify.calendar.extensions.calDAVHelper
+import org.fossify.calendar.extensions.eventZonesDiffer
+import org.fossify.calendar.extensions.formatEventClock
+import org.fossify.calendar.extensions.groupFrame
+import org.fossify.calendar.extensions.outlinedPill
+import org.fossify.calendar.extensions.isTwoZoneEvent
+import org.fossify.calendar.extensions.plainDurationText
+import org.fossify.calendar.extensions.themeColor
+import org.fossify.calendar.extensions.toJapaneseDurationString
+import org.fossify.calendar.extensions.zoneCityName
+import org.fossify.calendar.extensions.zoneDescription
+import org.fossify.calendar.extensions.zoneDifferenceText
+import org.fossify.calendar.extensions.zoneOffsetSeconds
 import org.fossify.calendar.extensions.calendarsDB
 import org.fossify.calendar.extensions.cancelNotification
 import org.fossify.calendar.extensions.config
@@ -59,6 +73,8 @@ import org.fossify.calendar.helpers.CALENDAR_ID
 import org.fossify.calendar.helpers.CLASS
 import org.fossify.calendar.helpers.CURRENT_TIME_ZONE
 import org.fossify.calendar.helpers.END_TIME_ZONE
+import org.fossify.calendar.helpers.END_ZONE_FOLLOWS_START
+import org.fossify.calendar.helpers.EVENT_TIME_FORMAT_JAPANESE
 import org.fossify.calendar.helpers.DELETE_ALL_OCCURRENCES
 import org.fossify.calendar.helpers.DELETE_FUTURE_OCCURRENCES
 import org.fossify.calendar.helpers.DELETE_SELECTED_OCCURRENCE
@@ -198,6 +214,8 @@ class EventActivity : SimpleActivity() {
     private var mStoredCalendars = ArrayList<CalendarEntity>()
     private var mOriginalTimeZone = DateTimeZone.getDefault().id
     private var mOriginalEndTimeZone = DateTimeZone.getDefault().id
+    // The end zone follows the start until it is set to a different zone (a flight's arrival).
+    private var mEndZoneFollowsStart = true
     private var mOriginalStartTS = 0L
     private var mOriginalEndTS = 0L
     private var mIsNewEvent = true
@@ -306,10 +324,12 @@ class EventActivity : SimpleActivity() {
 
         outState.apply {
             putSerializable(EVENT, mEvent.copy(attendees = emptyList()))
-            putLong(START_TS, mEventStartDateTime.seconds())
-            putLong(END_TS, mEventEndDateTime.seconds())
+            // the true instants, so a restore can put each wall clock back into its own zone
+            putLong(START_TS, zonedStartTS())
+            putLong(END_TS, zonedEndTS())
             putString(TIME_ZONE, mEvent.timeZone)
             putString(END_TIME_ZONE, mEvent.endTimeZone)
+            putBoolean(END_ZONE_FOLLOWS_START, mEndZoneFollowsStart)
 
             putInt(REMINDER_1_MINUTES, mReminder1Minutes)
             putInt(REMINDER_2_MINUTES, mReminder2Minutes)
@@ -349,10 +369,11 @@ class EventActivity : SimpleActivity() {
 
         savedInstanceState.apply {
             mEvent = getSerializable(EVENT) as Event
-            mEventStartDateTime = Formatter.getDateTimeFromTS(getLong(START_TS))
-            mEventEndDateTime = Formatter.getDateTimeFromTS(getLong(END_TS))
             mEvent.timeZone = getString(TIME_ZONE) ?: TimeZone.getDefault().id
             mEvent.endTimeZone = getString(END_TIME_ZONE) ?: ""
+            mEventStartDateTime = wallClockIn(getLong(START_TS), mEvent.getTimeZoneString())
+            mEventEndDateTime = wallClockIn(getLong(END_TS), mEvent.getEndTimeZoneString())
+            mEndZoneFollowsStart = getBoolean(END_ZONE_FOLLOWS_START, true)
 
             mReminder1Minutes = getInt(REMINDER_1_MINUTES)
             mReminder2Minutes = getInt(REMINDER_2_MINUTES)
@@ -401,13 +422,17 @@ class EventActivity : SimpleActivity() {
         ) {
             val timeZone = resultData.getSerializableExtra(TIME_ZONE) as MyTimeZone
             mEvent.timeZone = timeZone.zoneName
+            if (mEndZoneFollowsStart) {
+                mEvent.endTimeZone = ""
+            }
             updateTimeZoneText()
         } else if (
             requestCode == SELECT_END_TIME_ZONE_INTENT
             && resultCode == RESULT_OK && resultData?.hasExtra(TIME_ZONE) == true
         ) {
             val timeZone = resultData.getSerializableExtra(TIME_ZONE) as MyTimeZone
-            mEvent.endTimeZone = timeZone.zoneName
+            mEndZoneFollowsStart = timeZone.zoneName == mEvent.getTimeZoneString()
+            mEvent.endTimeZone = if (mEndZoneFollowsStart) "" else timeZone.zoneName
             updateTimeZoneText()
         }
         super.onActivityResult(requestCode, resultCode, resultData)
@@ -491,8 +516,14 @@ class EventActivity : SimpleActivity() {
         eventStartTime.setOnClickListener { setupStartTime() }
         eventEndDate.setOnClickListener { setupEndDate() }
         eventEndTime.setOnClickListener { setupEndTime() }
-        eventTimeZone.setOnClickListener { setupTimeZone() }
-        eventEndTimeZone.setOnClickListener { setupEndTimeZone() }
+        eventTimeZoneHolder.setOnClickListener { setupTimeZone() }
+        eventEndTimeZoneHolder.setOnClickListener { setupEndTimeZone() }
+        styleDateTimeBlock()
+        eventEndTimeZoneReset.setOnClickListener {
+            mEndZoneFollowsStart = true
+            mEvent.endTimeZone = ""
+            updateTimeZoneText()
+        }
 
         eventAllDay.setOnCheckedChangeListener { _, isChecked -> toggleAllDay(isChecked) }
         eventRepetition.setOnClickListener { showRepeatIntervalDialog() }
@@ -619,26 +650,51 @@ class EventActivity : SimpleActivity() {
             val newEndTS = mEventEndDateTime.withTimeAtStartOfDay().withHourOfDay(12).seconds()
             return Pair(newStartTS, newEndTS)
         } else {
-            // Start and end carry independent timezones (e.g. a flight), so reconcile each end's
-            // wall-clock against its own original zone.
-            val startOffset = timeZoneOffsetSeconds(mEvent.getTimeZoneString(), mOriginalTimeZone)
-            val endOffset = timeZoneOffsetSeconds(mEvent.getEndTimeZoneString(), mOriginalEndTimeZone)
-            val newStartTS = mEventStartDateTime.seconds() - startOffset
-            val newEndTS = mEventEndDateTime.seconds() - endOffset
-            return Pair(newStartTS, newEndTS)
+            // Start and end carry independent timezones (e.g. a flight): each wall clock the editor
+            // shows is read in its own zone — what a ticket prints — and turned into the true instant.
+            return Pair(zonedStartTS(), zonedEndTS())
         }
     }
 
-    // Seconds to shift a wall-clock by when its zone changed from the original (0 if unchanged or timezones disabled).
-    private fun timeZoneOffsetSeconds(newZone: String, originalZone: String): Long {
-        if (!config.allowChangingTimeZones || newZone.equals(originalZone, true)) {
-            return 0
+    // The wall clock's fields read in the zone. The editor's DateTimes hold the wall clock exactly as
+    // shown, so this works whatever zone object they happen to carry, and DST is taken at the event's
+    // own date (not today's). With timezones switched off the DateTime is the device clock as is.
+    private fun zonedSeconds(wallClock: DateTime, zoneId: String): Long {
+        if (!config.allowChangingTimeZones || mIsAllDayEvent) {
+            return wallClock.seconds()
         }
-        val original = originalZone.ifEmpty { DateTimeZone.getDefault().id }
-        val millis = System.currentTimeMillis()
-        val newOffset = DateTimeZone.forID(newZone).getOffset(millis)
-        val oldOffset = DateTimeZone.forID(original).getOffset(millis)
-        return (newOffset - oldOffset) / 1000L
+        return try {
+            wallClock.withZoneRetainFields(DateTimeZone.forID(zoneId)).seconds()
+        } catch (e: Exception) {
+            wallClock.seconds()
+        }
+    }
+
+    private fun zonedStartTS() = zonedSeconds(mEventStartDateTime, mEvent.getTimeZoneString())
+
+    private fun zonedEndTS() = zonedSeconds(mEventEndDateTime, mEvent.getEndTimeZoneString())
+
+    // Moving the start keeps the real duration: the end lands that long after the new start, shown on
+    // the end zone's clock (a flight moved by a day still lasts 2h 25m, whatever the zones).
+    private fun moveEndWithStart(durationSeconds: Long) {
+        mEventEndDateTime = if (!config.allowChangingTimeZones || mIsAllDayEvent) {
+            mEventStartDateTime.plusSeconds(durationSeconds.toInt())
+        } else {
+            wallClockIn(zonedStartTS() + durationSeconds, mEvent.getEndTimeZoneString())
+        }
+    }
+
+    // A true instant as the wall clock of the zone (device clock when timezones are switched off).
+    private fun wallClockIn(tsSeconds: Long, zoneId: String): DateTime {
+        val dateTime = Formatter.getDateTimeFromTS(tsSeconds)
+        if (!config.allowChangingTimeZones || mIsAllDayEvent) {
+            return dateTime
+        }
+        return try {
+            dateTime.withZone(DateTimeZone.forID(zoneId))
+        } catch (e: Exception) {
+            dateTime
+        }
     }
 
     private fun getReminders(): ArrayList<Reminder> {
@@ -673,8 +729,8 @@ class EventActivity : SimpleActivity() {
         return binding.eventTitle.text.toString() != mEvent.title ||
                 binding.eventLocation.text.toString() != mEvent.location ||
                 binding.eventDescription.text.toString() != mEvent.description ||
-                binding.eventTimeZone.text != mEvent.getTimeZoneString() ||
-                binding.eventEndTimeZone.text != mEvent.getEndTimeZoneString() ||
+                mEvent.getTimeZoneString() != mOriginalTimeZone ||
+                mEvent.getEndTimeZoneString() != mOriginalEndTimeZone ||
                 reminders != mEvent.getReminders() ||
                 mRepeatInterval != mEvent.repeatInterval ||
                 mRepeatRule != mEvent.repeatRule ||
@@ -725,8 +781,9 @@ class EventActivity : SimpleActivity() {
 
         window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
         binding.eventToolbar.title = getString(R.string.edit_event)
-        mOriginalTimeZone = mEvent.timeZone
-        mOriginalEndTimeZone = mEvent.endTimeZone.ifEmpty { mEvent.timeZone }
+        mOriginalTimeZone = mEvent.getTimeZoneString()
+        mOriginalEndTimeZone = mEvent.getEndTimeZoneString()
+        mEndZoneFollowsStart = mOriginalEndTimeZone == mOriginalTimeZone
         if (config.allowChangingTimeZones) {
             try {
                 mEventStartDateTime = Formatter.getDateTimeFromTS(realStart)
@@ -1531,10 +1588,9 @@ class EventActivity : SimpleActivity() {
 
     private fun showOrHideTimeZone() {
         val allowChangingTimeZones = config.allowChangingTimeZones && !mIsAllDayEvent
-        binding.eventTimeZoneImage.beVisibleIf(allowChangingTimeZones)
-        binding.eventTimeZone.beVisibleIf(allowChangingTimeZones)
-        binding.eventEndTimeZoneImage.beVisibleIf(allowChangingTimeZones)
-        binding.eventEndTimeZone.beVisibleIf(allowChangingTimeZones)
+        binding.eventTimeZoneHolder.beVisibleIf(allowChangingTimeZones)
+        binding.eventEndTimeZoneHolder.beVisibleIf(allowChangingTimeZones)
+        updateTimeZoneText()
     }
 
     private fun shareEvent() {
@@ -1700,8 +1756,9 @@ class EventActivity : SimpleActivity() {
             importId = newImportId
             timeZone =
                 if (mIsAllDayEvent || timeZone.isEmpty()) DateTimeZone.getDefault().id else timeZone
+            // an end zone equal to the start is stored empty: the end then follows the start
             endTimeZone =
-                if (mIsAllDayEvent || endTimeZone.isEmpty()) timeZone else endTimeZone
+                if (mIsAllDayEvent || endTimeZone.isEmpty() || endTimeZone == timeZone) "" else endTimeZone
             flags = mEvent.flags.addBitIf(binding.eventAllDay.isChecked, FLAG_ALL_DAY)
             repeatLimit = if (repeatInterval == 0) 0 else mRepeatLimit
             repeatRule = mRepeatRule
@@ -1846,13 +1903,75 @@ class EventActivity : SimpleActivity() {
         checkStartEndValidity()
     }
 
+    // Start and end each sit in a thin dim-gold card (発 Start / 着 End) so a zone visibly belongs to
+    // its own date and time; everything tappable — date, time, zone row, "same as start" — is an
+    // outlined accent pill, the zone row with a › chevron.
+    private fun styleDateTimeBlock() = binding.apply {
+        val accent = themeColor(ThemeSlot.TIME_ZONE_TAG)
+        val dim = themeColor(ThemeSlot.TIME_ZONE_TEXT)
+        val japanese = config.eventTimeFormat == EVENT_TIME_FORMAT_JAPANESE
+        eventStartCard.background = groupFrame(dim)
+        eventEndCard.background = groupFrame(dim)
+        eventStartLabel.text = if (japanese) "発  開始" else "発  Start"
+        eventEndLabel.text = if (japanese) "着  終了" else "着  End"
+        eventStartLabel.setTextColor(dim)
+        eventEndLabel.setTextColor(dim)
+        arrayOf(eventStartDate, eventStartTime, eventEndDate, eventEndTime, eventEndTimeZoneReset).forEach {
+            it.background = outlinedPill(accent)
+        }
+        eventTimeZoneHolder.background = outlinedPill(accent)
+        eventEndTimeZoneHolder.background = outlinedPill(accent)
+        eventEndTimeZoneReset.setTextColor(accent)
+        eventTimeZoneChevron.setTextColor(accent)
+        eventEndTimeZoneChevron.setTextColor(accent)
+
+        // the rows below (calendar, reminders, repetition, status, access, availability, colour) are
+        // actions too: each becomes an outlined pill, the multi-line holders with a softer radius
+        arrayOf(
+            eventReminder1, eventReminder2, eventReminder3, eventRepetition,
+            eventStatus, eventAccessLevel, eventAvailability,
+        ).forEach { pillRow(it, accent, 100f) }
+        arrayOf(eventCalendarHolder, eventRepetitionRuleHolder, eventRepetitionLimitHolder, eventColorHolder)
+            .forEach { pillRow(it, accent, 18f) }
+    }
+
+    // An outlined pill inset inside the row (a little air above, below and before the screen edge),
+    // with the text pulled in from the frame. The padding is set after the background, which would
+    // otherwise replace it with the inset drawable's own.
+    private fun pillRow(view: View, accent: Int, radiusDp: Float) {
+        val density = resources.displayMetrics.density
+        val vertical = (4 * density).toInt()
+        val end = (12 * density).toInt()
+        val top = view.paddingTop
+        val bottom = view.paddingBottom
+        val endPadding = view.paddingEnd
+        view.background = android.graphics.drawable.InsetDrawable(outlinedPill(accent, radiusDp = radiusDp), 0, vertical, end, vertical)
+        view.setPaddingRelative((14 * density).toInt(), top, endPadding + end, bottom)
+    }
+
+    // Each zone row reads "プラハ · CET · UTC+1" (offset at the event's own date); the end row says
+    // when it simply follows the start, and offers "same as start" once it has been set apart.
     private fun updateTimeZoneText() {
-        binding.eventTimeZone.text = mEvent.getTimeZoneString()
-        binding.eventEndTimeZone.text = mEvent.getEndTimeZoneString()
+        if (!::mEvent.isInitialized) {
+            return
+        }
+        val japanese = config.eventTimeFormat == EVENT_TIME_FORMAT_JAPANESE
+        val startZone = mEvent.getTimeZoneString()
+        val endZone = mEvent.getEndTimeZoneString()
+        val follows = mEndZoneFollowsStart || endZone == startZone
+        binding.eventTimeZone.text = zoneDescription(startZone, zonedStartTS(), japanese)
+        val endDescription = zoneDescription(endZone, zonedEndTS(), japanese)
+        binding.eventEndTimeZone.text = if (follows) getString(R.string.end_zone_follows_start, endDescription) else endDescription
+        binding.eventEndTimeZoneReset.beVisibleIf(!follows && binding.eventEndTimeZoneHolder.isVisible())
+        binding.eventEndTimeZoneReset.setTextColor(themeColor(ThemeSlot.TIME_ZONE_TAG))
+        updateZoneSummary()
     }
 
     private fun checkStartEndValidity() {
-        val textColor = if (mEventStartDateTime.isAfter(mEventEndDateTime)) {
+        if (!::mEvent.isInitialized) {
+            return
+        }
+        val textColor = if (zonedStartTS() > zonedEndTS()) {
             resources.getColor(R.color.red_text)
         } else {
             getProperTextColor()
@@ -1860,6 +1979,57 @@ class EventActivity : SimpleActivity() {
 
         binding.eventEndDate.setTextColor(textColor)
         binding.eventEndTime.setTextColor(textColor)
+        updateZoneSummary()
+    }
+
+    // The live line under the zone rows: real duration · arrival on the departure clock · 時差, or
+    // the device-clock start for a one-zone event abroad. Red with a warning when the arrival falls
+    // before the departure — the usual slip when typing a ticket's local arrival time.
+    private fun updateZoneSummary() {
+        if (!::mEvent.isInitialized) {
+            return
+        }
+        val summary = binding.eventZoneSummary
+        val startZone = mEvent.getTimeZoneString()
+        val endZone = mEvent.getEndTimeZoneString()
+        val startTS = zonedStartTS()
+        val endTS = zonedEndTS()
+        if (mIsAllDayEvent) {
+            summary.beGone()
+            return
+        }
+        val zonesShown = config.allowChangingTimeZones
+        summary.beVisible()
+        summary.applyThemeFont(ThemeSlot.TIME_ZONE_TEXT)
+        if (endTS < startTS) {
+            summary.text = "⚠  " + getString(R.string.zone_summary_negative)
+            summary.setTextColor(resources.getColor(R.color.red_text))
+            return
+        }
+        val format = config.eventTimeFormat
+        val japanese = format == EVENT_TIME_FORMAT_JAPANESE
+        val parts = ArrayList<String>()
+        parts += if (japanese) {
+            "所要" + (endTS - startTS).toInt().toJapaneseDurationString()
+        } else {
+            getString(R.string.zone_summary_duration, plainDurationText(endTS - startTS))
+        }
+        if (zonesShown && isTwoZoneEvent(startTS, endTS, startZone, endZone, false)) {
+            val arrival = formatEventClock(endTS, format, startZone)
+            val city = zoneCityName(startZone, japanese)
+            parts += if (japanese) "${city}時間で${arrival}着" else getString(R.string.zone_summary_arrives, arrival, city)
+            val diff = zoneDifferenceText(zoneOffsetSeconds(endZone, endTS) - zoneOffsetSeconds(startZone, endTS), japanese)
+            if (diff != null) {
+                parts += if (japanese) diff else getString(R.string.zone_summary_difference, diff)
+            }
+        }
+        val device = java.time.ZoneId.systemDefault().id
+        if (zonesShown && zoneOffsetSeconds(startZone, startTS) != zoneOffsetSeconds(device, startTS)) {
+            val here = formatEventClock(startTS, format)
+            parts += if (japanese) "当地時間で${here}開始" else getString(R.string.zone_summary_here, here)
+        }
+        summary.text = "↓  " + parts.joinToString(if (japanese) "・" else " · ")
+        summary.setTextColor(themeColor(ThemeSlot.TIME_ZONE_TEXT))
     }
 
     private fun showOnMap() {
@@ -1949,13 +2119,13 @@ class EventActivity : SimpleActivity() {
 
     private fun dateSet(year: Int, month: Int, day: Int, isStart: Boolean) {
         if (isStart) {
-            val diff = mEventEndDateTime.seconds() - mEventStartDateTime.seconds()
+            val duration = zonedEndTS() - zonedStartTS()
 
             mEventStartDateTime = mEventStartDateTime.withDate(year, month + 1, day)
             updateStartDateText()
             checkRepeatRule()
 
-            mEventEndDateTime = mEventStartDateTime.plusSeconds(diff.toInt())
+            moveEndWithStart(duration)
             updateEndTexts()
         } else {
             mEventEndDateTime = mEventEndDateTime.withDate(year, month + 1, day)
@@ -1966,13 +2136,13 @@ class EventActivity : SimpleActivity() {
     private fun timeSet(hours: Int, minutes: Int, isStart: Boolean) {
         try {
             if (isStart) {
-                val diff = mEventEndDateTime.seconds() - mEventStartDateTime.seconds()
+                val duration = zonedEndTS() - zonedStartTS()
 
                 mEventStartDateTime =
                     mEventStartDateTime.withHourOfDay(hours).withMinuteOfHour(minutes)
                 updateStartTimeText()
 
-                mEventEndDateTime = mEventStartDateTime.plusSeconds(diff.toInt())
+                moveEndWithStart(duration)
                 updateEndTexts()
             } else {
                 mEventEndDateTime = mEventEndDateTime.withHourOfDay(hours).withMinuteOfHour(minutes)

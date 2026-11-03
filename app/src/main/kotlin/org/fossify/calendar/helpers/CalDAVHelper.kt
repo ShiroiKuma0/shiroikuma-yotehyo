@@ -206,6 +206,7 @@ class CalDAVHelper(val context: Context) {
             Events.ORIGINAL_INSTANCE_TIME,
             Events.EVENT_LOCATION,
             Events.EVENT_TIMEZONE,
+            Events.EVENT_END_TIMEZONE,
             Events.CALENDAR_TIME_ZONE,
             Events.DELETED,
             Events.AVAILABILITY,
@@ -258,6 +259,9 @@ class CalDAVHelper(val context: Context) {
             val importId = getCalDAVEventImportId(calendarId, id)
             val eventTimeZone = cursor.getStringValue(Events.EVENT_TIMEZONE)
                 ?: cursor.getStringValue(Events.CALENDAR_TIME_ZONE) ?: DateTimeZone.getDefault().id
+            // a flight's arrival zone (DTEND;TZID in the server's iCalendar); kept only when it differs
+            val eventEndTimeZone = cursor.getStringValue(Events.EVENT_END_TIMEZONE)
+                ?.takeIf { it != eventTimeZone && ALL_TIME_ZONE_IDS.contains(it) } ?: ""
 
             val source = "$CALDAV-$calendarId"
             val repeatRule = Parser().parseRepeatInterval(rrule, startTS)
@@ -281,6 +285,7 @@ class CalDAVHelper(val context: Context) {
                 attendees = attendees,
                 importId = importId,
                 timeZone = eventTimeZone,
+                endTimeZone = eventEndTimeZone,
                 flags = allDay,
                 calendarId = localCalendarId,
                 source = source,
@@ -564,6 +569,12 @@ class CalDAVHelper(val context: Context) {
 
             put(Events.DTSTART, event.startTS * 1000L)
             put(Events.EVENT_TIMEZONE, event.getTimeZoneString())
+            // the arrival zone of a flight; the sync adapter writes it as DTEND;TZID
+            if (event.getIsAllDay() || event.getEndTimeZoneString() == event.getTimeZoneString()) {
+                putNull(Events.EVENT_END_TIMEZONE)
+            } else {
+                put(Events.EVENT_END_TIMEZONE, event.getEndTimeZoneString())
+            }
             if (event.repeatInterval > 0) {
                 put(Events.DURATION, getDurationCode(event))
                 putNull(Events.DTEND)

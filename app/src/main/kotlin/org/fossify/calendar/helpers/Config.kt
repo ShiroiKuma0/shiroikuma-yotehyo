@@ -257,6 +257,20 @@ class Config(context: Context) : BaseConfig(context) {
         set(allowChangingTimeZones) = prefs.edit()
             .putBoolean(ALLOW_CHANGING_TIME_ZONES, allowChangingTimeZones).apply()
 
+    // Zones picked lately, newest first (comma-separated ids), shown at the top of the zone picker.
+    var recentTimeZones: List<String>
+        get() = prefs.getString(RECENT_TIME_ZONES, "")!!.split(",").filter { it.isNotEmpty() }
+        set(recentTimeZones) = prefs.edit().putString(RECENT_TIME_ZONES, recentTimeZones.joinToString(",")).apply()
+
+    fun addRecentTimeZone(zoneId: String) {
+        recentTimeZones = (listOf(zoneId) + recentTimeZones.filter { it != zoneId }).take(8)
+    }
+
+    // The home zone ("" = off): while the device clock reads differently, the day view shows a travel banner.
+    var homeTimeZone: String
+        get() = prefs.getString(HOME_TIME_ZONE, "")!!
+        set(homeTimeZone) = prefs.edit().putString(HOME_TIME_ZONE, homeTimeZone).apply()
+
     var addBirthdaysAutomatically: Boolean
         get() = prefs.getBoolean(ADD_BIRTHDAYS_AUTOMATICALLY, false)
         set(addBirthdaysAutomatically) = prefs.edit()

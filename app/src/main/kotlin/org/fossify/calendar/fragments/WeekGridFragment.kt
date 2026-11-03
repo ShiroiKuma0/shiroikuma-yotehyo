@@ -19,6 +19,7 @@ import org.fossify.calendar.activities.MainActivity
 import org.fossify.calendar.databinding.FragmentWeekGridBinding
 import org.fossify.calendar.databinding.WeekGridDayBinding
 import org.fossify.calendar.databinding.WeekGridEventBinding
+import org.fossify.calendar.extensions.gridZoneMarker
 import org.fossify.calendar.extensions.ThemeSlot
 import org.fossify.calendar.extensions.applyCategoryFont
 import org.fossify.calendar.extensions.applyThemeFont
@@ -301,7 +302,7 @@ class WeekGridFragment : Fragment() {
         val label = if (event.getIsAllDay()) {
             event.title
         } else {
-            "${formatEventClock(event.startTS, ctx.config.eventTimeFormat)} ${event.title}"
+            "${formatEventClock(event.startTS, ctx.config.eventTimeFormat)} ${event.gridZoneMarker()}${event.title}"
         }
 
         var color = if (event.color != 0) event.color else ctx.themeColor(ThemeSlot.EVENT_TEXT)

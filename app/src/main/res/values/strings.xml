@@ -513,4 +513,23 @@
         Haven't found some strings? There's more at
         https://github.com/FossifyOrg/Commons/tree/master/commons/src/main/res
     -->
+    <!-- Time zones: day-view zone lines, editor summary, picker, home zone and travel banner -->
+    <string name="theme_sub_time_zones">Time zones</string>
+    <string name="theme_time_zone_text">Time zone lines</string>
+    <string name="theme_time_zone_tag">Time zone tags and next-day marker</string>
+    <string name="end_zone_same_as_start">⟲ same as start</string>
+    <string name="end_zone_follows_start">%s (same as start)</string>
+    <string name="zone_summary_duration">Duration %s</string>
+    <string name="zone_summary_arrives">arrives %1$s %2$s time</string>
+    <string name="zone_summary_here">%1$s here</string>
+    <string name="zone_summary_difference">time difference %s</string>
+    <string name="zone_summary_negative">Arrival is before departure — check the arrival time and zone.</string>
+    <string name="time_zone_recent">Recent</string>
+    <string name="time_zone_search_hint">City, zone, code or airport</string>
+    <string name="home_time_zone">Home time zone</string>
+    <string name="home_time_zone_off">Off — no travel banner</string>
+    <string name="home_time_zone_change">Choose another home time zone</string>
+    <string name="home_time_zone_turn_off">Turn the home time zone off</string>
+    <string name="travel_banner_here">Here</string>
+    <string name="travel_banner_home">Home</string>
 </resources>

@@ -8,7 +8,7 @@ import org.fossify.calendar.R
 import org.fossify.calendar.databinding.MonthViewBackgroundBinding
 import org.fossify.calendar.databinding.MonthViewBinding
 import org.fossify.calendar.extensions.config
-import org.fossify.calendar.extensions.getWeekNumberWidth
+import org.fossify.calendar.extensions.monthGridInset
 import org.fossify.calendar.extensions.launchNewEventIntent
 import org.fossify.calendar.extensions.launchNewTaskIntent
 import org.fossify.calendar.helpers.COLUMN_COUNT
@@ -122,12 +122,13 @@ class MonthViewWrapper(
     }
 
     private fun setupHorizontalOffset() {
-        horizontalOffset = context.getWeekNumberWidth()
+        horizontalOffset = context.monthGridInset()
     }
 
     private fun measureSizes() {
-        dayWidth = (width - horizontalOffset) / COLUMN_COUNT.toFloat()
-        dayHeight = (height - weekDaysLetterHeight) / ROW_COUNT.toFloat()
+        // the same margin left, right and below the grid (see Context.monthGridInset)
+        dayWidth = (width - 2 * horizontalOffset) / COLUMN_COUNT.toFloat()
+        dayHeight = (height - weekDaysLetterHeight - horizontalOffset) / ROW_COUNT.toFloat()
     }
 
     private fun addClickableBackgrounds() {

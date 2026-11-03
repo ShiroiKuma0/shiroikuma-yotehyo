@@ -37,6 +37,9 @@ class IcsImporter(val activity: Context) {
 
     private var curStart = -1L
     private var curEnd = -1L
+    // the TZIDs DTSTART / DTEND were written in (null = UTC / floating), so a flight keeps both zones
+    private var curStartZone: String? = null
+    private var curEndZone: String? = null
     private var curDuration = 0
     private var curTitle = ""
     private var curLocation = ""
@@ -125,6 +128,7 @@ class IcsImporter(val activity: Context) {
                     } else if (line.startsWith(DTSTART)) {
                         if (isParsingEvent || isParsingTask) {
                             curStart = getTimestamp(line.substring(DTSTART.length))
+                            curStartZone = tzidOf(line.substring(DTSTART.length))
 
                             if (curRrule != "") {
                                 parseRepeatRule()
@@ -137,6 +141,7 @@ class IcsImporter(val activity: Context) {
                         }
                     } else if (line.startsWith(DTEND)) {
                         curEnd = getTimestamp(line.substring(DTEND.length))
+                        curEndZone = tzidOf(line.substring(DTEND.length))
                     } else if (line.startsWith(DURATION)) {
                         val durationString = line.substring(DURATION.length)
                         curDuration = Parser().parseDurationSeconds(durationString)
@@ -342,7 +347,7 @@ class IcsImporter(val activity: Context) {
                             curRepeatExceptions,
                             emptyList(),
                             curImportId,
-                            DateTimeZone.getDefault().id,
+                            curStartZone ?: DateTimeZone.getDefault().id,
                             curFlags,
                             curCalendarId,
                             0,
@@ -354,6 +359,10 @@ class IcsImporter(val activity: Context) {
                             accessLevel = curAccessLevel,
                             color = curColor
                         )
+
+                        if (!isAllDay && curEndZone != null && curEndZone != event.timeZone) {
+                            event.endTimeZone = curEndZone!!
+                        }
 
                         if (isAllDay && curEnd > curStart && !event.isTask()) {
                             event.endTS -= TWELVE_HOURS
@@ -536,9 +545,20 @@ class IcsImporter(val activity: Context) {
         curRepeatLimit = repeatRule.repeatLimit
     }
 
+    // ";TZID=Europe/Prague:20261202T192000" → Europe/Prague, when it is a zone the app offers.
+    private fun tzidOf(rest: String): String? {
+        if (!rest.startsWith(';') || !rest.contains("$TZID=")) {
+            return null
+        }
+        val id = rest.substringAfter("$TZID=").substringBefore(':').substringBefore(';').trim('"')
+        return id.takeIf { ALL_TIME_ZONE_IDS.contains(it) }
+    }
+
     private fun resetValues() {
         curStart = -1L
         curEnd = -1L
+        curStartZone = null
+        curEndZone = null
         curTitle = ""
         curLocation = ""
         curDescription = ""

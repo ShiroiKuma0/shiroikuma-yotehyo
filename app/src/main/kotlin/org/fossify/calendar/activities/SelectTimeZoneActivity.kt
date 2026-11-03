@@ -10,6 +10,11 @@ import androidx.appcompat.widget.SearchView
 import androidx.core.view.MenuItemCompat
 import org.fossify.calendar.R
 import org.fossify.calendar.adapters.SelectTimeZoneAdapter
+import org.fossify.calendar.adapters.ZonePickerItem
+import org.fossify.calendar.extensions.config
+import org.fossify.calendar.extensions.zoneCode
+import org.fossify.calendar.extensions.zoneSearchNames
+import org.fossify.calendar.helpers.AIRPORTS
 import org.fossify.calendar.databinding.ActivitySelectTimeZoneBinding
 import org.fossify.calendar.helpers.CURRENT_TIME_ZONE
 import org.fossify.calendar.helpers.TIME_ZONE
@@ -32,20 +37,26 @@ class SelectTimeZoneActivity : SimpleActivity() {
         setContentView(binding.root)
         setupOptionsMenu()
 
-        SelectTimeZoneAdapter(this, allTimeZones) {
+        val initialItems = defaultItems()
+        SelectTimeZoneAdapter(this, initialItems, getString(R.string.time_zone_recent)) {
             hideKeyboard()
+            val zone = it as MyTimeZone
+            config.addRecentTimeZone(zone.zoneName)
             val data = Intent()
-            data.putExtra(TIME_ZONE, it as MyTimeZone)
+            data.putExtra(TIME_ZONE, zone)
             setResult(RESULT_OK, data)
             finish()
         }.apply {
             binding.selectTimeZoneList.adapter = this
         }
 
+        // with recent zones on top the user's own picks are right there; otherwise jump to the current zone
         val currentTimeZone = intent.getStringExtra(CURRENT_TIME_ZONE) ?: TimeZone.getDefault().id
-        val pos = allTimeZones.indexOfFirst { it.zoneName.equals(currentTimeZone, true) }
-        if (pos != -1) {
-            binding.selectTimeZoneList.scrollToPosition(pos)
+        if (config.recentTimeZones.isEmpty()) {
+            val pos = initialItems.indexOfFirst { it.zone.zoneName.equals(currentTimeZone, true) }
+            if (pos != -1) {
+                binding.selectTimeZoneList.scrollToPosition(pos)
+            }
         }
     }
 
@@ -62,7 +73,7 @@ class SelectTimeZoneActivity : SimpleActivity() {
         val searchManager = getSystemService(Context.SEARCH_SERVICE) as SearchManager
         mSearchMenuItem = menu.findItem(R.id.search)
         (mSearchMenuItem!!.actionView as SearchView).apply {
-            queryHint = getString(R.string.enter_a_country)
+            queryHint = getString(R.string.time_zone_search_hint)
             setSearchableInfo(searchManager.getSearchableInfo(componentName))
             isSubmitButtonEnabled = false
             isIconified = false
@@ -91,10 +102,51 @@ class SelectTimeZoneActivity : SimpleActivity() {
         })
     }
 
+    // Recent picks first (marked), then every zone.
+    private fun defaultItems(): ArrayList<ZonePickerItem> {
+        val byId = allTimeZones.associateBy { it.zoneName }
+        val recent = config.recentTimeZones.mapNotNull { byId[it] }.map { ZonePickerItem(it, isRecent = true) }
+        return ArrayList(recent + allTimeZones.map { ZonePickerItem(it) })
+    }
+
+    // Each zone's searchable text: its id (spaces for underscores), its city names in English, the
+    // device language and Japanese, its current code (CET, TRT…) and GMT offset. Built on first search.
+    private val searchIndex: List<Pair<MyTimeZone, String>> by lazy {
+        val now = System.currentTimeMillis()
+        allTimeZones.map { zone ->
+            val names = zoneSearchNames(zone.zoneName)
+            val code = zoneCode(zone.zoneName, now)
+            zone to (listOf(zone.zoneName, zone.zoneName.replace('_', ' '), code, zone.title) + names)
+                .joinToString("\n").lowercase(Locale.getDefault())
+        }
+    }
+
     private fun searchQueryChanged(text: String) {
-        val timeZones = allTimeZones.filter {
-            it.zoneName.lowercase(Locale.getDefault()).contains(text.lowercase(Locale.getDefault()))
-        }.toMutableList() as ArrayList<MyTimeZone>
-        (binding.selectTimeZoneList.adapter as? SelectTimeZoneAdapter)?.updateTimeZones(timeZones)
+        val query = text.trim().lowercase(Locale.getDefault())
+        val adapter = binding.selectTimeZoneList.adapter as? SelectTimeZoneAdapter ?: return
+        if (query.isEmpty()) {
+            adapter.updateItems(defaultItems())
+            return
+        }
+
+        val byId = allTimeZones.associateBy { it.zoneName }
+        // a three-letter airport code (PRG, IST, NRT) leads with that airport's zone
+        val airportItems = if (query.length == 3) {
+            AIRPORTS[query.uppercase(Locale.ROOT)]?.let { (city, zoneId) ->
+                byId[zoneId]?.let { listOf(ZonePickerItem(it, query.uppercase(Locale.ROOT), city)) }
+            } ?: emptyList()
+        } else {
+            emptyList()
+        }
+        // airports whose city matches (e.g. "tenerife" → TFS, TFN) when it is not a zone city itself
+        val airportCityItems = if (query.length >= 3) {
+            AIRPORTS.filter { (_, value) -> value.first.lowercase(Locale.getDefault()).contains(query) }
+                .mapNotNull { (code, value) -> byId[value.second]?.let { ZonePickerItem(it, code, value.first) } }
+                .filter { item -> airportItems.none { it.airportCode == item.airportCode } }
+        } else {
+            emptyList()
+        }
+        val zoneItems = searchIndex.filter { it.second.contains(query) }.map { ZonePickerItem(it.first) }
+        adapter.updateItems(ArrayList(airportItems + zoneItems + airportCityItems))
     }
 }

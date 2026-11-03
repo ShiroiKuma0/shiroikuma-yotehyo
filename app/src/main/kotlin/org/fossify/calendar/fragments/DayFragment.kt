@@ -24,6 +24,8 @@ import org.fossify.calendar.extensions.getViewBitmap
 import org.fossify.calendar.extensions.launchNewEventIntent
 import org.fossify.calendar.extensions.launchNewTaskIntent
 import org.fossify.calendar.extensions.printBitmap
+import org.fossify.calendar.extensions.showTravelBanner
+import org.fossify.calendar.extensions.themeColor
 import org.fossify.calendar.helpers.*
 import org.fossify.calendar.interfaces.NavigationListener
 import org.fossify.calendar.models.Event
@@ -51,6 +53,19 @@ class DayFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         updateCalendar()
+        updateTravelBanner()
+    }
+
+    // Away from the home zone, a banner under the date says where the device clock is and what time it is at home.
+    private fun updateTravelBanner() {
+        val ctx = context ?: return
+        binding.dayTravelBanner.applyThemeFont(ThemeSlot.TIME_ZONE_TEXT)
+        binding.dayTravelBanner.showTravelBanner(
+            ctx.config.homeTimeZone,
+            ctx.config.eventTimeFormat,
+            ctx.themeColor(ThemeSlot.TIME_ZONE_TEXT),
+            ctx.themeColor(ThemeSlot.TIME_ZONE_TAG),
+        )
     }
 
     private fun setupButtons() {

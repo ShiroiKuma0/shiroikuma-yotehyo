@@ -31,6 +31,7 @@ class DayEventsAdapter(activity: SimpleActivity, val events: ArrayList<Event>, r
     private val dimCompletedTasks = activity.config.dimCompletedTasks
     private var isPrintVersion = false
     private val mediumMargin = activity.resources.getDimension(org.fossify.commons.R.dimen.medium_margin).toInt()
+    private val zoneLinesWidth = activity.zoneLinesAvailableWidth()
 
     init {
         setupDragListener(true)
@@ -97,12 +98,7 @@ class DayEventsAdapter(activity: SimpleActivity, val events: ArrayList<Event>, r
                 eventItemHolder.setBackgroundResource(org.fossify.commons.R.drawable.section_holder_stroke)
                 eventItemHolder.background.applyColorFilter(textColor)
             }
-            val tzAnnotation = if (event.getIsAllDay()) {
-                null
-            } else {
-                eventTimeZoneAnnotation(event.startTS, event.endTS, event.getTimeZoneString(), event.getEndTimeZoneString())
-            }
-            eventItemTitle.text = if (tzAnnotation != null) "${event.title}$tzAnnotation" else event.title
+            eventItemTitle.text = event.title
             eventItemTitle.checkViewStrikeThrough(event.shouldStrikeThrough())
             val timeFormat = activity.config.eventTimeFormat
             eventItemTime.text = if (event.getIsAllDay()) allDayString else formatEventClock(event.startTS, timeFormat)
@@ -146,6 +142,16 @@ class DayEventsAdapter(activity: SimpleActivity, val events: ArrayList<Event>, r
             eventItemTitle.applyThemeFont(ThemeSlot.EVENT_TEXT)
             eventItemTime.applyThemeFont(ThemeSlot.TEXT_SECONDARY)
             eventItemDescription.applyThemeFont(ThemeSlot.TEXT_SECONDARY)
+            // 発 / 着 / 現地 lines under the device-clock time, for an event in another zone
+            eventItemZones.applyThemeFont(ThemeSlot.TIME_ZONE_TEXT)
+            val zoneTextColor = if (isPrintVersion) newTextColor else activity.themeColor(ThemeSlot.TIME_ZONE_TEXT)
+            val zoneTagColor = if (isPrintVersion) newTextColor else activity.themeColor(ThemeSlot.TIME_ZONE_TAG)
+            eventItemZones.showZoneLines(
+                event.zoneLines(activity.config.eventTimeFormat),
+                if (adjustAlpha) zoneTextColor.adjustAlpha(MEDIUM_ALPHA) else zoneTextColor,
+                if (adjustAlpha) zoneTagColor.adjustAlpha(MEDIUM_ALPHA) else zoneTagColor,
+                zoneLinesWidth,
+            )
             // The event title takes its category (event type) colour, and the category font when set.
             eventItemTitle.setTextColor(if (adjustAlpha) event.color.adjustAlpha(MEDIUM_ALPHA) else event.color)
             if (event.categoryFontFamily.isNotEmpty() || event.categoryFontWeight > 0 || event.categoryFontSize > 0) {

@@ -25,6 +25,13 @@ import org.fossify.calendar.extensions.showKeyboardTimePicker
 import org.fossify.calendar.extensions.tryImportEventsFromFile
 import org.fossify.calendar.extensions.updateWidgets
 import org.fossify.calendar.helpers.ALLOW_CHANGING_TIME_ZONES
+import org.fossify.calendar.helpers.CURRENT_TIME_ZONE
+import org.fossify.calendar.helpers.EVENT_TIME_FORMAT_JAPANESE
+import org.fossify.calendar.helpers.HOME_TIME_ZONE
+import org.fossify.calendar.helpers.getNowSeconds
+import org.fossify.calendar.helpers.TIME_ZONE
+import org.fossify.calendar.extensions.zoneDescription
+import org.fossify.calendar.models.MyTimeZone
 import org.fossify.calendar.helpers.ALLOW_CREATING_TASKS
 import org.fossify.calendar.helpers.ALLOW_CUSTOMIZE_DAY_COUNT
 import org.fossify.calendar.helpers.DAILY_VIEW
@@ -149,6 +156,7 @@ class SettingsActivity : SimpleActivity() {
         private const val PICK_SETTINGS_IMPORT_SOURCE_INTENT = 2
         private const val PICK_EVENTS_IMPORT_SOURCE_INTENT = 3
         private const val PICK_EVENTS_EXPORT_FILE_INTENT = 4
+        private const val SELECT_HOME_TIME_ZONE_INTENT = 5
     }
 
     private var mStoredPrimaryColor = 0
@@ -222,6 +230,7 @@ class SettingsActivity : SimpleActivity() {
         setupDimCompletedTasks()
         setupRollOverIncompleteTasks()
         setupAllowChangingTimeZones()
+        setupHomeTimeZone()
         updateTextColors(binding.settingsHolder)
         checkPrimaryColor()
         setupEnableAutomaticBackups()
@@ -278,6 +287,9 @@ class SettingsActivity : SimpleActivity() {
             parseFile(inputStream)
         } else if (requestCode == PICK_EVENTS_IMPORT_SOURCE_INTENT && resultCode == RESULT_OK && resultData != null && resultData.data != null) {
             tryImportEventsFromFile(resultData.data!!)
+        } else if (requestCode == SELECT_HOME_TIME_ZONE_INTENT && resultCode == RESULT_OK && resultData?.hasExtra(TIME_ZONE) == true) {
+            config.homeTimeZone = (resultData.getSerializableExtra(TIME_ZONE) as MyTimeZone).zoneName
+            updateHomeTimeZoneText()
         } else if (requestCode == PICK_EVENTS_EXPORT_FILE_INTENT && resultCode == RESULT_OK && resultData != null && resultData.data != null) {
             val outputStream = contentResolver.openOutputStream(resultData.data!!)
             exportEventsTo(calendarsToExport, outputStream)
@@ -933,6 +945,45 @@ class SettingsActivity : SimpleActivity() {
         }
     }
 
+    // Home zone: picking one turns the day view's travel banner on; once set, a tap offers change / off.
+    private fun setupHomeTimeZone() {
+        updateHomeTimeZoneText()
+        binding.settingsHomeTimeZoneHolder.setOnClickListener {
+            if (config.homeTimeZone.isEmpty()) {
+                pickHomeTimeZone()
+            } else {
+                val items = arrayListOf(
+                    RadioItem(0, getString(R.string.home_time_zone_change)),
+                    RadioItem(1, getString(R.string.home_time_zone_turn_off)),
+                )
+                RadioGroupDialog(this, items) {
+                    if (it == 0) {
+                        pickHomeTimeZone()
+                    } else {
+                        config.homeTimeZone = ""
+                        updateHomeTimeZoneText()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun pickHomeTimeZone() {
+        Intent(this, SelectTimeZoneActivity::class.java).apply {
+            putExtra(CURRENT_TIME_ZONE, config.homeTimeZone.ifEmpty { java.util.TimeZone.getDefault().id })
+            startActivityForResult(this, SELECT_HOME_TIME_ZONE_INTENT)
+        }
+    }
+
+    private fun updateHomeTimeZoneText() {
+        val home = config.homeTimeZone
+        binding.settingsHomeTimeZone.text = if (home.isEmpty()) {
+            getString(R.string.home_time_zone_off)
+        } else {
+            zoneDescription(home, getNowSeconds(), config.eventTimeFormat == EVENT_TIME_FORMAT_JAPANESE)
+        }
+    }
+
     private fun setupDefaultStartTime() {
         updateDefaultStartTimeText()
         binding.settingsDefaultStartTimeHolder.setOnClickListener {
@@ -1138,6 +1189,7 @@ class SettingsActivity : SimpleActivity() {
                 put(DIM_COMPLETED_TASKS, config.dimCompletedTasks)
                 put(ROLL_OVER_INCOMPLETE_TASKS, config.rollOverIncompleteTasks)
                 put(ALLOW_CHANGING_TIME_ZONES, config.allowChangingTimeZones)
+                put(HOME_TIME_ZONE, config.homeTimeZone)
                 put(USE_PREVIOUS_EVENT_REMINDERS, config.usePreviousEventReminders)
                 put(DEFAULT_REMINDER_1, config.defaultReminder1)
                 put(DEFAULT_REMINDER_2, config.defaultReminder2)
@@ -1254,6 +1306,7 @@ class SettingsActivity : SimpleActivity() {
                 DIM_COMPLETED_TASKS -> config.dimCompletedTasks = value.toBoolean()
                 ROLL_OVER_INCOMPLETE_TASKS -> config.rollOverIncompleteTasks = value.toBoolean()
                 ALLOW_CHANGING_TIME_ZONES -> config.allowChangingTimeZones = value.toBoolean()
+                HOME_TIME_ZONE -> config.homeTimeZone = value.toString()
                 USE_PREVIOUS_EVENT_REMINDERS -> config.usePreviousEventReminders = value.toBoolean()
                 DEFAULT_REMINDER_1 -> config.defaultReminder1 = value.toInt()
                 DEFAULT_REMINDER_2 -> config.defaultReminder2 = value.toInt()

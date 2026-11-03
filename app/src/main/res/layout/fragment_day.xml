@@ -8,11 +8,26 @@
 
     <include layout="@layout/top_navigation" />
 
+    <!-- Travel banner: shown while the device clock reads differently from the home zone. -->
+    <org.fossify.commons.views.MyTextView
+        android:id="@+id/day_travel_banner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/top_value"
+        android:layout_marginStart="@dimen/activity_margin"
+        android:layout_marginEnd="@dimen/activity_margin"
+        android:layout_marginBottom="@dimen/medium_margin"
+        android:gravity="center"
+        android:paddingTop="@dimen/small_margin"
+        android:paddingBottom="@dimen/small_margin"
+        android:textSize="@dimen/normal_text_size"
+        android:visibility="gone" />
+
     <org.fossify.commons.views.MyRecyclerView
         android:id="@+id/day_events"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/top_value"
+        android:layout_below="@+id/day_travel_banner"
         android:clipToPadding="false"
         android:layoutAnimation="@anim/layout_animation"
         app:layoutManager="org.fossify.commons.views.MyLinearLayoutManager" />

@@ -31,6 +31,8 @@ import org.fossify.calendar.databinding.ActivityMainBinding
 import org.fossify.calendar.dialogs.SelectCalendarsDialog
 import org.fossify.calendar.dialogs.SelectHolidayTypesDialog
 import org.fossify.calendar.dialogs.SetRemindersDialog
+import org.fossify.calendar.extensions.outlinedPill
+import org.fossify.calendar.extensions.effectiveFontSize
 import org.fossify.calendar.extensions.addImportIdsToTasks
 import org.fossify.calendar.extensions.calDAVHelper
 import org.fossify.calendar.extensions.config
@@ -220,20 +222,19 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
                 openNewEvent()
             }
         }
-        binding.fabEventLabel.setOnClickListener { openNewEvent() }
-        binding.fabTaskLabel.setOnClickListener { openNewTask() }
+        binding.fabEventLabel.setOnClickListener {
+            openNewEvent()
+            Handler().postDelayed({ hideExtendedFab() }, 300)
+        }
+        binding.fabTaskLabel.setOnClickListener {
+            openNewTask()
+            Handler().postDelayed({ hideExtendedFab() }, 300)
+        }
 
         binding.fabExtendedOverlay.setOnClickListener {
             hideExtendedFab()
         }
 
-        binding.fabTaskIcon.setOnClickListener {
-            openNewTask()
-
-            Handler().postDelayed({
-                hideExtendedFab()
-            }, 300)
-        }
 
         storeStateVariables()
 
@@ -309,11 +310,7 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
             updateTextColors(calendarCoordinator)
             fabExtendedOverlay.background =
                 getProperBackgroundColor().adjustAlpha(0.8f).toDrawable()
-            fabEventLabel.setTextColor(getProperTextColor())
-            fabTaskLabel.setTextColor(getProperTextColor())
-
-            fabTaskIcon.drawable.applyColorFilter(mStoredPrimaryColor.getContrastColor())
-            fabTaskIcon.background.applyColorFilter(mStoredPrimaryColor)
+            styleFabMenu()
 
             searchHolder.background = getProperBackgroundColor().toDrawable()
             checkSwipeRefreshAvailability()
@@ -417,9 +414,22 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
                 setStroke(strokePx, themeColor(ThemeSlot.SEARCH_BORDER))
             }
 
+        // A slimmer bar: 40 dp in all (commons uses the 56 dp action-bar height with 8 dp above and
+        // below), so the 日 週 月 年 icons fill it; the freed height goes to the calendar below.
+        val density = resources.displayMetrics.density
+        menu.findViewById<View>(org.fossify.commons.R.id.search_bar_container)?.apply {
+            layoutParams = layoutParams.apply { height = (40 * density).toInt() }
+            setPaddingRelative(paddingStart, (3 * density).toInt(), paddingEnd, (3 * density).toInt())
+        }
+        menu.requireToolbar().minimumHeight = 0
+
         menu.findViewById<EditText>(org.fossify.commons.R.id.top_toolbar_search)?.apply {
             setTextColor(themeColor(ThemeSlot.SEARCH_TEXT))
             setHintTextColor(themeColor(ThemeSlot.SEARCH_HINT))
+            // smaller than commons' 20 sp unless a size is set for "Search text" in 白い熊 予定表 UI
+            if (effectiveFontSize(ThemeSlot.SEARCH_TEXT) <= 0) {
+                setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15f)
+            }
             applyThemeFont(ThemeSlot.SEARCH_TEXT)
         }
 
@@ -1373,10 +1383,44 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
         else -> dayCode
     }
 
+    // The + menu: black panel in a 2 dp accent frame; Event is the main pill (3 dp, bold), Task a
+    // regular one (1.25 dp) — both unfilled, label and icon in the accent.
+    private fun styleFabMenu() = binding.apply {
+        val accent = getProperPrimaryColor()
+        fabMenu.background = android.graphics.drawable.GradientDrawable().apply {
+            cornerRadius = 20 * resources.displayMetrics.density
+            setStroke((2 * resources.displayMetrics.density).toInt(), accent)
+            setColor(getProperBackgroundColor())
+        }
+        // the + button itself: an unfilled round pill — background showing through, a 3 dp accent
+        // ring (it is the screen's main action), the icon in the accent, no shadow. Re-applied on
+        // every resume, after commons' updateTextColors has filled it with the accent again.
+        calendarFab.apply {
+            backgroundTintList = android.content.res.ColorStateList.valueOf(getProperBackgroundColor())
+            shapeAppearanceModel = com.google.android.material.shape.ShapeAppearanceModel.builder()
+                .setAllCornerSizes(com.google.android.material.shape.RelativeCornerSize(0.5f))
+                .build()
+            compatElevation = 0f
+            rippleColor = (accent and 0x00FFFFFF) or (0x4D shl 24)
+            foreground = android.graphics.drawable.GradientDrawable().apply {
+                shape = android.graphics.drawable.GradientDrawable.OVAL
+                setStroke((3 * resources.displayMetrics.density).toInt(), accent)
+                setColor(android.graphics.Color.TRANSPARENT)
+            }
+            applyColorFilter(accent)
+        }
+        fabEventLabel.background = outlinedPill(accent, strokeDp = 3f)
+        fabTaskLabel.background = outlinedPill(accent)
+        arrayOf(fabEventLabel, fabTaskLabel).forEach { label ->
+            label.setTextColor(accent)
+            label.compoundDrawablesRelative.filterNotNull().forEach { it.mutate().applyColorFilter(accent) }
+        }
+    }
+
     private fun showExtendedFab() {
         animateFabIcon(false)
         binding.apply {
-            arrayOf(fabEventLabel, fabExtendedOverlay, fabTaskIcon, fabTaskLabel).forEach {
+            arrayOf(fabExtendedOverlay, fabMenu).forEach {
                 it.fadeIn()
             }
         }
@@ -1385,7 +1429,7 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
     private fun hideExtendedFab() {
         animateFabIcon(true)
         binding.apply {
-            arrayOf(fabEventLabel, fabExtendedOverlay, fabTaskIcon, fabTaskLabel).forEach {
+            arrayOf(fabExtendedOverlay, fabMenu).forEach {
                 it.fadeOut()
             }
         }
