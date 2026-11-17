@@ -44,16 +44,12 @@ import org.fossify.calendar.helpers.REGULAR_DAY_BOX_BORDER_DP
 import org.fossify.calendar.helpers.SPECIAL_DAY_FRAME_DP
 import org.fossify.calendar.helpers.SPECIAL_DAY_FRAME_GAP_DP
 import org.fossify.calendar.helpers.THEME_UNSET
-import org.fossify.calendar.helpers.TYPE_EVENT
-import org.fossify.calendar.helpers.TYPE_TASK
 import org.fossify.calendar.helpers.WEEK_START_TIMESTAMP
 import org.fossify.calendar.helpers.getActivityToOpen
 import org.fossify.calendar.models.Event
-import org.fossify.commons.dialogs.RadioGroupDialog
 import org.fossify.commons.extensions.adjustAlpha
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.helpers.MEDIUM_ALPHA
-import org.fossify.commons.models.RadioItem
 import org.joda.time.DateTime
 import org.joda.time.DateTimeConstants
 import kotlin.math.roundToInt
@@ -338,17 +334,14 @@ class WeekGridFragment : Fragment() {
         container.addView(line.root)
     }
 
-    // Match the regular week view's add flow: offer the Event/Task chooser when tasks are enabled,
-    // otherwise go straight to a new event.
+    // Match the regular week view's add flow: offer the Event/Task choice as the + menu's pills
+    // when tasks are enabled, otherwise go straight to a new event.
     private fun addEventOrTask(dayCode: String) {
         val ctx = requireContext()
-        if (ctx.config.allowCreatingTasks) {
-            val items = arrayListOf(
-                RadioItem(TYPE_EVENT, getString(R.string.event)),
-                RadioItem(TYPE_TASK, getString(R.string.task))
-            )
-            RadioGroupDialog(requireActivity(), items) {
-                if (it as Int == TYPE_TASK) ctx.launchNewTaskIntent(dayCode) else ctx.launchNewEventIntent(dayCode)
+        val main = activity as? MainActivity
+        if (ctx.config.allowCreatingTasks && main != null) {
+            main.showEventTaskChooser { isTask ->
+                if (isTask) ctx.launchNewTaskIntent(dayCode) else ctx.launchNewEventIntent(dayCode)
             }
         } else {
             ctx.launchNewEventIntent(dayCode)

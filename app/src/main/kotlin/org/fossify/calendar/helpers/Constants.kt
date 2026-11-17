@@ -195,6 +195,7 @@ const val PALETTE_BLACK = 0xFF000000.toInt()
 const val PALETTE_YELLOW = 0xFFFFFF00.toInt()
 // The one hue the black/yellow palette leaves unused, so it reads as "today" and nothing else.
 const val PALETTE_BLUE = 0xFF2979FF.toInt()
+const val PILL_DIALOG_SEEDED = "pill_dialog_seeded" // one-time switch to commons' pill dialog buttons
 
 // Per-element fonts: one entry per text slot, keyed by the slot key.
 const val FONT_FAMILY_PREFIX = "font_family_" // String, "" = system/global default

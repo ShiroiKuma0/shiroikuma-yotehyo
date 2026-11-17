@@ -5,6 +5,7 @@ import androidx.annotation.StringRes
 import org.fossify.calendar.R
 import org.fossify.calendar.helpers.DAY_BOX_THICKNESS_INHERIT
 import org.fossify.calendar.helpers.DIALOG_BORDER_WIDTH_DEFAULT
+import androidx.core.graphics.ColorUtils
 import org.fossify.calendar.helpers.PALETTE_BLACK
 import org.fossify.calendar.helpers.PALETTE_BLUE
 import org.fossify.calendar.helpers.PALETTE_YELLOW
@@ -30,6 +31,7 @@ enum class ThemeGroup(@StringRes val labelRes: Int) {
     SEARCH(R.string.theme_group_search),
     CHROME(R.string.theme_group_chrome),
     CALENDAR(R.string.theme_group_calendar),
+    SETTINGS_PAGE(R.string.theme_group_settings_page),
 }
 
 enum class ThemeSlot(
@@ -58,7 +60,6 @@ enum class ThemeSlot(
     MENU_TEXT("theme_menu_text", ThemeGroup.CHROME, R.string.theme_menu_text),
     SETTINGS_TITLE("theme_settings_title", ThemeGroup.CHROME, R.string.theme_settings_title),
     VIEW_SWITCHER("theme_view_switcher", ThemeGroup.CHROME, R.string.theme_view_switcher, hasFont = true),
-    SETTINGS_SWITCHER("theme_settings_switcher", ThemeGroup.CHROME, R.string.theme_settings_switcher, hasFont = true),
 
     // Calendar surfaces
     EVENT_TEXT("theme_event_text", ThemeGroup.CALENDAR, R.string.theme_event_text, hasFont = true),
@@ -89,7 +90,15 @@ enum class ThemeSlot(
     // (dim gold), and the outlined zone tags plus 翌日 (accent)
     TIME_ZONE_TEXT("theme_time_zone_text", ThemeGroup.CALENDAR, R.string.theme_time_zone_text, hasFont = true),
     TIME_ZONE_TAG("theme_time_zone_tag", ThemeGroup.CALENDAR, R.string.theme_time_zone_tag),
+
+    // Settings pages: the dim gold of every explanation and of the thin rule beside it, and the darker
+    // (opaque, never faded) yellow of a switch that is off
+    SETTINGS_NOTE("theme_settings_note", ThemeGroup.SETTINGS_PAGE, R.string.theme_settings_note),
+    SWITCH_OFF("theme_switch_off", ThemeGroup.SETTINGS_PAGE, R.string.theme_switch_off),
 }
+
+private const val NOTE_BLEND = 0.784f
+private const val SWITCH_OFF_BLEND = 0.55f
 
 /** The effective color for a slot: the user's override if set, otherwise its inherited default. */
 fun Context.themeColor(slot: ThemeSlot): Int {
@@ -116,7 +125,6 @@ private fun Context.themeDefault(slot: ThemeSlot): Int = when (slot) {
     ThemeSlot.MENU_TEXT -> themeColor(ThemeSlot.TEXT)
     ThemeSlot.SETTINGS_TITLE -> themeColor(ThemeSlot.PRIMARY).getContrastColor()
     ThemeSlot.VIEW_SWITCHER -> themeColor(ThemeSlot.TOOLBAR_ICONS)
-    ThemeSlot.SETTINGS_SWITCHER -> themeColor(ThemeSlot.TOOLBAR_ICONS)
 
     // Calendar: today markers follow the accent; weekend reuses the stock weekend color;
     // grid lines inherit the text color at the same low alpha the views already use.
@@ -150,6 +158,11 @@ private fun Context.themeDefault(slot: ThemeSlot): Int = when (slot) {
 
     ThemeSlot.TIME_ZONE_TEXT -> dimmedColor(themeColor(ThemeSlot.TEXT))
     ThemeSlot.TIME_ZONE_TAG -> themeColor(ThemeSlot.PRIMARY)
+
+    // #C8C800 on the black/yellow palette: 78 % of the way from the background to the text
+    ThemeSlot.SETTINGS_NOTE -> ColorUtils.blendARGB(themeColor(ThemeSlot.BACKGROUND), themeColor(ThemeSlot.TEXT), NOTE_BLEND)
+    // #8C8C00: 55 % of the way from the background to the accent
+    ThemeSlot.SWITCH_OFF -> ColorUtils.blendARGB(themeColor(ThemeSlot.BACKGROUND), themeColor(ThemeSlot.PRIMARY), SWITCH_OFF_BLEND)
 }
 
 /** Set an explicit override for a slot. Write-through slots persist to the stock commons/config colors. */
@@ -216,6 +229,20 @@ fun Context.seedDialogStyleIfNeeded() {
     config.dialogBorderWidth = DIALOG_BORDER_WIDTH_DEFAULT
     config.styledDialogButtons = true
     config.dialogStyleSeeded = true
+}
+
+/**
+ * One-time switch to commons' pill dialog buttons (sk12): the positive button becomes the main
+ * outlined pill (3 dp, bold), every other button a thin one — never filled. It takes precedence over
+ * the older boxed buttons and can be turned off again under Dialogs in 白い熊 予定表 UI.
+ */
+fun Context.seedPillDialogButtonsIfNeeded() {
+    if (config.pillDialogSeeded) {
+        return
+    }
+
+    config.pillDialogButtons = true
+    config.pillDialogSeeded = true
 }
 
 /**

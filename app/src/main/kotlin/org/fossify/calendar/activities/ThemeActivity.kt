@@ -1,5 +1,11 @@
 package org.fossify.calendar.activities
 
+import android.graphics.Typeface
+import android.util.TypedValue
+import android.widget.LinearLayout
+import org.fossify.calendar.extensions.outlinedPill
+import org.fossify.calendar.views.applyOutlinedSwitch
+import kotlin.math.roundToInt
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Intent
@@ -60,7 +66,6 @@ import org.fossify.calendar.helpers.THEME_UNSET
 import org.fossify.calendar.helpers.formatDayBoxHeader
 import org.fossify.commons.dialogs.ConfirmationDialog
 import org.fossify.commons.dialogs.RadioGroupDialog
-import org.fossify.commons.extensions.adjustAlpha
 import org.fossify.commons.extensions.beVisibleIf
 import org.fossify.commons.extensions.getAlertDialogBuilder
 import org.fossify.commons.extensions.getProperBackgroundColor
@@ -86,6 +91,9 @@ class ThemeActivity : SimpleActivity() {
     companion object {
         // How many hex characters of the automation token stay visible at each end.
         private const val TOKEN_VISIBLE_CHARS = 8
+
+        // Set by Settings when it opens this page, so "App settings" goes back to it instead of stacking a copy
+        const val EXTRA_FROM_SETTINGS = "from_settings"
     }
 
     private val binding by viewBinding(ActivityThemeBinding::inflate)
@@ -148,6 +156,12 @@ class ThemeActivity : SimpleActivity() {
         indentStepPx = 3 * resources.getDimensionPixelSize(org.fossify.commons.R.dimen.activity_margin)
         currentRowIndent = 0
 
+        // The page's link to the app's own settings: the first, thick pill, right under the title.
+        addActionRow(
+            getString(R.string.theme_app_settings), getString(R.string.theme_app_settings_desc),
+            main = true, opens = true
+        ) { openAppSettings() }
+
         // Export / Import — the first, separated section (same idea and flow as the Kōjiki page).
         addSection(R.string.eim_heading)
         addExportImportRow()
@@ -167,6 +181,10 @@ class ThemeActivity : SimpleActivity() {
         // Top bar action/overflow icons, overflow-menu text, and the Settings toolbar foreground.
         addSection(R.string.theme_group_chrome)
         slotsOf(ThemeGroup.CHROME).forEach { addSlot(it) }
+
+        // Settings pages — the dim gold of explanations and their rule, and a switch that is off.
+        addSection(R.string.theme_group_settings_page)
+        slotsOf(ThemeGroup.SETTINGS_PAGE).forEach { addSlot(it) }
 
         // Calendar — grouped by surface.
         addSection(R.string.theme_group_calendar)
@@ -242,42 +260,20 @@ class ThemeActivity : SimpleActivity() {
         addThicknessRow(R.string.theme_dialog_border_width, config.dialogBorderWidth, min = 0, max = 8) {
             config.dialogBorderWidth = it
         }
+        addToggleRow(R.string.theme_dialog_pill_buttons, config.pillDialogButtons, R.string.theme_dialog_pill_buttons_desc) {
+            config.pillDialogButtons = it
+        }
         addToggleRow(R.string.theme_dialog_styled_buttons, config.styledDialogButtons) {
             config.styledDialogButtons = it
         }
     }
 
-    // The tappable Export/Import entry row: title + a status line that is refreshed with the newest
-    // export in the chosen directory every time the page opens (buildRows runs in onResume).
+    // The Export/Import panel: the section's main pill, with a status line beneath that is refreshed
+    // with the newest export in the chosen directory every time the page opens (buildRows runs in onResume).
     private fun addExportImportRow() {
-        val margin = resources.getDimensionPixelSize(org.fossify.commons.R.dimen.activity_margin)
-        val titleView = TextView(this).apply {
-            text = getString(R.string.eim_heading)
-            setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 16f)
-            setTextColor(textColor)
-        }
-        val statusView = TextView(this).apply {
-            text = getString(R.string.eim_desc)
-            setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 13f)
-            setTextColor(textColor.adjustAlpha(0.6f))
-            setPadding(0, margin / 4, 0, 0)
-        }
-        val row = android.widget.LinearLayout(this).apply {
-            orientation = android.widget.LinearLayout.VERTICAL
-            setPadding(margin, margin * 3 / 4, margin, margin * 3 / 4)
-            val outValue = android.util.TypedValue()
-            theme.resolveAttribute(android.R.attr.selectableItemBackground, outValue, true)
-            setBackgroundResource(outValue.resourceId)
-            isClickable = true
-            setOnClickListener { openExportImport() }
-            addView(titleView)
-            addView(statusView)
-        }
-        row.layoutParams = android.widget.LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
-        )
-        indentView(row, currentRowIndent)
-        binding.themeHolder.addView(row)
+        val statusView = addActionRow(
+            getString(R.string.eim_heading), getString(R.string.eim_desc), main = true, opens = true
+        ) { openExportImport() } ?: return
         // Query the export directory for the latest export off the main thread — SAF listing is slow.
         // Warnings (no directory set / no export yet) show in red, like in the panel.
         ensureBackgroundThread {
@@ -291,6 +287,14 @@ class ThemeActivity : SimpleActivity() {
         }
     }
 
+    private fun openAppSettings() {
+        if (intent.getBooleanExtra(EXTRA_FROM_SETTINGS, false)) {
+            finish()
+        } else {
+            startActivity(Intent(this, SettingsActivity::class.java))
+        }
+    }
+
     // ---- Automation: a subgroup of Export / Import, since every automation intent drives that export
     // (see receivers/StateExportReceiver) ----
 
@@ -299,15 +303,15 @@ class ThemeActivity : SimpleActivity() {
         // switch, which now ships ON; then "Use authorization token?", which ships OFF; then the token
         // itself, shown ONLY while the second switch is on. A 48-character secret sitting under an off
         // switch invites 白い熊 to paste it somewhere it will do nothing.
-        addToggleRow(R.string.enable_automation, config.automationEnabled) {
+        addToggleRow(R.string.enable_automation, config.automationEnabled, R.string.enable_automation_desc) {
             config.automationEnabled = it
         }
-        addDescriptionRow(R.string.enable_automation_desc)
-        addToggleRow(R.string.automation_require_token, config.automationRequireToken) {
+        addToggleRow(
+            R.string.automation_require_token, config.automationRequireToken, R.string.automation_require_token_desc
+        ) {
             config.automationRequireToken = it
             showTokenRow(it)
         }
-        addDescriptionRow(R.string.automation_require_token_desc)
         addTokenRow()
         showTokenRow(config.automationRequireToken)
 
@@ -327,9 +331,12 @@ class ThemeActivity : SimpleActivity() {
         tokenRow = row
         row.themeTokenLabel.text = getString(R.string.automation_token)
         row.themeTokenLabel.setTextColor(textColor)
-        row.themeTokenValue.setTextColor(textColor.adjustAlpha(0.6f))
+        row.themeTokenValue.setTextColor(noteColor())
         row.themeTokenRegenerate.text = getString(R.string.automation_token_regenerate)
         row.themeTokenRegenerate.setTextColor(primaryColor)
+        // An action in place, after a confirmation: a thin pill, no ›
+        row.themeTokenRegenerate.background = outlinedPill(primaryColor)
+        row.themeTokenRegenerate.setPadding(px(16f), px(9f), px(16f), px(9f))
         row.root.setOnClickListener {
             // Not commons' copyToClipboard: that one toasts the value itself, which would put the full
             // secret back on screen right after we deliberately abbreviated it.
@@ -348,6 +355,7 @@ class ThemeActivity : SimpleActivity() {
                 toast(R.string.automation_token_regenerated)
             }
         }
+        tighten(row.root)
         indentView(row.root, currentRowIndent)
         binding.themeHolder.addView(row.root)
     }
@@ -377,13 +385,8 @@ class ThemeActivity : SimpleActivity() {
 
     private fun addAllFilesAccessRow() {
         val granted = Environment.isExternalStorageManager()
-        val row = ItemThemeValueBinding.inflate(layoutInflater, binding.themeHolder, false)
-        row.themeValueLabel.text = getString(R.string.all_files_access)
-        row.themeValueLabel.setTextColor(textColor)
-        row.themeValueValue.text =
-            getString(if (granted) R.string.all_files_access_granted else R.string.all_files_access_needed)
-        row.themeValueValue.setTextColor(if (granted) textColor.adjustAlpha(0.6f) else SettingsTransfer.WARN_COLOR)
-        row.root.setOnClickListener {
+        val status = getString(if (granted) R.string.all_files_access_granted else R.string.all_files_access_needed)
+        val statusView = addActionRow(getString(R.string.all_files_access), status, main = false, opens = true) {
             try {
                 startActivity(
                     Intent(
@@ -399,18 +402,16 @@ class ThemeActivity : SimpleActivity() {
                 }
             }
         }
-        indentView(row.root, currentRowIndent)
-        binding.themeHolder.addView(row.root)
+        if (!granted) {
+            statusView?.setTextColor(SettingsTransfer.WARN_COLOR)
+        }
     }
 
-    /** A dimmed explanatory line under the row it belongs to. */
+    /** A loose note that belongs to no single item (a section intro): dim gold, no rule. */
     private fun addDescriptionRow(@StringRes textRes: Int) {
         val margin = resources.getDimensionPixelSize(org.fossify.commons.R.dimen.activity_margin)
-        val view = TextView(this).apply {
-            text = getString(textRes)
-            setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 13f)
-            setTextColor(textColor.adjustAlpha(0.6f))
-            setPadding(margin, 0, margin, margin / 2)
+        val view = noteView(getString(textRes)).apply {
+            setPadding(margin, px(2f), margin, px(4f))
             layoutParams = android.widget.LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
             )
@@ -436,7 +437,7 @@ class ThemeActivity : SimpleActivity() {
         row.themeColorLabel.text = getString(R.string.theme_dialog_border_color)
         row.themeColorLabel.setTextColor(textColor)
         row.themeColorPreview.background.setTint(config.dialogBorderColor)
-        row.themeColorDefault.setTextColor(textColor.adjustAlpha(0.6f))
+        row.themeColorDefault.setTextColor(noteColor())
         row.themeColorDefault.beVisibleIf(config.dialogBorderColor == PALETTE_YELLOW)
         row.root.setOnClickListener {
             AlphaColorPickerDialog(this, config.dialogBorderColor, addDefaultColorButton = true) { wasPositive, color ->
@@ -445,6 +446,7 @@ class ThemeActivity : SimpleActivity() {
                 row.themeColorDefault.beVisibleIf(config.dialogBorderColor == PALETTE_YELLOW)
             }
         }
+        tighten(row.root)
         indentView(row.root, currentRowIndent)
         binding.themeHolder.addView(row.root)
     }
@@ -468,7 +470,7 @@ class ThemeActivity : SimpleActivity() {
         row.themeColorLabel.text = getString(R.string.theme_grid_line_color)
         row.themeColorLabel.setTextColor(textColor)
         row.themeColorPreview.background.setTint(gridLineColor(line))
-        row.themeColorDefault.setTextColor(textColor.adjustAlpha(0.6f))
+        row.themeColorDefault.setTextColor(noteColor())
         row.themeColorDefault.beVisibleIf(config.getGridLineColor(line.key) == THEME_UNSET)
         row.root.setOnClickListener {
             AlphaColorPickerDialog(this, gridLineColor(line), addDefaultColorButton = true) { wasPositive, color ->
@@ -477,6 +479,7 @@ class ThemeActivity : SimpleActivity() {
                 row.themeColorDefault.beVisibleIf(config.getGridLineColor(line.key) == THEME_UNSET)
             }
         }
+        tighten(row.root)
         indentView(row.root, currentRowIndent)
         binding.themeHolder.addView(row.root)
     }
@@ -524,11 +527,12 @@ class ThemeActivity : SimpleActivity() {
         row.themeColorLabel.text = getString(slot.labelRes)
         row.themeColorLabel.setTextColor(textColor)
         row.themeColorPreview.background.setTint(themeColor(slot))
-        row.themeColorDefault.setTextColor(textColor.adjustAlpha(0.6f))
+        row.themeColorDefault.setTextColor(noteColor())
         row.themeColorDefault.beVisibleIf(followsDefault(slot))
         row.root.setOnClickListener { openColorPicker(slot) }
         previews[slot] = row.themeColorPreview
         defaultBadges[slot] = row.themeColorDefault
+        tighten(row.root)
         indentView(row.root, currentRowIndent)
         binding.themeHolder.addView(row.root)
     }
@@ -567,21 +571,49 @@ class ThemeActivity : SimpleActivity() {
             }
         }
 
+        listOf<View>(b.themeTextColorRow, b.themeTextFontRow, b.themeTextWeightRow, b.themeTextSizeRow).forEach { tighten(it) }
+        b.themeTextSample.setPaddingRelative(b.themeTextSample.paddingStart, 0, b.themeTextSample.paddingEnd, px(4f))
         indentView(b.root, currentRowIndent)
         binding.themeHolder.addView(b.root)
     }
 
-    private fun addToggleRow(@StringRes labelRes: Int, isChecked: Boolean, onToggle: (Boolean) -> Unit) {
+    /**
+     * A switch row. With an explanation it becomes one block: the label bold, the explanation beneath
+     * in dim gold, and the thin dim-gold rule down its left edge.
+     */
+    private fun addToggleRow(
+        @StringRes labelRes: Int,
+        isChecked: Boolean,
+        @StringRes descRes: Int? = null,
+        onToggle: (Boolean) -> Unit,
+    ) {
         val row = ItemThemeToggleBinding.inflate(layoutInflater, binding.themeHolder, false)
         row.themeToggleSwitch.text = getString(labelRes)
         row.themeToggleSwitch.setColors(textColor, primaryColor, getProperBackgroundColor())
         row.themeToggleSwitch.isChecked = isChecked
+        row.themeToggleSwitch.applyOutlinedSwitch()
         row.themeToggleHolder.setOnClickListener {
             row.themeToggleSwitch.toggle()
             onToggle(row.themeToggleSwitch.isChecked)
         }
-        indentView(row.root, currentRowIndent)
-        binding.themeHolder.addView(row.root)
+        tighten(row.root)
+        if (descRes == null) {
+            indentView(row.root, currentRowIndent)
+            binding.themeHolder.addView(row.root)
+            return
+        }
+
+        row.themeToggleSwitch.setTypeface(row.themeToggleSwitch.typeface, Typeface.BOLD)
+        val endPadding = row.root.paddingEnd
+        row.root.setPaddingRelative(0, px(2f), endPadding, 0)
+        val column = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(row.root, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            addView(noteView(getString(descRes)).apply { setPaddingRelative(0, 0, endPadding, px(2f)) })
+        }
+        val block = ruled(column)
+        indentView(block, currentRowIndent)
+        binding.themeHolder.addView(block)
     }
 
     /** A slot follows its inherited default when it has no explicit override (write-through slots never do). */
@@ -679,9 +711,10 @@ class ThemeActivity : SimpleActivity() {
         val row = ItemThemeValueBinding.inflate(layoutInflater, binding.themeHolder, false)
         row.themeValueLabel.text = getString(R.string.theme_day_box_header_align)
         row.themeValueLabel.setTextColor(textColor)
-        row.themeValueValue.setTextColor(textColor.adjustAlpha(0.6f))
+        row.themeValueValue.setTextColor(noteColor())
         row.themeValueValue.text = alignmentText()
         row.root.setOnClickListener { openHeaderAlignmentPicker(row.themeValueValue) }
+        tighten(row.root)
         indentView(row.root, currentRowIndent)
         binding.themeHolder.addView(row.root)
     }
@@ -710,9 +743,10 @@ class ThemeActivity : SimpleActivity() {
         val row = ItemThemeValueBinding.inflate(layoutInflater, binding.themeHolder, false)
         row.themeValueLabel.text = getString(R.string.theme_date_header_format)
         row.themeValueLabel.setTextColor(textColor)
-        row.themeValueValue.setTextColor(textColor.adjustAlpha(0.6f))
+        row.themeValueValue.setTextColor(noteColor())
         row.themeValueValue.text = dateFormatSample()
         row.root.setOnClickListener { openDateHeaderFormatPicker(row.themeValueValue) }
+        tighten(row.root)
         indentView(row.root, currentRowIndent)
         binding.themeHolder.addView(row.root)
     }
@@ -782,9 +816,10 @@ class ThemeActivity : SimpleActivity() {
         val row = ItemThemeValueBinding.inflate(layoutInflater, binding.themeHolder, false)
         row.themeValueLabel.text = getString(R.string.theme_day_off_title)
         row.themeValueLabel.setTextColor(textColor)
-        row.themeValueValue.setTextColor(textColor.adjustAlpha(0.6f))
+        row.themeValueValue.setTextColor(noteColor())
         row.themeValueValue.text = config.dayOffTitle
         row.root.setOnClickListener { openDayOffTitleDialog(row.themeValueValue) }
+        tighten(row.root)
         indentView(row.root, currentRowIndent)
         binding.themeHolder.addView(row.root)
     }
@@ -808,9 +843,10 @@ class ThemeActivity : SimpleActivity() {
         val row = ItemThemeValueBinding.inflate(layoutInflater, binding.themeHolder, false)
         row.themeValueLabel.text = getString(R.string.theme_event_time_format)
         row.themeValueLabel.setTextColor(textColor)
-        row.themeValueValue.setTextColor(textColor.adjustAlpha(0.6f))
+        row.themeValueValue.setTextColor(noteColor())
         row.themeValueValue.text = eventTimeSample()
         row.root.setOnClickListener { openEventTimeFormatPicker(row.themeValueValue) }
+        tighten(row.root)
         indentView(row.root, currentRowIndent)
         binding.themeHolder.addView(row.root)
     }
@@ -875,7 +911,7 @@ class ThemeActivity : SimpleActivity() {
         val row = ItemThemeSliderBinding.inflate(layoutInflater, binding.themeHolder, false)
         row.themeSliderLabel.text = getString(labelRes)
         row.themeSliderLabel.setTextColor(textColor)
-        row.themeSliderValue.setTextColor(textColor.adjustAlpha(0.6f))
+        row.themeSliderValue.setTextColor(noteColor())
         row.themeSliderValue.text = thicknessText(current)
         row.themeSliderSeekbar.min = min
         row.themeSliderSeekbar.max = max
@@ -884,6 +920,7 @@ class ThemeActivity : SimpleActivity() {
             row.themeSliderValue.text = thicknessText(it)
             onChange(it)
         }
+        tighten(row.root)
         indentView(row.root, currentRowIndent)
         binding.themeHolder.addView(row.root)
     }
@@ -893,5 +930,94 @@ class ThemeActivity : SimpleActivity() {
         dp < 0 -> getString(R.string.theme_default_value)
         dp == 0 -> getString(R.string.theme_thickness_none)
         else -> getString(R.string.theme_thickness_value, dp)
+    }
+
+    // ---- The black-yellow page: pills for actions, dim-gold explanations, minimal padding ----
+
+    private fun px(dp: Float) = (dp * resources.displayMetrics.density).roundToInt()
+
+    private fun noteColor() = themeColor(ThemeSlot.SETTINGS_NOTE)
+
+    private fun noteView(text: CharSequence) = TextView(this).apply {
+        this.text = text
+        setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+        setTextColor(noteColor())
+    }
+
+    /** Minimal padding: a row is only as tall as its content, 2 dp above and below. */
+    private fun tighten(view: View) {
+        view.minimumHeight = 0
+        view.setPaddingRelative(view.paddingStart, px(2f), view.paddingEnd, px(2f))
+    }
+
+    /** An item that carries an explanation, with the thin (2 dp) dim-gold rule down its left edge. */
+    private fun ruled(content: View): View {
+        val margin = resources.getDimensionPixelSize(org.fossify.commons.R.dimen.activity_margin)
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            setPaddingRelative(margin, px(2f), 0, px(2f))
+            addView(View(context).apply {
+                setBackgroundColor(noteColor())
+                layoutParams = LinearLayout.LayoutParams(px(2f), ViewGroup.LayoutParams.MATCH_PARENT).apply {
+                    marginEnd = px(10f)
+                }
+            })
+            addView(content, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        }
+    }
+
+    /**
+     * A row that does something when tapped: an outlined pill as wide as its label — never stretched
+     * across the line — with a › when it opens something, 3 dp and bold for the main action of its
+     * section. The explanation sits beneath in dim gold, aligned with the label, and the two share the
+     * rule. Only the pill is the touch target. Returns the explanation, so a caller can refresh it.
+     */
+    private fun addActionRow(
+        title: String,
+        desc: CharSequence?,
+        main: Boolean,
+        opens: Boolean,
+        onClick: () -> Unit,
+    ): TextView? {
+        val padH = px(16f)
+        val padV = px(9f)
+        val pill = TextView(this).apply {
+            text = if (opens) "$title  ›" else title
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+            setTextColor(primaryColor)
+            if (main) setTypeface(typeface, Typeface.BOLD)
+            background = outlinedPill(primaryColor, if (main) 3f else 1.25f)
+            setPadding(padH, padV, padH, padV)
+            isClickable = true
+            isFocusable = true
+            setOnClickListener { onClick() }
+            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                topMargin = px(3f)
+                bottomMargin = px(3f)
+            }
+        }
+        val column = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(pill)
+        }
+        val descView = desc?.let { text ->
+            noteView(text).apply {
+                setPaddingRelative(padH, 0, padH, px(2f))
+                column.addView(this)
+            }
+        }
+        val row = if (descView != null) {
+            ruled(column)
+        } else {
+            val margin = resources.getDimensionPixelSize(org.fossify.commons.R.dimen.activity_margin)
+            column.apply {
+                layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                setPaddingRelative(margin, 0, margin, 0)
+            }
+        }
+        indentView(row, currentRowIndent)
+        binding.themeHolder.addView(row)
+        return descView
     }
 }

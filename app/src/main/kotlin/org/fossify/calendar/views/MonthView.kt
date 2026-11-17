@@ -209,8 +209,13 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
             }
         }
 
+        // The day's events stack in the order the week and day views list them: all-day first, then
+        // by start time. Upstream put the longest event on top instead, which stacked a flight that
+        // leaves at 23:55 and lands tomorrow ABOVE the one that leaves at 19:20 the same evening.
+        // A longer event still wins among those starting at the same moment, so a span that begins
+        // earlier keeps its bar at the top of every cell it crosses.
         allEvents = allEvents.asSequence().sortedWith(
-            compareBy({ -it.daysCnt }, { !it.isAllDay }, { it.startTS }, { it.endTS }, { it.startDayIndex }, { it.title })
+            compareBy({ !it.isAllDay }, { it.startTS }, { -it.daysCnt }, { it.endTS }, { it.startDayIndex }, { it.title })
         ).toMutableList() as ArrayList<MonthViewEvent>
     }
 

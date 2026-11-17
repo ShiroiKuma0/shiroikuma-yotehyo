@@ -33,7 +33,6 @@ import org.fossify.calendar.databinding.ActivityMainBinding
 import org.fossify.calendar.dialogs.ManageHolidaysDialog
 import org.fossify.calendar.dialogs.SelectCalendarsDialog
 import org.fossify.calendar.dialogs.SetRemindersDialog
-import org.fossify.calendar.extensions.outlinedPill
 import org.fossify.calendar.extensions.effectiveFontSize
 import org.fossify.calendar.extensions.addImportIdsToTasks
 import org.fossify.calendar.extensions.calDAVHelper
@@ -154,6 +153,7 @@ import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import java.text.SimpleDateFormat
 import java.util.Locale
+import androidx.core.view.doOnLayout
 
 class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
     override var isSearchBarEnabled = true
@@ -164,6 +164,13 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
     private var shouldGoToTodayBeVisible = false
     private var goToTodayButton: MenuItem? = null
     private var updatingHolidays = false
+
+    // set while the + menu stands in for someone else's Event/Task question (see showEventTaskChooser)
+    private var fabMenuCallback: ((isTask: Boolean) -> Unit)? = null
+
+    // the screen point the + menu was asked for, and the last finger-down that can supply one
+    private var fabMenuAnchor: android.graphics.PointF? = null
+    private var lastTouchDown: android.graphics.PointF? = null
 
     private var mStoredTextColor = 0
     private var mStoredBackgroundColor = 0
@@ -205,15 +212,11 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
 
         config.initializeHolidayManagementNotice(org.fossify.calendar.BuildConfig.VERSION_CODE)
         checkWhatsNewDialog()
-        binding.calendarFab.beVisibleIf(config.storedView != YEARLY_VIEW && config.storedView != WEEKLY_VIEW && config.storedView != WEEKLY_GRID_VIEW)
+        binding.calendarFab.beVisibleIf(fabBelongsIn(config.storedView))
         binding.calendarFab.setOnClickListener {
             if (config.allowCreatingTasks) {
                 if (binding.fabExtendedOverlay.isVisible()) {
-                    openNewEvent()
-
-                    Handler().postDelayed({
-                        hideExtendedFab()
-                    }, 300)
+                    pickFromFabMenu(isTask = false)
                 } else {
                     showExtendedFab()
                 }
@@ -221,14 +224,8 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
                 openNewEvent()
             }
         }
-        binding.fabEventLabel.setOnClickListener {
-            openNewEvent()
-            Handler().postDelayed({ hideExtendedFab() }, 300)
-        }
-        binding.fabTaskLabel.setOnClickListener {
-            openNewTask()
-            Handler().postDelayed({ hideExtendedFab() }, 300)
-        }
+        binding.fabEventLabel.setOnClickListener { pickFromFabMenu(isTask = false) }
+        binding.fabTaskLabel.setOnClickListener { pickFromFabMenu(isTask = true) }
 
         binding.fabExtendedOverlay.setOnClickListener {
             hideExtendedFab()
@@ -476,25 +473,6 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
             view.applyThemeFont(ThemeSlot.VIEW_SWITCHER)
             view.setOnClickListener { switchToView(targetView) }
         }
-        styleSettingsSwitcher()
-    }
-
-    // The 設定 shortcut (two adjacent glyphs) right of the grid icon: 設 opens the 白い熊 予定表 UI
-    // page, 定 opens the regular Settings. Both share the SETTINGS_SWITCHER colour + font.
-    private fun styleSettingsSwitcher() {
-        val color = themeColor(ThemeSlot.SETTINGS_SWITCHER)
-        val actionView = binding.mainMenu.requireToolbar().menu.findItem(R.id.settings_switcher)?.actionView ?: return
-        val glyphs = listOf(
-            Triple(R.id.settings_switcher_ui, "設", { launchUiPage() }),
-            Triple(R.id.settings_switcher_settings, "定", { launchSettings() }),
-        )
-        glyphs.forEach { (viewId, label, onClick) ->
-            val view = actionView.findViewById<TextView>(viewId) ?: return@forEach
-            view.text = label
-            view.setTextColor(color)
-            view.applyThemeFont(ThemeSlot.SETTINGS_SWITCHER)
-            view.setOnClickListener { onClick() }
-        }
     }
 
     private fun launchUiPage() {
@@ -685,10 +663,10 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
         intent.removeExtra(VIEW_TO_OPEN)
         intent.removeExtra(DAY_CODE)
         if (dayCodeToOpen.isNotEmpty()) {
-            binding.calendarFab.beVisible()
             if (viewToOpen != LAST_VIEW) {
                 config.storedView = viewToOpen
             }
+            binding.calendarFab.beVisibleIf(fabBelongsIn(config.storedView))
             updateViewPager(dayCodeToOpen)
             return true
         }
@@ -794,6 +772,9 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
         // Observe touches without consuming them, so the current view keeps scrolling/paging
         // normally while we watch for the "swipe up in the left quarter -> go to today" gesture.
         goToTodaySwipeDetector.onTouchEvent(ev)
+        if (ev.actionMasked == MotionEvent.ACTION_DOWN) {
+            lastTouchDown = android.graphics.PointF(ev.rawX, ev.rawY)
+        }
         return super.dispatchTouchEvent(ev)
     }
 
@@ -1290,7 +1271,7 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
     }
 
     private fun updateView(view: Int) {
-        binding.calendarFab.beVisibleIf(view != YEARLY_VIEW && view != WEEKLY_VIEW && view != WEEKLY_GRID_VIEW)
+        binding.calendarFab.beVisibleIf(fabBelongsIn(view))
         val dateCode = getDateCodeToDisplay(view)
         config.storedView = view
         checkSwipeRefreshAvailability()
@@ -1373,15 +1354,10 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
         else -> dayCode
     }
 
-    // The + menu: black panel in a 2 dp accent frame; Event is the main pill (3 dp, bold), Task a
-    // regular one (1.25 dp) — both unfilled, label and icon in the accent.
+    // The + menu: two unfilled pills stacked above the button, each a Material extended FAB in a
+    // 2 dp accent frame with accent text — the same size and shape as 白い熊 鍵暗号's add menu.
     private fun styleFabMenu() = binding.apply {
         val accent = getProperPrimaryColor()
-        fabMenu.background = android.graphics.drawable.GradientDrawable().apply {
-            cornerRadius = 20 * resources.displayMetrics.density
-            setStroke((2 * resources.displayMetrics.density).toInt(), accent)
-            setColor(getProperBackgroundColor())
-        }
         // the + button itself: an unfilled round pill — background showing through, a 3 dp accent
         // ring (it is the screen's main action), the icon in the accent, no shadow. Re-applied on
         // every resume, after commons' updateTextColors has filled it with the accent again.
@@ -1399,24 +1375,92 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
             }
             applyColorFilter(accent)
         }
-        fabEventLabel.background = outlinedPill(accent, strokeDp = 3f)
-        fabTaskLabel.background = outlinedPill(accent)
-        arrayOf(fabEventLabel, fabTaskLabel).forEach { label ->
-            label.setTextColor(accent)
-            label.compoundDrawablesRelative.filterNotNull().forEach { it.mutate().applyColorFilter(accent) }
+        val pillStroke = (2 * resources.displayMetrics.density).toInt()
+        arrayOf(fabEventLabel, fabTaskLabel).forEach { pill ->
+            pill.backgroundTintList =
+                android.content.res.ColorStateList.valueOf(getProperBackgroundColor())
+            pill.strokeColor = android.content.res.ColorStateList.valueOf(accent)
+            pill.strokeWidth = pillStroke
+            pill.setTextColor(accent)
+            pill.rippleColor = android.content.res.ColorStateList.valueOf(
+                (accent and 0x00FFFFFF) or (0x4D shl 24)
+            )
         }
     }
 
-    private fun showExtendedFab() {
+    // Event or Task, offered as the + menu instead of a radio dialog, for the places that ask for
+    // one themselves — a long-press on an empty day, a tapped week-grid slot. The pills open at the
+    // finger rather than above the + button. The caller says what to do with the answer; dismissing
+    // the menu drops the question.
+    fun showEventTaskChooser(callback: (isTask: Boolean) -> Unit) =
+        showExtendedFab(lastTouchDown, callback)
+
+    private fun pickFromFabMenu(isTask: Boolean) {
+        val callback = fabMenuCallback
+        fabMenuCallback = null
+        when {
+            callback != null -> callback(isTask)
+            isTask -> openNewTask()
+            else -> openNewEvent()
+        }
+        Handler().postDelayed({ hideExtendedFab() }, 300)
+    }
+
+    // The + button belongs only to the views that have no other way in. The month, week and year
+    // grids all offer a new entry on a long-press, so they carry no button.
+    private fun fabBelongsIn(view: Int) =
+        view != MONTHLY_VIEW && view != WEEKLY_VIEW && view != WEEKLY_GRID_VIEW && view != YEARLY_VIEW
+
+    private fun showExtendedFab(
+        anchor: android.graphics.PointF? = null,
+        callback: ((isTask: Boolean) -> Unit)? = null,
+    ) {
+        fabMenuCallback = callback
+        fabMenuAnchor = anchor
         animateFabIcon(false)
         binding.apply {
+            // visible first, so the menu is measured and can be moved onto the anchor before it fades in
+            fabMenu.beVisible()
+            placeFabMenu()
             arrayOf(fabExtendedOverlay, fabMenu).forEach {
                 it.fadeIn()
             }
         }
     }
 
+    // Without an anchor the menu stays where the layout puts it — above the + button. With one it
+    // springs from the finger: centred on the touch, sitting just above it, nudged back inside the
+    // screen, and dropped below the touch when there is no room above.
+    private fun placeFabMenu() {
+        val menu = binding.fabMenu
+        menu.translationX = 0f
+        menu.translationY = 0f
+        val anchor = fabMenuAnchor ?: return
+        menu.doOnLayout { view ->
+            val holder = binding.mainHolder
+            val origin = IntArray(2)
+            holder.getLocationOnScreen(origin)
+            val density = resources.displayMetrics.density
+            val gutter = 16 * density
+            val gap = 8 * density
+            val touchX = anchor.x - origin[0]
+            val touchY = anchor.y - origin[1]
+
+            val maxLeft = (holder.width - view.width - gutter).coerceAtLeast(gutter)
+            val left = (touchX - view.width / 2f).coerceIn(gutter, maxLeft)
+
+            val above = touchY - gap - view.height
+            val top = if (above >= gutter) above else touchY + gap
+            val maxTop = (holder.height - view.height - gutter).coerceAtLeast(gutter)
+
+            view.translationX = left - view.left
+            view.translationY = top.coerceIn(gutter, maxTop) - view.top
+        }
+    }
+
     private fun hideExtendedFab() {
+        fabMenuCallback = null
+        fabMenuAnchor = null
         animateFabIcon(true)
         binding.apply {
             arrayOf(fabExtendedOverlay, fabMenu).forEach {
@@ -1468,7 +1512,7 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
             .commit()
         supportFragmentManager.executePendingTransactions()
         resetActionBarTitle()
-        binding.calendarFab.beVisible()
+        binding.calendarFab.beGone()
         showBackNavigationArrow()
     }
 
@@ -1537,8 +1581,8 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
         }
 
         binding.calendarFab.beGoneIf(
-            supportFragmentManager.backStackEntryCount == 0 &&
-                    (config.storedView == YEARLY_VIEW || config.storedView == WEEKLY_VIEW || config.storedView == WEEKLY_GRID_VIEW)
+            currentFragment is MonthFragmentsHolder ||
+                    (supportFragmentManager.backStackEntryCount == 0 && !fabBelongsIn(config.storedView))
         )
         if (supportFragmentManager.backStackEntryCount > 0) {
             showBackNavigationArrow()

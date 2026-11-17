@@ -86,7 +86,6 @@
     <string name="theme_menu_text">Menu text</string>
     <string name="theme_settings_title">Settings title &amp; arrow</string>
     <string name="theme_view_switcher">View switcher (日週月年)</string>
-    <string name="theme_settings_switcher">Settings shortcut (設定)</string>
     <string name="theme_background">Background</string>
     <string name="theme_primary">Primary / accent</string>
     <string name="theme_text">Text</string>
@@ -531,4 +530,16 @@
     <string name="home_time_zone_turn_off">Turn the home time zone off</string>
     <string name="travel_banner_here">Here</string>
     <string name="travel_banner_home">Home</string>
+    <!-- The + menu's two pills -->
+    <string name="add_event">Add event</string>
+    <string name="add_task">Add task</string>
+    <!-- Black-yellow theme: menu pills, settings-page pills, the outlined switch -->
+    <string name="theme_group_settings_page">Settings pages</string>
+    <string name="theme_settings_note">Explanations and the rule beside them</string>
+    <string name="theme_switch_off">Switch when off</string>
+    <string name="theme_app_settings">App settings</string>
+    <string name="theme_app_settings_desc">Everything else: reminders, calendars, CalDAV, widgets.</string>
+    <string name="theme_dialog_pill_buttons">Pill buttons</string>
+    <string name="theme_dialog_pill_buttons_desc">Outlined pills, never filled: the confirming button bold with a thick frame, the others thin. Overrides the boxed buttons.</string>
+    <string name="theme_ui_desc">Colours, fonts, the export and import of every setting, automation.</string>
 </resources>
