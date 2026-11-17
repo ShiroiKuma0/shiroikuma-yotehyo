@@ -8,6 +8,9 @@ import org.fossify.calendar.helpers.DIALOG_BORDER_WIDTH_DEFAULT
 import androidx.core.graphics.ColorUtils
 import org.fossify.calendar.helpers.PALETTE_BLACK
 import org.fossify.calendar.helpers.PALETTE_BLUE
+import org.fossify.calendar.helpers.PALETTE_CYAN
+import org.fossify.calendar.helpers.PALETTE_ORANGE
+import org.fossify.calendar.helpers.PALETTE_RED
 import org.fossify.calendar.helpers.PALETTE_YELLOW
 import org.fossify.calendar.helpers.THEME_UNSET
 import org.fossify.calendar.helpers.TODAY_BOX_BORDER_THICKNESS_DEFAULT
@@ -31,6 +34,7 @@ enum class ThemeGroup(@StringRes val labelRes: Int) {
     SEARCH(R.string.theme_group_search),
     CHROME(R.string.theme_group_chrome),
     CALENDAR(R.string.theme_group_calendar),
+    MENUS(R.string.theme_group_menus),
     SETTINGS_PAGE(R.string.theme_group_settings_page),
 }
 
@@ -90,6 +94,14 @@ enum class ThemeSlot(
     // (dim gold), and the outlined zone tags plus 翌日 (accent)
     TIME_ZONE_TEXT("theme_time_zone_text", ThemeGroup.CALENDAR, R.string.theme_time_zone_text, hasFont = true),
     TIME_ZONE_TAG("theme_time_zone_tag", ThemeGroup.CALENDAR, R.string.theme_time_zone_tag),
+
+    // Menus: every action row is an outlined pill whose frame and label stay in the accent, while its
+    // icon says by colour what the row does (helpers/MenuPills, views/PillMenuItemView). A destructive
+    // row lends the delete colour to its frame and label as well.
+    MENU_ROLE_CONTACT("theme_menu_role_contact", ThemeGroup.MENUS, R.string.theme_menu_role_contact),
+    MENU_ROLE_SHARE("theme_menu_role_share", ThemeGroup.MENUS, R.string.theme_menu_role_share),
+    MENU_ROLE_VIEW("theme_menu_role_view", ThemeGroup.MENUS, R.string.theme_menu_role_view),
+    MENU_ROLE_DELETE("theme_menu_role_delete", ThemeGroup.MENUS, R.string.theme_menu_role_delete),
 
     // Settings pages: the dim gold of every explanation and of the thin rule beside it, and the darker
     // (opaque, never faded) yellow of a switch that is off
@@ -158,6 +170,11 @@ private fun Context.themeDefault(slot: ThemeSlot): Int = when (slot) {
 
     ThemeSlot.TIME_ZONE_TEXT -> dimmedColor(themeColor(ThemeSlot.TEXT))
     ThemeSlot.TIME_ZONE_TAG -> themeColor(ThemeSlot.PRIMARY)
+
+    ThemeSlot.MENU_ROLE_CONTACT -> PALETTE_CYAN
+    ThemeSlot.MENU_ROLE_SHARE -> PALETTE_ORANGE
+    ThemeSlot.MENU_ROLE_VIEW -> themeColor(ThemeSlot.PRIMARY)
+    ThemeSlot.MENU_ROLE_DELETE -> PALETTE_RED
 
     // #C8C800 on the black/yellow palette: 78 % of the way from the background to the text
     ThemeSlot.SETTINGS_NOTE -> ColorUtils.blendARGB(themeColor(ThemeSlot.BACKGROUND), themeColor(ThemeSlot.TEXT), NOTE_BLEND)

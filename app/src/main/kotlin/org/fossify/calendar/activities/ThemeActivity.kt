@@ -182,6 +182,11 @@ class ThemeActivity : SimpleActivity() {
         addSection(R.string.theme_group_chrome)
         slotsOf(ThemeGroup.CHROME).forEach { addSlot(it) }
 
+        // Menus — every action row is an outlined pill; its icon is coloured by what the row does.
+        addSection(R.string.theme_group_menus)
+        addDescriptionRow(R.string.theme_menus_note)
+        slotsOf(ThemeGroup.MENUS).forEach { addSlot(it) }
+
         // Settings pages — the dim gold of explanations and their rule, and a switch that is off.
         addSection(R.string.theme_group_settings_page)
         slotsOf(ThemeGroup.SETTINGS_PAGE).forEach { addSlot(it) }

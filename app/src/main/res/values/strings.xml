@@ -535,7 +535,13 @@
     <string name="add_event">Add event</string>
     <string name="add_task">Add task</string>
     <!-- Black-yellow theme: menu pills, settings-page pills, the outlined switch -->
+    <string name="theme_group_menus">Menus</string>
     <string name="theme_group_settings_page">Settings pages</string>
+    <string name="theme_menu_role_contact">Icon: about a person (birthdays, anniversaries)</string>
+    <string name="theme_menu_role_share">Icon: copies, shares, prints</string>
+    <string name="theme_menu_role_view">Icon: views, opens, settings</string>
+    <string name="theme_menu_role_delete">Icon, frame and label: deletes</string>
+    <string name="theme_menus_note">Every action in a menu is an outlined pill; its icon is coloured by what it does.</string>
     <string name="theme_settings_note">Explanations and the rule beside them</string>
     <string name="theme_switch_off">Switch when off</string>
     <string name="theme_app_settings">App settings</string>
