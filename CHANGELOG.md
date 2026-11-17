@@ -4,6 +4,47 @@ This file carries **both** histories. The 白い熊 予定表 fork releases come
 everything below the `# Changelog` heading further down is Fossify Calendar's own changelog,
 kept verbatim.
 
+## 白い熊 予定表 1.10.3+085 — 2026-11-17
+Built on Fossify Calendar 1.10.3.
+
+The black-yellow theme, applied in full: menus, switches, dialog buttons and the UI settings page all
+say at a glance what can be pressed.
+
+### UI & theming
+- **Menus: every action row is a full-width outlined pill** with its icon inside at the left and a ›
+  when it opens something — in every menu: the main screen's ⋮, the editors' and selection bars'
+  overflow, a calendar's ⋮ on Manage calendars, and the commons screens. Icons are coloured by what
+  the row does: share, duplicate and print orange; add birthdays / anniversaries cyan; delete red
+  (its frame and label too); everything else the accent. Disabled rows are dimmed to 38 %, checkable
+  rows stay plain with a small outlined switch, and group dividers are a clear darker-yellow line.
+  A calendar's ⋮ moves up instead of scrolling while the screen has room.
+- **Switches are outlined pills with a dot** on every screen of the app (Settings, the event and task
+  editors, widget setup, the UI page): accent when on, an opaque darker yellow (`#8C8C00`) when off,
+  never filled; the dot slides across.
+- **Dialog buttons are outlined pills:** the confirming button bold with a 3 dp frame, the others
+  thin. On by default; Dialogs → Pill buttons turns them off.
+- **白い熊 予定表 UI page:** a new **App settings ›** link as the first thick pill; **Export / Import ›**
+  the section's main pill with its status beneath; all-files access a thin pill with ›; Regenerate
+  a thin pill. A switch with an explanation is one block — bold label, dim-gold explanation, thin
+  dim-gold rule down its left. Explanations are dim gold, not faded text, and every row is only as
+  tall as its content.
+- **Settings:** the "白い熊 予定表 UI" entry is a bold, thick pill with › instead of a bare heading.
+- **The + menu** is two bare outlined pills, **Add task** and **Add event**, above the button. The
+  same pills replace the Event / Task radio dialog wherever a day or an hour is tapped to add
+  something (month, week, week grid, day).
+- **The 設定 shortcut is gone from the top bar.** Settings is in ⋮; the UI page opens with a
+  long-press on ⋮ or from the pill at the top of Settings.
+- New colour roles: **Menus** (the four icon roles) and **Settings pages** (explanations and their
+  rule; a switch that is off). The "Settings shortcut (設定)" role is gone with the shortcut.
+
+### Fixes & behavior
+- **The month view stacks a day's events like the week and day views:** all-day first, then by
+  start time. A flight leaving at 23:55 no longer sits above one leaving at 19:20 because it runs
+  past midnight.
+
+### Packaging
+- Patched Fossify Commons `6.1.6-sk10` → `6.1.6-sk14` (pill dialog buttons, sk12).
+
 ## 白い熊 予定表 1.10.3+078 — 2026-11-03
 Built on Fossify Calendar 1.10.3.
 
