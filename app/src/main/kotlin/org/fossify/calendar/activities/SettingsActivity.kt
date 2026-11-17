@@ -2,11 +2,13 @@ package org.fossify.calendar.activities
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import kotlin.math.roundToInt
 import android.media.AudioManager
 import android.media.RingtoneManager
 import android.os.Bundle
 import android.widget.Toast
 import org.fossify.calendar.R
+import org.fossify.calendar.extensions.outlinedPill
 import org.fossify.calendar.databinding.ActivitySettingsBinding
 import org.fossify.calendar.dialogs.ExportEventsDialog
 import org.fossify.calendar.dialogs.ManageAutomaticBackupsDialog
@@ -316,9 +318,28 @@ class SettingsActivity : SimpleActivity() {
     }
 
     // The whole "白い熊 予定表 UI" section header is the entry point into the consolidated UI page.
+    // It is the page's main action, so it looks like one: a thick outlined pill as wide as its label, bold,
+    // with a › for the screen it opens — a bare section label gave no clue that it could be pressed.
     private fun setupThemeAndColors() {
-        binding.settingsShiroikumaUiLabel.setOnClickListener {
-            startActivity(Intent(this, ThemeActivity::class.java))
+        val label = binding.settingsShiroikumaUiLabel
+        val accent = getProperPrimaryColor()
+        val density = resources.displayMetrics.density
+        val padH = (16 * density).roundToInt()
+        val padV = (9 * density).roundToInt()
+        label.text = getString(R.string.shiroikuma_ui_category) + "  ›"
+        label.setTextColor(accent)
+        label.setTypeface(label.typeface, android.graphics.Typeface.BOLD)
+        label.background = outlinedPill(accent, 3f)
+        label.setPadding(padH, padV, padH, padV)
+        (label.layoutParams as? android.view.ViewGroup.MarginLayoutParams)?.let {
+            it.width = android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+            it.marginStart = resources.getDimensionPixelSize(org.fossify.commons.R.dimen.activity_margin)
+            it.topMargin = (8 * density).roundToInt()
+            it.bottomMargin = (8 * density).roundToInt()
+            label.layoutParams = it
+        }
+        label.setOnClickListener {
+            startActivity(Intent(this, ThemeActivity::class.java).putExtra(ThemeActivity.EXTRA_FROM_SETTINGS, true))
         }
     }
 

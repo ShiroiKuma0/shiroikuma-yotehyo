@@ -5,6 +5,7 @@ import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.FrameLayout
 import org.fossify.calendar.R
+import org.fossify.calendar.activities.MainActivity
 import org.fossify.calendar.databinding.MonthViewBackgroundBinding
 import org.fossify.calendar.databinding.MonthViewBinding
 import org.fossify.calendar.extensions.config
@@ -14,13 +15,9 @@ import org.fossify.calendar.extensions.launchNewTaskIntent
 import org.fossify.calendar.helpers.COLUMN_COUNT
 import org.fossify.calendar.helpers.Formatter
 import org.fossify.calendar.helpers.ROW_COUNT
-import org.fossify.calendar.helpers.TYPE_EVENT
-import org.fossify.calendar.helpers.TYPE_TASK
 import org.fossify.calendar.models.DayMonthly
 import org.fossify.commons.compose.extensions.getActivity
-import org.fossify.commons.dialogs.RadioGroupDialog
 import org.fossify.commons.extensions.onGlobalLayout
-import org.fossify.commons.models.RadioItem
 
 // used in the Monthly view fragment, 1 view per screen
 class MonthViewWrapper(
@@ -163,18 +160,15 @@ class MonthViewWrapper(
                 }
             }
 
+            // Event or Task is asked with the + menu's pills at the finger, as in the week views.
             setOnLongClickListener {
-                if (context.config.allowCreatingTasks) {
-                    val items = arrayListOf(
-                        RadioItem(TYPE_EVENT, context.getString(R.string.event)),
-                        RadioItem(TYPE_TASK, context.getString(R.string.task))
-                    )
-
-                    RadioGroupDialog(context.getActivity(), items) {
-                        if (it == TYPE_EVENT) {
-                            context.launchNewEventIntent(day.code)
-                        } else {
+                val main = context.getActivity() as? MainActivity
+                if (context.config.allowCreatingTasks && main != null) {
+                    main.showEventTaskChooser { isTask ->
+                        if (isTask) {
                             context.launchNewTaskIntent(day.code)
+                        } else {
+                            context.launchNewEventIntent(day.code)
                         }
                     }
                 } else {

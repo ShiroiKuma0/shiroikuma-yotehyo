@@ -401,6 +401,10 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(DIALOG_STYLE_SEEDED, false)
         set(value) = prefs.edit().putBoolean(DIALOG_STYLE_SEEDED, value).apply()
 
+    var pillDialogSeeded: Boolean
+        get() = prefs.getBoolean(PILL_DIALOG_SEEDED, false)
+        set(value) = prefs.edit().putBoolean(PILL_DIALOG_SEEDED, value).apply()
+
     var pureYellowMigrated: Boolean
         get() = prefs.getBoolean(PURE_YELLOW_MIGRATED, false)
         set(value) = prefs.edit().putBoolean(PURE_YELLOW_MIGRATED, value).apply()

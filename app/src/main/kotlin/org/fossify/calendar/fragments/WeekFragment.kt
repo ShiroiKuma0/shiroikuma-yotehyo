@@ -55,8 +55,6 @@ import org.fossify.calendar.helpers.Formatter
 import org.fossify.calendar.helpers.IS_TASK_COMPLETED
 import org.fossify.calendar.helpers.NEW_EVENT_SET_HOUR_DURATION
 import org.fossify.calendar.helpers.NEW_EVENT_START_TS
-import org.fossify.calendar.helpers.TYPE_EVENT
-import org.fossify.calendar.helpers.TYPE_TASK
 import org.fossify.calendar.helpers.WEEK_START_TIMESTAMP
 import org.fossify.calendar.helpers.WeeklyCalendarImpl
 import org.fossify.calendar.helpers.getActivityToOpen
@@ -66,7 +64,6 @@ import org.fossify.calendar.interfaces.WeeklyCalendar
 import org.fossify.calendar.models.Event
 import org.fossify.calendar.models.EventWeeklyView
 import org.fossify.calendar.views.MyScrollView
-import org.fossify.commons.dialogs.RadioGroupDialog
 import org.fossify.commons.extensions.adjustAlpha
 import org.fossify.commons.extensions.applyColorFilter
 import org.fossify.commons.extensions.beGone
@@ -87,7 +84,6 @@ import org.fossify.commons.helpers.MEDIUM_ALPHA
 import org.fossify.commons.helpers.WEEK_SECONDS
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.helpers.isNougatPlus
-import org.fossify.commons.models.RadioItem
 import org.joda.time.DateTime
 import org.joda.time.Days
 import java.util.Calendar
@@ -475,14 +471,11 @@ class WeekFragment : Fragment(), WeeklyCalendar {
                     setOnClickListener {
                         val timestamp =
                             weekDateTime.plusDays(index).withTime(hour, 0, 0, 0).seconds()
-                        if (config.allowCreatingTasks) {
-                            val items = arrayListOf(
-                                RadioItem(TYPE_EVENT, getString(R.string.event)),
-                                RadioItem(TYPE_TASK, getString(R.string.task))
-                            )
-
-                            RadioGroupDialog(activity!!, items) {
-                                launchNewEventIntent(timestamp, it as Int == TYPE_TASK)
+                        val main = activity as? MainActivity
+                        if (config.allowCreatingTasks && main != null) {
+                            // Event or Task is asked with the + menu's pills, not a radio dialog.
+                            main.showEventTaskChooser { isTask ->
+                                launchNewEventIntent(timestamp, isTask)
                             }
                         } else {
                             launchNewEventIntent(timestamp, false)

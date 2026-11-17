@@ -12,6 +12,7 @@ import org.fossify.calendar.extensions.config
 import org.fossify.calendar.extensions.getAlarmManager
 import org.fossify.calendar.extensions.refreshCalDAVCalendars
 import org.fossify.calendar.extensions.themeColor
+import org.fossify.calendar.views.outlineAllSwitches
 import org.fossify.commons.activities.BaseSimpleActivity
 import org.fossify.commons.dialogs.ConfirmationDialog
 import org.fossify.commons.dialogs.PermissionRequiredDialog
@@ -89,6 +90,13 @@ open class SimpleActivity : BaseSimpleActivity() {
                 }, CALDAV_REFRESH_DELAY)
             }
         }
+    }
+
+    // Every switch on our screens is the theme's outlined pill. Posted, so it runs after the screen has
+    // built its rows and recoloured its views in its own onResume.
+    override fun onResume() {
+        super.onResume()
+        window.decorView.post { window.decorView.outlineAllSwitches() }
     }
 
     override fun onStop() {

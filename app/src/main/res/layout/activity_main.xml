@@ -44,51 +44,40 @@
                 android:alpha="0"
                 android:visibility="gone" />
 
-            <!-- The + menu: a yellow-framed panel above the button, each choice an outlined pill
-                 (Event the main one, Task a regular one). Colours and frames are set in code. -->
+            <!-- The + menu: two bare pills stacked above the button, 鍵暗号-style — a Material
+                 extended FAB each (56 dp tall, 16 dp corners, label-large text), unfilled, in an
+                 accent frame. No panel around them, no icons. Colours are set in code. -->
             <LinearLayout
                 android:id="@+id/fab_menu"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/activity_margin"
                 android:layout_marginBottom="@dimen/activity_margin"
                 android:alpha="0"
                 android:orientation="vertical"
-                android:padding="@dimen/normal_margin"
                 android:visibility="gone"
                 app:layout_constraintBottom_toTopOf="@+id/calendar_fab"
-                app:layout_constraintEnd_toEndOf="@+id/calendar_fab">
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_goneMarginBottom="@dimen/activity_margin">
 
-                <org.fossify.commons.views.MyTextView
+                <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
                     android:id="@+id/fab_task_label"
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:drawablePadding="@dimen/normal_margin"
-                    android:gravity="center_vertical"
-                    android:minWidth="180dp"
-                    android:paddingStart="@dimen/big_margin"
-                    android:paddingTop="@dimen/normal_margin"
-                    android:paddingEnd="@dimen/big_margin"
-                    android:paddingBottom="@dimen/normal_margin"
-                    android:text="@string/task"
-                    android:textSize="@dimen/big_text_size"
-                    app:drawableStartCompat="@drawable/ic_task_vector" />
+                    android:layout_gravity="end"
+                    android:layout_marginBottom="@dimen/activity_margin"
+                    android:stateListAnimator="@null"
+                    android:text="@string/add_task"
+                    app:elevation="0dp" />
 
-                <org.fossify.commons.views.MyTextView
+                <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
                     android:id="@+id/fab_event_label"
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/normal_margin"
-                    android:drawablePadding="@dimen/normal_margin"
-                    android:gravity="center_vertical"
-                    android:minWidth="180dp"
-                    android:paddingStart="@dimen/big_margin"
-                    android:paddingTop="@dimen/normal_margin"
-                    android:paddingEnd="@dimen/big_margin"
-                    android:paddingBottom="@dimen/normal_margin"
-                    android:text="@string/event"
-                    android:textSize="@dimen/big_text_size"
-                    android:textStyle="bold"
-                    app:drawableStartCompat="@drawable/ic_today_vector" />
+                    android:layout_gravity="end"
+                    android:stateListAnimator="@null"
+                    android:text="@string/add_event"
+                    app:elevation="0dp" />
 
             </LinearLayout>
 

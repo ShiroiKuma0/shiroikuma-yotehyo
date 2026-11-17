@@ -29,9 +29,7 @@ import org.fossify.calendar.extensions.themeColor
 import org.fossify.calendar.helpers.*
 import org.fossify.calendar.interfaces.NavigationListener
 import org.fossify.calendar.models.Event
-import org.fossify.commons.dialogs.RadioGroupDialog
 import org.fossify.commons.extensions.*
-import org.fossify.commons.models.RadioItem
 
 class DayFragment : Fragment() {
     var mListener: NavigationListener? = null
@@ -132,15 +130,13 @@ class DayFragment : Fragment() {
         })
     }
 
+    // Event or Task is asked with the + menu's pills, not a radio dialog.
     private fun addEventOrTask() {
         val ctx = requireContext()
-        if (ctx.config.allowCreatingTasks) {
-            val items = arrayListOf(
-                RadioItem(TYPE_EVENT, getString(R.string.event)),
-                RadioItem(TYPE_TASK, getString(R.string.task))
-            )
-            RadioGroupDialog(requireActivity(), items) {
-                if (it as Int == TYPE_TASK) ctx.launchNewTaskIntent(mDayCode) else ctx.launchNewEventIntent(mDayCode)
+        val main = activity as? MainActivity
+        if (ctx.config.allowCreatingTasks && main != null) {
+            main.showEventTaskChooser { isTask ->
+                if (isTask) ctx.launchNewTaskIntent(mDayCode) else ctx.launchNewEventIntent(mDayCode)
             }
         } else {
             ctx.launchNewEventIntent(mDayCode)
