@@ -7,6 +7,7 @@ import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.PopupMenu
+import org.fossify.calendar.helpers.MenuPills
 import org.fossify.calendar.R
 import org.fossify.calendar.activities.SimpleActivity
 import org.fossify.calendar.databinding.ItemCalendarBinding
@@ -141,7 +142,7 @@ class ManageCalendarsAdapter(
                 }
                 true
             }
-            show()
+            MenuPills.show(this, contextTheme, view, Gravity.END)
         }
     }
 

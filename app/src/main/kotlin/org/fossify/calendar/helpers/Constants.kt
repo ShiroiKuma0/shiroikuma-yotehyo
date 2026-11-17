@@ -195,6 +195,10 @@ const val PALETTE_BLACK = 0xFF000000.toInt()
 const val PALETTE_YELLOW = 0xFFFFFF00.toInt()
 // The one hue the black/yellow palette leaves unused, so it reads as "today" and nothing else.
 const val PALETTE_BLUE = 0xFF2979FF.toInt()
+// Menu icon roles (ThemeSlot.MENU_ROLE_*): what an icon's colour says its row does
+const val PALETTE_CYAN = 0xFF00FFFF.toInt() // about a contact or person
+const val PALETTE_ORANGE = 0xFFFF8000.toInt() // copies, shares, exports
+const val PALETTE_RED = 0xFFFF0000.toInt() // deletes — the warning colour
 const val PILL_DIALOG_SEEDED = "pill_dialog_seeded" // one-time switch to commons' pill dialog buttons
 
 // Per-element fonts: one entry per text slot, keyed by the slot key.

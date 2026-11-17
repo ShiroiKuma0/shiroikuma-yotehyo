@@ -1,0 +1,155 @@
+package org.fossify.calendar.helpers
+
+import android.annotation.SuppressLint
+import android.content.Context
+import android.graphics.Rect
+import android.util.TypedValue
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
+import androidx.annotation.DrawableRes
+import androidx.appcompat.view.menu.MenuBuilder
+import androidx.appcompat.view.menu.MenuPopupHelper
+import androidx.appcompat.widget.PopupMenu
+import androidx.core.graphics.ColorUtils
+import org.fossify.calendar.R
+import org.fossify.commons.R as CR
+import org.fossify.calendar.extensions.ThemeSlot
+import org.fossify.calendar.extensions.themeColor
+
+/**
+ * What a menu row needs to know to be drawn as a pill (see views/PillMenuItemView, and the Menus section
+ * of the black-yellow-theme skill). A menu item carries no "opens something" flag and no meaning of its
+ * own, so this table supplies them by item id: the icon for an item that has none, the role whose colour
+ * the icon takes — the frame and the label stay in the accent, or in the warning colour for a
+ * destructive row — and whether the row ends in a ›.
+ *
+ * An item that is not listed keeps the icon it brought, in the view/open colour, with no ›.
+ */
+object MenuPills {
+    const val DISABLED_ALPHA = 97 // 38 %
+    const val TOGGLE_HEIGHT_DP = 36 // a checkable row: the switch and little more
+    const val PILL_MARGIN_DP = 3 // above and below a pill
+    const val SIDE_MARGIN_DP = 8 // between a pill and the menu's edge
+
+    private const val DIVIDER_BLEND = 0.7f
+    private const val MENU_CHROME_DP = 24
+    private const val GROUP_DIVIDER_DP = 9
+
+    class Spec(@DrawableRes val icon: Int, val role: ThemeSlot, val opens: Boolean = false)
+
+    private val specs: Map<Int, Spec> = mapOf(
+        // a calendar's ⋮ on Manage calendars, and the bars over selected calendars and events
+        R.id.cab_edit to Spec(CR.drawable.ic_edit_vector, ThemeSlot.MENU_ROLE_VIEW, opens = true),
+        R.id.cab_share to Spec(CR.drawable.ic_share_vector, ThemeSlot.MENU_ROLE_SHARE, opens = true),
+        R.id.cab_delete to Spec(CR.drawable.ic_delete_vector, ThemeSlot.MENU_ROLE_DELETE),
+
+        // the event and task editors
+        R.id.save to Spec(CR.drawable.ic_check_vector, ThemeSlot.MENU_ROLE_VIEW),
+        R.id.delete to Spec(CR.drawable.ic_delete_vector, ThemeSlot.MENU_ROLE_DELETE),
+        R.id.duplicate to Spec(CR.drawable.ic_copy_vector, ThemeSlot.MENU_ROLE_SHARE, opens = true),
+        R.id.share to Spec(CR.drawable.ic_share_vector, ThemeSlot.MENU_ROLE_SHARE, opens = true),
+        R.id.add_calendar to Spec(CR.drawable.ic_plus_vector, ThemeSlot.MENU_ROLE_VIEW, opens = true),
+
+        // the top bar's ⋮ on the main screen
+        R.id.go_to_today to Spec(R.drawable.ic_today_vector, ThemeSlot.MENU_ROLE_VIEW),
+        R.id.go_to_date to Spec(R.drawable.ic_calendar_vector, ThemeSlot.MENU_ROLE_VIEW, opens = true),
+        R.id.change_view to Spec(R.drawable.ic_change_view_vector, ThemeSlot.MENU_ROLE_VIEW, opens = true),
+        R.id.filter to Spec(CR.drawable.ic_filter_vector, ThemeSlot.MENU_ROLE_VIEW, opens = true),
+        R.id.refresh_caldav_calendars to Spec(R.drawable.ic_repeat_outline_vector, ThemeSlot.MENU_ROLE_VIEW),
+        R.id.print to Spec(CR.drawable.ic_print_vector, ThemeSlot.MENU_ROLE_SHARE, opens = true),
+        R.id.add_holidays to Spec(R.drawable.ic_event_available_vector, ThemeSlot.MENU_ROLE_VIEW, opens = true),
+        R.id.add_birthdays to Spec(CR.drawable.ic_person_outline_vector, ThemeSlot.MENU_ROLE_CONTACT, opens = true),
+        R.id.add_anniversaries to Spec(CR.drawable.ic_heart_vector, ThemeSlot.MENU_ROLE_CONTACT, opens = true),
+        R.id.settings to Spec(CR.drawable.ic_settings_cog_vector, ThemeSlot.MENU_ROLE_VIEW, opens = true),
+        R.id.about to Spec(CR.drawable.ic_info_vector, ThemeSlot.MENU_ROLE_VIEW, opens = true),
+        R.id.more_apps_from_us to Spec(CR.drawable.ic_google_play_vector, ThemeSlot.MENU_ROLE_VIEW, opens = true),
+        R.id.search to Spec(CR.drawable.ic_search_vector, ThemeSlot.MENU_ROLE_VIEW),
+    )
+
+    fun spec(id: Int): Spec? = specs[id]
+
+    /** The colour of the row's icon: its role's, or the view/open one for an item nobody listed. */
+    fun iconColor(context: Context, id: Int): Int =
+        context.themeColor(specs[id]?.role ?: ThemeSlot.MENU_ROLE_VIEW)
+
+    fun isDestructive(id: Int) = specs[id]?.role == ThemeSlot.MENU_ROLE_DELETE
+
+    /** The frame and label of a row: the warning colour for a destructive one, else accent and menu text. */
+    fun frameColor(context: Context, id: Int): Int =
+        context.themeColor(if (isDestructive(id)) ThemeSlot.MENU_ROLE_DELETE else ThemeSlot.PRIMARY)
+
+    fun labelColor(context: Context, id: Int): Int =
+        context.themeColor(if (isDestructive(id)) ThemeSlot.MENU_ROLE_DELETE else ThemeSlot.MENU_TEXT)
+
+    /** A disabled row is the same row at 38 %. */
+    fun fade(item: MenuItem, color: Int): Int =
+        if (item.isEnabled) color else ColorUtils.setAlphaComponent(color, DISABLED_ALPHA)
+
+    // The line between two groups of a menu: an opaque darker accent, bright enough to be seen on the
+    // background, quieter than a pill frame
+    fun dividerColor(context: Context): Int = ColorUtils.blendARGB(
+        context.themeColor(ThemeSlot.BACKGROUND), context.themeColor(ThemeSlot.PRIMARY), DIVIDER_BLEND
+    )
+
+    /** The disabled title line a menu opens with. */
+    fun isHeader(item: MenuItem) = !item.isEnabled && item.itemId == 0 && !item.hasSubMenu()
+
+    /**
+     * Shows [popup] so that it never scrolls while the screen has room. A stock popup is given only the
+     * larger of the room above and the room below its anchor, so a long menu opened from a row low on
+     * the screen scrolled with half the screen free; shifted up by what is missing below, it can use the
+     * whole height. Clicks still reach the popup's own listener, which lives on its menu.
+     */
+    @SuppressLint("RestrictedApi")
+    fun show(popup: PopupMenu, themed: Context, anchor: View, gravity: Int) {
+        val menu = popup.menu
+        val offset = verticalOffset(themed, anchor, menu)
+        if (offset == null || menu !is MenuBuilder) {
+            popup.show()
+            return
+        }
+
+        MenuPopupHelper(themed, menu, anchor).apply {
+            setGravity(gravity)
+            show(0, offset)
+        }
+    }
+
+    // The vertical offset the menu needs to get its full height, or null when it fits below its anchor
+    // anyway. The height is estimated from the rows as PillMenuItemView draws them, a little generously:
+    // an estimate that is too large only moves the menu slightly higher.
+    @SuppressLint("RestrictedApi")
+    private fun verticalOffset(themed: Context, anchor: View, menu: Menu): Int? {
+        if (menu !is MenuBuilder) return null
+        val metrics = themed.resources.displayMetrics
+        val rowHeight = TypedValue()
+        val rowAttr = androidx.appcompat.R.attr.dropdownListPreferredItemHeight
+        if (!themed.theme.resolveAttribute(rowAttr, rowHeight, true)) return null
+
+        val row = rowHeight.getDimension(metrics)
+        val density = metrics.density
+        var needed = MENU_CHROME_DP * density
+        var group: Int? = null
+        for (item in menu.visibleItems) {
+            needed += when {
+                item.isCheckable -> TOGGLE_HEIGHT_DP * density
+                isHeader(item) -> row
+                else -> row + 2 * PILL_MARGIN_DP * density
+            }
+            if (group != null && group != item.groupId && menu.isGroupDividerEnabled) {
+                needed += GROUP_DIVIDER_DP * density
+            }
+            group = item.groupId
+        }
+
+        val frame = Rect()
+        anchor.getWindowVisibleDisplayFrame(frame)
+        val position = IntArray(2)
+        anchor.getLocationOnScreen(position)
+        val base = position[1] + anchor.height
+        val below = frame.bottom - base
+        if (needed <= below) return null
+        return maxOf((frame.top - base).toFloat(), below - needed).toInt()
+    }
+}
