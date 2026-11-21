@@ -1,5 +1,7 @@
 package org.fossify.calendar.adapters
 
+import org.fossify.commons.extensions.getContrastColor
+import org.fossify.commons.extensions.circleDrawable
 import android.app.Activity
 import android.content.res.ColorStateList
 import android.graphics.Color
@@ -33,14 +35,14 @@ class CheckableColorAdapter(private val activity: Activity, private val colors: 
 
         fun bindView(color: Int, checked: Boolean) {
             binding.checkableColorButton.apply {
-                backgroundTintList = ColorStateList.valueOf(color)
+                background = circleDrawable(color)
                 setOnClickListener {
                     updateSelection(color)
                 }
 
                 if (checked) {
                     setImageResource(org.fossify.commons.R.drawable.ic_check_vector)
-                    applyColorFilter(Color.WHITE)
+                    applyColorFilter(color.getContrastColor()) // readable on the swatch itself
                 } else {
                     setImageDrawable(null)
                 }

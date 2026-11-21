@@ -1,5 +1,6 @@
 package org.fossify.calendar.fragments
 
+import org.fossify.calendar.helpers.PRINT_TEXT_COLOR
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
@@ -7,7 +8,6 @@ import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.DatePicker
 import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.viewpager.widget.ViewPager
@@ -24,7 +24,11 @@ import org.fossify.calendar.views.MyScrollView
 import org.fossify.commons.extensions.*
 import org.fossify.commons.helpers.WEEK_SECONDS
 import org.fossify.commons.views.MyViewPager
+import org.fossify.commons.views.FamilyDatePicker
 import org.joda.time.DateTime
+import org.fossify.calendar.extensions.themeColor
+import org.fossify.calendar.extensions.ThemeSlot
+import org.fossify.calendar.extensions.edgeLines
 
 class WeekFragmentsHolder : MyFragmentHolder(), WeekFragmentListener {
     private val PREFILLED_WEEKS = 151
@@ -48,11 +52,13 @@ class WeekFragmentsHolder : MyFragmentHolder(), WeekFragmentListener {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        val textColor = requireContext().getProperTextColor()
         binding = FragmentWeekHolderBinding.inflate(inflater, container, false)
-        binding.root.background = ColorDrawable(requireContext().getProperBackgroundColor())
-        binding.weekViewMonthLabel.setTextColor(textColor)
-        binding.weekViewWeekNumber.setTextColor(textColor)
+        binding.root.background = ColorDrawable(requireContext().themeColor(ThemeSlot.VIEW_GROUND))
+        binding.weekViewMonthLabel.setTextColor(requireContext().themeColor(ThemeSlot.NAV_TITLE))
+        binding.weekViewWeekNumber.setTextColor(requireContext().themeColor(ThemeSlot.WEEK_NUMBER))
+        // the hairlines that frame the hours column, in the grid-line colour
+        binding.weekViewHoursDivider.background = requireContext().edgeLines(bottom = true, end = true)
+        binding.weekViewHoursScrollview.background = requireContext().edgeLines(end = true)
         binding.weekViewMonthLabel.applyThemeFont(ThemeSlot.TEXT)
         binding.weekViewWeekNumber.applyThemeFont(ThemeSlot.TEXT)
 
@@ -131,7 +137,7 @@ class WeekFragmentsHolder : MyFragmentHolder(), WeekFragmentListener {
         })
     }
 
-    private fun addHours(textColor: Int = requireContext().getProperTextColor()) {
+    private fun addHours(textColor: Int = requireContext().themeColor(ThemeSlot.HOUR_LABEL)) {
         val itemHeight = requireContext().getWeeklyViewItemHeight().toInt()
         binding.weekViewHoursHolder.removeAllViews()
         val hourDateTime = DateTime().withDate(2000, 1, 1).withTime(0, 0, 0, 0)
@@ -177,9 +183,8 @@ class WeekFragmentsHolder : MyFragmentHolder(), WeekFragmentListener {
             return
         }
 
-        val datePicker = getDatePickerView()
         val dateTime = getCurrentDate()!!
-        datePicker.init(dateTime.year, dateTime.monthOfYear - 1, dateTime.dayOfMonth, null)
+        val datePicker = getDatePickerView(dateTime)
 
         activity?.getAlertDialogBuilder()!!
             .setNegativeButton(org.fossify.commons.R.string.cancel, null)
@@ -189,7 +194,7 @@ class WeekFragmentsHolder : MyFragmentHolder(), WeekFragmentListener {
             }
     }
 
-    private fun dateSelected(dateTime: DateTime, datePicker: DatePicker) {
+    private fun dateSelected(dateTime: DateTime, datePicker: FamilyDatePicker) {
         val month = datePicker.month + 1
         val year = datePicker.year
         val day = datePicker.dayOfMonth
@@ -212,7 +217,7 @@ class WeekFragmentsHolder : MyFragmentHolder(), WeekFragmentListener {
         }
 
         updateDaysCount(context?.config?.weeklyViewDays ?: 7)
-        binding.weekViewDaysCount.setTextColor(requireContext().getProperTextColor())
+        binding.weekViewDaysCount.setTextColor(requireContext().themeColor(ThemeSlot.HOUR_LABEL))
     }
 
     private fun updateWeeklyViewDays(days: Int) {
@@ -282,7 +287,7 @@ class WeekFragmentsHolder : MyFragmentHolder(), WeekFragmentListener {
         binding.weekViewHolder.height - binding.weekViewSeekbar.height - binding.weekViewDaysCountDivider.height
 
     override fun printView() {
-        val lightTextColor = resources.getColor(org.fossify.commons.R.color.theme_light_text_color)
+        val lightTextColor = PRINT_TEXT_COLOR
         binding.apply {
             weekViewDaysCountDivider.beGone()
             weekViewSeekbar.beGone()
@@ -300,10 +305,10 @@ class WeekFragmentsHolder : MyFragmentHolder(), WeekFragmentListener {
                     weekViewDaysCountDivider.beVisible()
                     weekViewSeekbar.beVisible()
                     weekViewDaysCount.beVisible()
-                    weekViewWeekNumber.setTextColor(requireContext().getProperTextColor())
-                    weekViewMonthLabel.setTextColor(requireContext().getProperTextColor())
+                    weekViewWeekNumber.setTextColor(requireContext().themeColor(ThemeSlot.WEEK_NUMBER))
+                    weekViewMonthLabel.setTextColor(requireContext().themeColor(ThemeSlot.NAV_TITLE))
                     addHours()
-                    root.background = ColorDrawable(requireContext().getProperBackgroundColor())
+                    root.background = ColorDrawable(requireContext().themeColor(ThemeSlot.VIEW_GROUND))
                     (viewPager.adapter as? MyWeekPagerAdapter)?.togglePrintMode(viewPager.currentItem)
                 }, 1000)
             }, 1000)

@@ -1,12 +1,15 @@
 package org.fossify.calendar.activities
 
-import android.app.DatePickerDialog
+import org.fossify.commons.helpers.uiColor
+import org.fossify.commons.helpers.UiRole
+import org.fossify.commons.extensions.pillDrawable
 import android.content.Intent
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.core.content.ContextCompat
 import org.fossify.calendar.R
 import org.fossify.calendar.databinding.ActivityTaskBinding
+import org.fossify.calendar.dialogs.DatePickDialog
 import org.fossify.calendar.dialogs.DeleteEventDialog
 import org.fossify.calendar.dialogs.EditRepeatingEventDialog
 import org.fossify.calendar.dialogs.ReminderWarningDialog
@@ -80,7 +83,6 @@ import org.fossify.commons.extensions.beGoneIf
 import org.fossify.commons.extensions.beVisibleIf
 import org.fossify.commons.extensions.checkAppSideloading
 import org.fossify.commons.extensions.getContrastColor
-import org.fossify.commons.extensions.getDatePickerDialogTheme
 import org.fossify.commons.extensions.getFormattedMinutes
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperPrimaryColor
@@ -109,6 +111,8 @@ import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.helpers.getJavaDayOfWeekFromISO
 import org.fossify.commons.models.RadioItem
 import org.joda.time.DateTime
+import org.fossify.calendar.extensions.themeColor
+import org.fossify.calendar.extensions.ThemeSlot
 
 class TaskActivity : SimpleActivity() {
     private var mCalendarId = LOCAL_CALENDAR_ID
@@ -702,17 +706,7 @@ class TaskActivity : SimpleActivity() {
 
     private fun setupDate() {
         hideKeyboard()
-        val datePicker = DatePickerDialog(
-            this,
-            getDatePickerDialogTheme(),
-            dateSetListener,
-            mTaskDateTime.year,
-            mTaskDateTime.monthOfYear - 1,
-            mTaskDateTime.dayOfMonth
-        )
-
-        datePicker.datePicker.firstDayOfWeek = getJavaDayOfWeekFromISO(config.firstDayOfWeek)
-        datePicker.show()
+        DatePickDialog(this, mTaskDateTime.year, mTaskDateTime.monthOfYear - 1, mTaskDateTime.dayOfMonth, dateSetListener)
     }
 
     private fun setupTime() {
@@ -726,8 +720,7 @@ class TaskActivity : SimpleActivity() {
         }
     }
 
-    private val dateSetListener =
-        DatePickerDialog.OnDateSetListener { _, year, monthOfYear, dayOfMonth ->
+    private val dateSetListener = { year: Int, monthOfYear: Int, dayOfMonth: Int ->
             dateSet(year, monthOfYear, dayOfMonth)
         }
 
@@ -815,18 +808,12 @@ class TaskActivity : SimpleActivity() {
     }
 
     private fun updateTaskCompletedButton() {
-        val primaryColor = getProperPrimaryColor()
-        if (mTaskCompleted) {
-            binding.toggleMarkComplete.background = ContextCompat.getDrawable(
-                this, org.fossify.commons.R.drawable.button_background_stroke
-            )
-            binding.toggleMarkComplete.setText(R.string.mark_incomplete)
-            binding.toggleMarkComplete.setTextColor(getProperTextColor())
-        } else {
-            binding.toggleMarkComplete.setTextColor(primaryColor.getContrastColor())
+        // an outlined pill, never filled: the main one while the task is still open
+        binding.toggleMarkComplete.apply {
+            if (mTaskCompleted) setText(R.string.mark_incomplete)
+            setTextColor(uiColor(UiRole.BUTTON_TEXT))
+            background = pillDrawable(uiColor(UiRole.BUTTON_FRAME), uiColor(UiRole.BUTTON_GROUND), main = !mTaskCompleted)
         }
-
-        binding.toggleMarkComplete.background.applyColorFilter(primaryColor)
     }
 
     private fun toggleCompletion() {
@@ -972,13 +959,13 @@ class TaskActivity : SimpleActivity() {
             mEventColor
         }
 
-        binding.taskColor.setFillWithStroke(taskColor, getProperBackgroundColor())
+        binding.taskColor.setFillWithStroke(taskColor, themeColor(ThemeSlot.SWATCH_RING))
     }
 
     private fun updateColors() {
         binding.apply {
             updateTextColors(taskNestedScrollview)
-            val textColor = getProperTextColor()
+            val textColor = themeColor(ThemeSlot.EDITOR_ICON)
             arrayOf(
                 taskTimeImage, taskReminderImage, calendarImage, taskRepetitionImage, taskColorImage
             ).forEach {

@@ -2,4 +2,6 @@
 <resources>
     <!-- Marks a switch or checkbox already given the theme's outlined look (views/OutlinedSwitch.kt) -->
     <item name="outlined_switch_tag" type="id" />
+    <!-- Marks a Settings row whose label was already turned into a pill (SettingsActivity.pillRow) -->
+    <item name="settings_row_styled" type="id" />
 </resources>

@@ -45,7 +45,9 @@ class DeleteEventDialog(
             .setPositiveButton(org.fossify.commons.R.string.yes) { _, _ -> dialogConfirmed(binding) }
             .setNegativeButton(org.fossify.commons.R.string.no, null)
             .apply {
-                activity.setupDialogStuff(binding.root, this) { alertDialog ->
+                activity.setupDialogStuff(
+                    binding.root, this, destructiveButton = android.content.DialogInterface.BUTTON_POSITIVE
+                ) { alertDialog ->
                     dialog = alertDialog
                 }
             }

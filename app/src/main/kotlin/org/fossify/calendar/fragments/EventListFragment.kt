@@ -47,6 +47,8 @@ import org.fossify.commons.interfaces.RefreshRecyclerViewListener
 import org.fossify.commons.views.MyLinearLayoutManager
 import org.fossify.commons.views.MyRecyclerView
 import org.joda.time.DateTime
+import org.fossify.calendar.extensions.themeColor
+import org.fossify.calendar.extensions.ThemeSlot
 
 class EventListFragment : MyFragmentHolder(), RefreshRecyclerViewListener {
     private var mEvents = ArrayList<Event>()
@@ -68,10 +70,10 @@ class EventListFragment : MyFragmentHolder(), RefreshRecyclerViewListener {
         savedInstanceState: Bundle?
     ): View {
         binding = FragmentEventListBinding.inflate(inflater, container, false)
-        binding.root.background = ColorDrawable(requireContext().getProperBackgroundColor())
+        binding.root.background = ColorDrawable(requireContext().themeColor(ThemeSlot.VIEW_GROUND))
         binding.calendarEventsListHolder.id = (System.currentTimeMillis() % 100000).toInt()
         binding.calendarEmptyListPlaceholder2.apply {
-            setTextColor(context.getProperPrimaryColor())
+            setTextColor(context.themeColor(ThemeSlot.LIST_NEW_EVENT_LINK))
             underlineText()
             setOnClickListener {
                 activity?.hideKeyboard()
@@ -207,7 +209,7 @@ class EventListFragment : MyFragmentHolder(), RefreshRecyclerViewListener {
         binding.calendarEmptyListPlaceholder2.beVisibleIf(mEvents.isEmpty())
         binding.calendarEventsList.beGoneIf(mEvents.isEmpty())
         if (activity != null) {
-            binding.calendarEmptyListPlaceholder.setTextColor(requireActivity().getProperTextColor())
+            binding.calendarEmptyListPlaceholder.setTextColor(requireActivity().themeColor(ThemeSlot.LIST_PLACEHOLDER))
             if (mEvents.isEmpty()) {
                 val placeholderTextId = if (requireActivity().config.displayCalendars.isEmpty()) {
                     R.string.everything_filtered_out

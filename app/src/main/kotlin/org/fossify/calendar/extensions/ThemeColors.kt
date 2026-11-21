@@ -9,6 +9,12 @@ import androidx.core.graphics.ColorUtils
 import org.fossify.calendar.helpers.PALETTE_BLACK
 import org.fossify.calendar.helpers.PALETTE_BLUE
 import org.fossify.calendar.helpers.PALETTE_CYAN
+import org.fossify.calendar.helpers.PALETTE_GREEN
+import org.fossify.calendar.helpers.PALETTE_MAGENTA
+import org.fossify.calendar.helpers.PALETTE_WARNING
+import org.fossify.calendar.helpers.PALETTE_WEEKEND
+import org.fossify.commons.helpers.MEDIUM_ALPHA
+import org.fossify.commons.helpers.resetAllUiColors
 import org.fossify.calendar.helpers.PALETTE_ORANGE
 import org.fossify.calendar.helpers.PALETTE_RED
 import org.fossify.calendar.helpers.PALETTE_YELLOW
@@ -16,10 +22,13 @@ import org.fossify.calendar.helpers.THEME_UNSET
 import org.fossify.calendar.helpers.TODAY_BOX_BORDER_THICKNESS_DEFAULT
 import org.fossify.commons.extensions.adjustAlpha
 import org.fossify.commons.extensions.getContrastColor
-import org.fossify.commons.extensions.getProperBackgroundColor
-import org.fossify.commons.extensions.getProperPrimaryColor
-import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.helpers.LOWER_ALPHA
+import org.fossify.commons.helpers.UiRole
+import org.fossify.commons.helpers.isUiColorSet
+import org.fossify.commons.helpers.resetUiColor
+import org.fossify.commons.helpers.setUiColor
+import org.fossify.commons.helpers.uiColor
+import org.fossify.commons.helpers.uiDefaultColor
 
 // Granular, per-element theming for 白い熊 予定表.
 //
@@ -36,6 +45,20 @@ enum class ThemeGroup(@StringRes val labelRes: Int) {
     CALENDAR(R.string.theme_group_calendar),
     MENUS(R.string.theme_group_menus),
     SETTINGS_PAGE(R.string.theme_group_settings_page),
+
+    // Items of this app that belong in a section the commons' roles open (shown there, beside them)
+    TEXT_STATUS(R.string.theme_group_foundation),
+    BUTTONS(R.string.theme_group_foundation),
+    DIALOGS(R.string.theme_group_dialogs),
+    SWITCHES(R.string.theme_group_foundation),
+    VIEWS(R.string.theme_sub_views),
+    YEAR(R.string.theme_sub_year_view),
+    EVENT_LIST(R.string.theme_sub_event_list),
+    EDITOR(R.string.theme_sub_editor),
+    LISTS(R.string.theme_sub_calendar_lists),
+    EXIM_PANEL(R.string.theme_sub_exim_panel),
+    FONT_PICKER(R.string.theme_sub_font_picker),
+    WIDGET_SETUP(R.string.theme_sub_widget_setup),
 }
 
 enum class ThemeSlot(
@@ -45,24 +68,27 @@ enum class ThemeSlot(
     val isFoundation: Boolean = false,
     // hasFont = true for concrete text elements (family / weight / size are configurable per element)
     val hasFont: Boolean = false,
+    // A slot with a role IS that commons role (helpers/UiRoles.kt) under this app's label and section:
+    // it is read and stored as the role, so what the commons draws and what this app draws agree.
+    val role: UiRole? = null,
 ) {
     // Foundation — reuse the stock commons colors (editing these repaints the whole app)
-    BACKGROUND("theme_background", ThemeGroup.FOUNDATION, R.string.theme_background, isFoundation = true),
-    PRIMARY("theme_primary", ThemeGroup.FOUNDATION, R.string.theme_primary, isFoundation = true),
-    TEXT("theme_text", ThemeGroup.FOUNDATION, R.string.theme_text, isFoundation = true, hasFont = true),
+    BACKGROUND("theme_background", ThemeGroup.FOUNDATION, R.string.theme_background, isFoundation = true, role = UiRole.BACKGROUND),
+    PRIMARY("theme_primary", ThemeGroup.FOUNDATION, R.string.theme_primary, isFoundation = true, role = UiRole.ACCENT),
+    TEXT("theme_text", ThemeGroup.FOUNDATION, R.string.theme_text, isFoundation = true, hasFont = true, role = UiRole.TEXT),
     TEXT_SECONDARY("theme_text_secondary", ThemeGroup.FOUNDATION, R.string.theme_text_secondary, hasFont = true),
 
     // Search bar (the top MySearchMenu)
-    SEARCH_FILL("theme_search_fill", ThemeGroup.SEARCH, R.string.theme_search_fill),
-    SEARCH_TEXT("theme_search_text", ThemeGroup.SEARCH, R.string.theme_search_text, hasFont = true),
-    SEARCH_HINT("theme_search_hint", ThemeGroup.SEARCH, R.string.theme_search_hint),
-    SEARCH_ICON("theme_search_icon", ThemeGroup.SEARCH, R.string.theme_search_icon),
-    SEARCH_BORDER("theme_search_border", ThemeGroup.SEARCH, R.string.theme_search_border),
+    SEARCH_FILL("theme_search_fill", ThemeGroup.SEARCH, R.string.theme_search_fill, role = UiRole.SEARCH_GROUND),
+    SEARCH_TEXT("theme_search_text", ThemeGroup.SEARCH, R.string.theme_search_text, hasFont = true, role = UiRole.SEARCH_TEXT),
+    SEARCH_HINT("theme_search_hint", ThemeGroup.SEARCH, R.string.theme_search_hint, role = UiRole.SEARCH_HINT),
+    SEARCH_ICON("theme_search_icon", ThemeGroup.SEARCH, R.string.theme_search_icon, role = UiRole.SEARCH_ICON),
+    SEARCH_BORDER("theme_search_border", ThemeGroup.SEARCH, R.string.theme_search_border, role = UiRole.SEARCH_FRAME),
 
     // Top bar (action / overflow icons), overflow menu text, and the Settings toolbar foreground
-    TOOLBAR_ICONS("theme_toolbar_icons", ThemeGroup.CHROME, R.string.theme_toolbar_icons),
-    MENU_TEXT("theme_menu_text", ThemeGroup.CHROME, R.string.theme_menu_text),
-    SETTINGS_TITLE("theme_settings_title", ThemeGroup.CHROME, R.string.theme_settings_title),
+    TOOLBAR_ICONS("theme_toolbar_icons", ThemeGroup.CHROME, R.string.theme_toolbar_icons, role = UiRole.TOOLBAR_ICON),
+    MENU_TEXT("theme_menu_text", ThemeGroup.CHROME, R.string.theme_menu_text, role = UiRole.MENU_LABEL),
+    SETTINGS_TITLE("theme_settings_title", ThemeGroup.CHROME, R.string.theme_settings_title, role = UiRole.TOOLBAR_TITLE),
     VIEW_SWITCHER("theme_view_switcher", ThemeGroup.CHROME, R.string.theme_view_switcher, hasFont = true),
 
     // Calendar surfaces
@@ -102,40 +128,101 @@ enum class ThemeSlot(
     MENU_ROLE_SHARE("theme_menu_role_share", ThemeGroup.MENUS, R.string.theme_menu_role_share),
     MENU_ROLE_VIEW("theme_menu_role_view", ThemeGroup.MENUS, R.string.theme_menu_role_view),
     MENU_ROLE_DELETE("theme_menu_role_delete", ThemeGroup.MENUS, R.string.theme_menu_role_delete),
+    MENU_ROLE_CONNECT("theme_menu_role_connect", ThemeGroup.MENUS, R.string.theme_menu_role_connect),
+    MENU_ROLE_BLOCK("theme_menu_role_block", ThemeGroup.MENUS, R.string.theme_menu_role_block),
 
     // Settings pages: the dim gold of every explanation and of the thin rule beside it, and the darker
     // (opaque, never faded) yellow of a switch that is off
     SETTINGS_NOTE("theme_settings_note", ThemeGroup.SETTINGS_PAGE, R.string.theme_settings_note),
-    SWITCH_OFF("theme_switch_off", ThemeGroup.SETTINGS_PAGE, R.string.theme_switch_off),
+    SETTINGS_HEADING("theme_settings_heading", ThemeGroup.SETTINGS_PAGE, R.string.theme_settings_heading),
+    SETTINGS_VALUE("theme_settings_value", ThemeGroup.SETTINGS_PAGE, R.string.theme_settings_value),
+    SWITCH_OFF("theme_switch_off", ThemeGroup.SWITCHES, R.string.theme_switch_off, role = UiRole.SWITCH_OFF_OUTLINE),
+
+    // A warning that is only read: "no export yet", an end before its start
+    STATUS_WARNING("theme_status_warning", ThemeGroup.TEXT_STATUS, R.string.theme_status_warning),
+
+    // The + menu: the two pills above the round button, and the veil over the screen behind them
+    FAB_MENU_TEXT("theme_fab_menu_text", ThemeGroup.BUTTONS, R.string.theme_fab_menu_text),
+    FAB_MENU_FRAME("theme_fab_menu_frame", ThemeGroup.BUTTONS, R.string.theme_fab_menu_frame),
+    FAB_MENU_GROUND("theme_fab_menu_ground", ThemeGroup.BUTTONS, R.string.theme_fab_menu_ground),
+    FAB_MENU_SCRIM("theme_fab_menu_scrim", ThemeGroup.BUTTONS, R.string.theme_fab_menu_scrim),
+
+    // The keyboard time entry: one box per digit
+    TIME_CELL_FRAME("theme_time_cell_frame", ThemeGroup.DIALOGS, R.string.theme_time_cell_frame),
+    TIME_CELL_GROUND("theme_time_cell_ground", ThemeGroup.DIALOGS, R.string.theme_time_cell_ground),
+
+    // What every calendar view shares
+    VIEW_GROUND("theme_view_ground", ThemeGroup.VIEWS, R.string.theme_view_ground),
+    NAV_TITLE("theme_nav_title", ThemeGroup.VIEWS, R.string.theme_nav_title),
+    NAV_ARROW("theme_nav_arrow", ThemeGroup.VIEWS, R.string.theme_nav_arrow),
+    DAY_NUMBER("theme_day_number", ThemeGroup.VIEWS, R.string.theme_day_number),
+    WEEK_NUMBER("theme_week_number", ThemeGroup.VIEWS, R.string.theme_week_number),
+    HOUR_LABEL("theme_hour_label", ThemeGroup.VIEWS, R.string.theme_hour_label),
+    NEW_EVENT_MARK("theme_new_event_mark", ThemeGroup.VIEWS, R.string.theme_new_event_mark),
+    SELECTED_DAY_RING("theme_selected_day_ring", ThemeGroup.VIEWS, R.string.theme_selected_day_ring),
+
+    // The year view
+    YEAR_MONTH_LABEL("theme_year_month_label", ThemeGroup.YEAR, R.string.theme_year_month_label),
+    YEAR_CURRENT_MONTH("theme_year_current_month", ThemeGroup.YEAR, R.string.theme_year_current_month),
+    YEAR_DAY_NUMBER("theme_year_day_number", ThemeGroup.YEAR, R.string.theme_year_day_number),
+    YEAR_TODAY_MARK("theme_year_today_mark", ThemeGroup.YEAR, R.string.theme_year_today_mark),
+
+    // The event list and a day's list
+    LIST_ITEM_TEXT("theme_list_item_text", ThemeGroup.EVENT_LIST, R.string.theme_list_item_text),
+    LIST_PLACEHOLDER("theme_list_placeholder", ThemeGroup.EVENT_LIST, R.string.theme_list_placeholder),
+    LIST_NEW_EVENT_LINK("theme_list_new_event_link", ThemeGroup.EVENT_LIST, R.string.theme_list_new_event_link),
+
+    // The event and task editors
+    EDITOR_ICON("theme_editor_icon", ThemeGroup.EDITOR, R.string.theme_editor_icon),
+    EDITOR_ICON_PEOPLE("theme_editor_icon_people", ThemeGroup.EDITOR, R.string.theme_editor_icon_people),
+    EDITOR_MAP_ICON("theme_editor_map_icon", ThemeGroup.EDITOR, R.string.theme_editor_map_icon),
+
+    // Lists of calendars and time zones, the quick filter, and the ring round every colour drop
+    CALENDAR_LIST_TITLE("theme_calendar_list_title", ThemeGroup.LISTS, R.string.theme_calendar_list_title),
+    CALENDAR_LIST_ICON("theme_calendar_list_icon", ThemeGroup.LISTS, R.string.theme_calendar_list_icon),
+    SWATCH_RING("theme_swatch_ring", ThemeGroup.LISTS, R.string.theme_swatch_ring),
+    SWATCH_RING_EMPTY("theme_swatch_ring_empty", ThemeGroup.LISTS, R.string.theme_swatch_ring_empty),
+    FILTER_CHIP_TEXT("theme_filter_chip_text", ThemeGroup.LISTS, R.string.theme_filter_chip_text),
+    FILTER_CHIP_TEXT_OFF("theme_filter_chip_text_off", ThemeGroup.LISTS, R.string.theme_filter_chip_text_off),
+    TIME_ZONE_LIST_TEXT("theme_time_zone_list_text", ThemeGroup.LISTS, R.string.theme_time_zone_list_text),
+
+    // The Export / Import panel
+    EXIM_TEXT("theme_exim_text", ThemeGroup.EXIM_PANEL, R.string.theme_exim_text),
+    EXIM_CAPTION("theme_exim_caption", ThemeGroup.EXIM_PANEL, R.string.theme_exim_caption),
+    EXIM_BOX_FRAME("theme_exim_box_frame", ThemeGroup.EXIM_PANEL, R.string.theme_exim_box_frame),
+    EXIM_BOX_GROUND("theme_exim_box_ground", ThemeGroup.EXIM_PANEL, R.string.theme_exim_box_ground),
+    EXIM_DIVIDER("theme_exim_divider", ThemeGroup.EXIM_PANEL, R.string.theme_exim_divider),
+
+    // The font picker
+    FONT_OPTION_TEXT("theme_font_option_text", ThemeGroup.FONT_PICKER, R.string.theme_font_option_text),
+    FONT_ADD_TEXT("theme_font_add_text", ThemeGroup.FONT_PICKER, R.string.theme_font_add_text),
+
+    // The widget setup screens
+    WIDGET_SETUP_GROUND("theme_widget_setup_ground", ThemeGroup.WIDGET_SETUP, R.string.theme_widget_setup_ground),
+    WIDGET_SAMPLE_EVENT("theme_widget_sample_event", ThemeGroup.WIDGET_SETUP, R.string.theme_widget_sample_event),
+    WIDGET_SAMPLE_TODAY("theme_widget_sample_today", ThemeGroup.WIDGET_SETUP, R.string.theme_widget_sample_today),
 }
 
 private const val NOTE_BLEND = 0.784f
-private const val SWITCH_OFF_BLEND = 0.55f
+private const val SCRIM_ALPHA = 0.8f
+private const val EXIM_DIVIDER_ALPHA = 0.4f
 
 /** The effective color for a slot: the user's override if set, otherwise its inherited default. */
 fun Context.themeColor(slot: ThemeSlot): Int {
+    slot.role?.let { return uiColor(it) }
     val override = config.getThemeOverride(slot.key)
     return if (override != THEME_UNSET) override else themeDefault(slot)
 }
 
 private fun Context.themeDefault(slot: ThemeSlot): Int = when (slot) {
-    // Foundation reads the stock commons colors (seeded to black/yellow on first run)
-    ThemeSlot.BACKGROUND -> getProperBackgroundColor()
-    ThemeSlot.PRIMARY -> getProperPrimaryColor()
-    ThemeSlot.TEXT -> getProperTextColor()
+    // A slot that is a commons role has the role's default (themeColor never comes here for one)
+    ThemeSlot.BACKGROUND, ThemeSlot.PRIMARY, ThemeSlot.TEXT,
+    ThemeSlot.SEARCH_FILL, ThemeSlot.SEARCH_TEXT, ThemeSlot.SEARCH_HINT, ThemeSlot.SEARCH_ICON, ThemeSlot.SEARCH_BORDER,
+    ThemeSlot.TOOLBAR_ICONS, ThemeSlot.MENU_TEXT, ThemeSlot.SETTINGS_TITLE, ThemeSlot.SWITCH_OFF -> uiDefaultColor(slot.role!!)
     ThemeSlot.TEXT_SECONDARY -> themeColor(ThemeSlot.TEXT).adjustAlpha(0.6f)
 
-    // Search bar: black fill, yellow text/icon/border by inheriting foundation
-    ThemeSlot.SEARCH_FILL -> themeColor(ThemeSlot.BACKGROUND)
-    ThemeSlot.SEARCH_TEXT -> themeColor(ThemeSlot.PRIMARY)
-    ThemeSlot.SEARCH_HINT -> themeColor(ThemeSlot.PRIMARY).adjustAlpha(0.5f)
-    ThemeSlot.SEARCH_ICON -> themeColor(ThemeSlot.PRIMARY)
-    ThemeSlot.SEARCH_BORDER -> themeColor(ThemeSlot.PRIMARY)
 
     // Top bar / menu chrome
-    ThemeSlot.TOOLBAR_ICONS -> themeColor(ThemeSlot.PRIMARY)
-    ThemeSlot.MENU_TEXT -> themeColor(ThemeSlot.TEXT)
-    ThemeSlot.SETTINGS_TITLE -> themeColor(ThemeSlot.PRIMARY).getContrastColor()
     ThemeSlot.VIEW_SWITCHER -> themeColor(ThemeSlot.TOOLBAR_ICONS)
 
     // Calendar: today markers follow the accent; weekend reuses the stock weekend color;
@@ -175,31 +262,53 @@ private fun Context.themeDefault(slot: ThemeSlot): Int = when (slot) {
     ThemeSlot.MENU_ROLE_SHARE -> PALETTE_ORANGE
     ThemeSlot.MENU_ROLE_VIEW -> themeColor(ThemeSlot.PRIMARY)
     ThemeSlot.MENU_ROLE_DELETE -> PALETTE_RED
+    ThemeSlot.MENU_ROLE_CONNECT -> PALETTE_GREEN
+    ThemeSlot.MENU_ROLE_BLOCK -> PALETTE_MAGENTA
+
+    ThemeSlot.STATUS_WARNING -> PALETTE_WARNING
+
+    ThemeSlot.FAB_MENU_TEXT -> uiColor(UiRole.BUTTON_TEXT)
+    ThemeSlot.FAB_MENU_FRAME -> uiColor(UiRole.BUTTON_FRAME)
+    ThemeSlot.FAB_MENU_GROUND -> uiColor(UiRole.BUTTON_GROUND)
+    ThemeSlot.FAB_MENU_SCRIM -> themeColor(ThemeSlot.BACKGROUND).adjustAlpha(SCRIM_ALPHA)
+
+    ThemeSlot.TIME_CELL_FRAME -> themeColor(ThemeSlot.PRIMARY)
+    ThemeSlot.TIME_CELL_GROUND -> uiColor(UiRole.DIALOG_GROUND)
+
+    ThemeSlot.VIEW_GROUND -> themeColor(ThemeSlot.BACKGROUND)
+    ThemeSlot.NAV_TITLE, ThemeSlot.NAV_ARROW, ThemeSlot.DAY_NUMBER, ThemeSlot.WEEK_NUMBER, ThemeSlot.HOUR_LABEL,
+    ThemeSlot.YEAR_MONTH_LABEL, ThemeSlot.LIST_ITEM_TEXT, ThemeSlot.LIST_PLACEHOLDER -> themeColor(ThemeSlot.TEXT)
+    ThemeSlot.NEW_EVENT_MARK, ThemeSlot.YEAR_CURRENT_MONTH, ThemeSlot.LIST_NEW_EVENT_LINK,
+    ThemeSlot.EDITOR_MAP_ICON -> themeColor(ThemeSlot.PRIMARY)
+    ThemeSlot.YEAR_DAY_NUMBER -> themeColor(ThemeSlot.DAY_NUMBER).adjustAlpha(MEDIUM_ALPHA)
+    ThemeSlot.YEAR_TODAY_MARK -> themeColor(ThemeSlot.PRIMARY).adjustAlpha(MEDIUM_ALPHA)
+
+    ThemeSlot.EDITOR_ICON -> themeColor(ThemeSlot.MENU_ROLE_VIEW)
+
+    ThemeSlot.CALENDAR_LIST_TITLE, ThemeSlot.CALENDAR_LIST_ICON, ThemeSlot.FILTER_CHIP_TEXT,
+    ThemeSlot.TIME_ZONE_LIST_TEXT, ThemeSlot.FONT_OPTION_TEXT -> themeColor(ThemeSlot.TEXT)
+    ThemeSlot.FILTER_CHIP_TEXT_OFF -> themeColor(ThemeSlot.FILTER_CHIP_TEXT).adjustAlpha(LOWER_ALPHA)
+    ThemeSlot.SWATCH_RING, ThemeSlot.WIDGET_SETUP_GROUND -> themeColor(ThemeSlot.BACKGROUND)
+    ThemeSlot.SETTINGS_HEADING, ThemeSlot.SETTINGS_VALUE, ThemeSlot.SELECTED_DAY_RING,
+    ThemeSlot.SWATCH_RING_EMPTY, ThemeSlot.EXIM_CAPTION, ThemeSlot.EXIM_BOX_FRAME, ThemeSlot.FONT_ADD_TEXT,
+    ThemeSlot.WIDGET_SAMPLE_EVENT, ThemeSlot.WIDGET_SAMPLE_TODAY -> themeColor(ThemeSlot.PRIMARY)
+    ThemeSlot.EXIM_TEXT -> uiColor(UiRole.DIALOG_TEXT)
+    ThemeSlot.EXIM_BOX_GROUND -> uiColor(UiRole.DIALOG_GROUND)
+    ThemeSlot.EXIM_DIVIDER -> themeColor(ThemeSlot.PRIMARY).adjustAlpha(EXIM_DIVIDER_ALPHA)
+    ThemeSlot.EDITOR_ICON_PEOPLE -> themeColor(ThemeSlot.MENU_ROLE_CONTACT)
 
     // #C8C800 on the black/yellow palette: 78 % of the way from the background to the text
     ThemeSlot.SETTINGS_NOTE -> ColorUtils.blendARGB(themeColor(ThemeSlot.BACKGROUND), themeColor(ThemeSlot.TEXT), NOTE_BLEND)
-    // #8C8C00: 55 % of the way from the background to the accent
-    ThemeSlot.SWITCH_OFF -> ColorUtils.blendARGB(themeColor(ThemeSlot.BACKGROUND), themeColor(ThemeSlot.PRIMARY), SWITCH_OFF_BLEND)
 }
 
-/** Set an explicit override for a slot. Write-through slots persist to the stock commons/config colors. */
+/** Set an explicit override for a slot. A role slot is stored as its commons role. */
 fun Context.setThemeColor(slot: ThemeSlot, color: Int) {
+    slot.role?.let {
+        setUiColor(it, color)
+        config.themeRevision = config.themeRevision + 1
+        return
+    }
     when (slot) {
-        ThemeSlot.PRIMARY -> {
-            config.isSystemThemeEnabled = false
-            config.primaryColor = color
-        }
-
-        ThemeSlot.BACKGROUND -> {
-            config.isSystemThemeEnabled = false
-            config.backgroundColor = color
-        }
-
-        ThemeSlot.TEXT -> {
-            config.isSystemThemeEnabled = false
-            config.textColor = color
-        }
-
         // Weekend reuses the existing single source of truth so the Settings picker stays in sync.
         ThemeSlot.WEEKEND -> config.highlightWeekendsColor = color
 
@@ -207,12 +316,15 @@ fun Context.setThemeColor(slot: ThemeSlot, color: Int) {
     }
 }
 
-/** Revert a slot to its default (palette for the editable foundation colors, inherited otherwise). */
+/** Revert a slot to its default (the role's own for a role slot, inherited otherwise). */
 fun Context.resetThemeColor(slot: ThemeSlot) {
+    slot.role?.let {
+        resetUiColor(it)
+        config.themeRevision = config.themeRevision + 1
+        return
+    }
     when (slot) {
-        ThemeSlot.BACKGROUND -> setThemeColor(slot, PALETTE_BLACK)
-        ThemeSlot.PRIMARY, ThemeSlot.TEXT -> setThemeColor(slot, PALETTE_YELLOW)
-        ThemeSlot.WEEKEND -> config.highlightWeekendsColor = resources.getColor(R.color.red_text, theme)
+        ThemeSlot.WEEKEND -> config.highlightWeekendsColor = PALETTE_WEEKEND
         else -> config.clearThemeOverride(slot.key)
     }
 }
@@ -223,7 +335,6 @@ fun Context.seedBlackYellowThemeIfNeeded() {
         return
     }
 
-    config.isSystemThemeEnabled = false
     config.backgroundColor = PALETTE_BLACK
     config.textColor = PALETTE_YELLOW
     config.primaryColor = PALETTE_YELLOW
@@ -232,17 +343,15 @@ fun Context.seedBlackYellowThemeIfNeeded() {
 }
 
 /**
- * One-time seed of the yellow dialog accent: a yellow border around every dialog and the boxed
- * (black fill + yellow text/border) button style. These live in Commons' BaseConfig so the patched
- * setupDialogStuff can read them; we write the fork defaults here once, on first run, so existing
- * installs (already past the black/yellow seed) still pick them up. Adjustable later in 白い熊 予定表 UI.
+ * One-time seed of the dialog frame's width and the boxed button style. These live in Commons'
+ * BaseConfig so setupDialogStuff can read them. The frame's colour is the commons role
+ * UiRole.DIALOG_FRAME and is not seeded: it follows the accent until it is set on the UI page.
  */
 fun Context.seedDialogStyleIfNeeded() {
     if (config.dialogStyleSeeded) {
         return
     }
 
-    config.dialogBorderColor = PALETTE_YELLOW
     config.dialogBorderWidth = DIALOG_BORDER_WIDTH_DEFAULT
     config.styledDialogButtons = true
     config.dialogStyleSeeded = true
@@ -303,12 +412,11 @@ fun Context.migrateToPureYellowIfNeeded() {
         this
     }
 
-    // Stock commons colors (seeded by seedBlackYellowThemeIfNeeded) + the dialog accent border.
+    // Stock commons colors (seeded by seedBlackYellowThemeIfNeeded).
     config.backgroundColor = config.backgroundColor.migrated()
     config.textColor = config.textColor.migrated()
     config.primaryColor = config.primaryColor.migrated()
     config.accentColor = config.accentColor.migrated()
-    config.dialogBorderColor = config.dialogBorderColor.migrated()
 
     // Widget colors and the weekend highlight (single source of truth for the WEEKEND slot).
     config.widgetBgColor = config.widgetBgColor.migrated()
@@ -344,3 +452,44 @@ fun Context.regularDayBoxBorderColor(): Int =
     } else {
         themeColor(ThemeSlot.PRIMARY)
     }
+
+/**
+ * The move to the commons roles (sk18). An override stored under a slot's own key moves to the key of
+ * the role the slot now is — at every start and after every import, so a settings export written by
+ * an older build still lands. Once only, the dialog frame that earlier builds seeded as plain yellow
+ * goes back to following the accent.
+ */
+fun Context.migrateSlotsToRoles() {
+    var moved = false
+    ThemeSlot.entries.filter { it.role != null && !it.isFoundation }.forEach { slot ->
+        val override = config.getThemeOverride(slot.key)
+        if (override != THEME_UNSET) {
+            setUiColor(slot.role!!, override)
+            config.clearThemeOverride(slot.key)
+            moved = true
+        }
+    }
+    if (!config.slotsToRolesMigrated) {
+        if (isUiColorSet(UiRole.DIALOG_FRAME) && uiColor(UiRole.DIALOG_FRAME) == PALETTE_YELLOW) {
+            resetUiColor(UiRole.DIALOG_FRAME)
+        }
+        config.slotsToRolesMigrated = true
+        moved = true
+    }
+    if (moved) config.themeRevision = config.themeRevision + 1
+}
+
+/**
+ * Every colour of the page back to its default: the commons roles, this app's own slots, the weekend
+ * colour and the grid lines. Fonts, widths and switches are left as they are.
+ */
+fun Context.resetAllThemeColors() {
+    resetAllUiColors()
+    config.backgroundColor = PALETTE_BLACK
+    config.textColor = PALETTE_YELLOW
+    config.primaryColor = PALETTE_YELLOW
+    config.accentColor = PALETTE_YELLOW
+    ThemeSlot.entries.filter { it.role == null }.forEach { resetThemeColor(it) }
+    WeekGridLine.entries.forEach { config.setGridLineColor(it.key, THEME_UNSET) }
+    config.themeRevision = config.themeRevision + 1
+}

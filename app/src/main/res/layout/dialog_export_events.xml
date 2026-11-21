@@ -93,13 +93,11 @@
 
         </RelativeLayout>
 
-        <ImageView
+        <org.fossify.commons.views.MyDivider
             android:id="@+id/export_past_entries_divider"
             android:layout_width="match_parent"
             android:layout_height="@dimen/divider_height"
-            android:layout_marginStart="@dimen/activity_margin"
-            android:background="@color/divider_grey"
-            android:importantForAccessibility="no" />
+            android:layout_marginStart="@dimen/activity_margin" />
 
         <RelativeLayout
             android:id="@+id/export_past_events_checkbox_holder"
@@ -130,13 +128,11 @@
             android:orientation="vertical"
             android:visibility="gone">
 
-            <ImageView
+            <org.fossify.commons.views.MyDivider
                 android:id="@+id/export_events_divider"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/divider_height"
-                android:layout_marginBottom="@dimen/medium_margin"
-                android:background="@color/divider_grey"
-                android:importantForAccessibility="no" />
+                android:layout_marginBottom="@dimen/medium_margin" />
 
             <org.fossify.commons.views.MyTextView
                 android:id="@+id/export_events_pick_types_label"

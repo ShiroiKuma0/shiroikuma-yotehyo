@@ -1,5 +1,6 @@
 package org.fossify.calendar.fragments
 
+import org.fossify.calendar.helpers.PRINT_TEXT_COLOR
 import android.os.Bundle
 import android.util.SparseArray
 import android.view.LayoutInflater
@@ -26,6 +27,7 @@ import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.updateTextColors
 import org.joda.time.DateTime
+import org.fossify.calendar.extensions.themeColor
 
 class YearFragment : Fragment(), YearlyCalendar {
     private var mYear = 0
@@ -101,8 +103,8 @@ class YearFragment : Fragment(), YearlyCalendar {
             val monthOfYear = index + 1
             val monthView = monthHolder.smallMonthView
             val curTextColor = when {
-                isPrintVersion -> resources.getColor(org.fossify.commons.R.color.theme_light_text_color)
-                else -> requireContext().getProperTextColor()
+                isPrintVersion -> PRINT_TEXT_COLOR
+                else -> requireContext().themeColor(ThemeSlot.YEAR_MONTH_LABEL)
             }
 
             monthHolder.monthLabel.setTextColor(curTextColor)
@@ -123,7 +125,7 @@ class YearFragment : Fragment(), YearlyCalendar {
     }
 
     private fun setupButtons() {
-        val textColor = requireContext().getProperTextColor()
+        val textColor = requireContext().themeColor(ThemeSlot.NAV_ARROW)
         topNavigationBinding.topLeftArrow.apply {
             applyColorFilter(textColor)
             background = null
@@ -149,7 +151,7 @@ class YearFragment : Fragment(), YearlyCalendar {
         }
 
         topNavigationBinding.topValue.apply {
-            setTextColor(requireContext().getProperTextColor())
+            setTextColor(requireContext().themeColor(ThemeSlot.NAV_TITLE))
             setOnClickListener {
                 (activity as MainActivity).showGoToDateDialog()
             }
@@ -160,7 +162,7 @@ class YearFragment : Fragment(), YearlyCalendar {
         if (now.year == mYear) {
             val monthOfYear = now.monthOfYear
             val monthHolder = monthHolders[monthOfYear - 1]
-            monthHolder.monthLabel.setTextColor(requireContext().getProperPrimaryColor())
+            monthHolder.monthLabel.setTextColor(requireContext().themeColor(ThemeSlot.YEAR_CURRENT_MONTH))
             monthHolder.smallMonthView.todaysId = now.dayOfMonth
         }
     }

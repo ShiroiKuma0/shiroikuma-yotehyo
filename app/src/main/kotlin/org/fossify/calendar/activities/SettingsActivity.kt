@@ -8,7 +8,6 @@ import android.media.RingtoneManager
 import android.os.Bundle
 import android.widget.Toast
 import org.fossify.calendar.R
-import org.fossify.calendar.extensions.outlinedPill
 import org.fossify.calendar.databinding.ActivitySettingsBinding
 import org.fossify.calendar.dialogs.ExportEventsDialog
 import org.fossify.calendar.dialogs.ManageAutomaticBackupsDialog
@@ -87,9 +86,7 @@ import org.fossify.commons.dialogs.SelectAlarmSoundDialog
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beGoneIf
 import org.fossify.commons.extensions.beVisibleIf
-import org.fossify.commons.extensions.checkAppIconColor
 import org.fossify.commons.extensions.formatMinutesToTimeString
-import org.fossify.commons.extensions.getAppIconColors
 import org.fossify.commons.extensions.getDayOfWeekString
 import org.fossify.commons.extensions.getDefaultAlarmSound
 import org.fossify.commons.extensions.getFileOutputStream
@@ -151,6 +148,22 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 import kotlin.system.exitProcess
+import org.fossify.commons.helpers.uiColor
+import org.fossify.commons.helpers.UiRole
+import org.fossify.commons.extensions.pillDrawable
+import org.fossify.commons.extensions.getColoredDrawableWithColor
+import org.fossify.calendar.extensions.themeColor
+import org.fossify.calendar.extensions.ThemeSlot
+import android.widget.TextView
+import android.view.View
+import org.fossify.commons.R as CR
+
+// A row's icon, and the pill of a row that opens something.
+private const val ROW_ICON_DP = 20
+private const val ROW_ICON_GAP_DP = 10
+private const val PILL_PAD_H_DP = 16
+private const val PILL_PAD_V_DP = 9
+private const val PILL_ROW_PAD_DP = 3
 
 class SettingsActivity : SimpleActivity() {
     companion object {
@@ -188,7 +201,6 @@ class SettingsActivity : SimpleActivity() {
 
     private fun setupSettingItems() {
         setupThemeAndColors()
-        setupCustomizeColors()
         setupCustomizeNotifications()
         setupUseEnglish()
         setupLanguage()
@@ -258,8 +270,123 @@ class SettingsActivity : SimpleActivity() {
             binding.settingsBackupsLabel,
             binding.settingsMigratingLabel
         ).forEach {
-            it.setTextColor(getProperPrimaryColor())
+            it.setTextColor(themeColor(ThemeSlot.SETTINGS_HEADING))
         }
+        styleRows()
+    }
+
+    // The black-yellow look on this screen: every row carries an icon coloured by what the row does (the
+    // menu icon roles), and a row that opens something is an outlined pill around its label with a › —
+    // the way to the UI page being this screen's one thick pill. Switch and value rows stay plain.
+    @Suppress("LongMethod")
+    private fun styleRows() = binding.apply {
+        val view = ThemeSlot.MENU_ROLE_VIEW
+        val share = ThemeSlot.MENU_ROLE_SHARE
+        val connect = ThemeSlot.MENU_ROLE_CONNECT
+        val cog = CR.drawable.ic_settings_cog_vector
+        val clock = CR.drawable.ic_clock_vector
+        val bell = CR.drawable.ic_bell_vector
+
+        settingsShiroikumaUiLabel.setTextColor(uiColor(UiRole.BUTTON_TEXT))
+        settingsShiroikumaUiLabel.rowIcon(R.drawable.ic_color_outline_vector, view)
+
+        // rows that open a screen, a panel or a picker of their own: pills
+        settingsWidgetColorCustomizationLabel.pillRow(R.drawable.ic_color_outline_vector, view)
+        settingsManageEventTypesLabel.pillRow(R.drawable.ic_category_outline_vector, view)
+        settingsManageQuickFilterEventTypes.pillRow(CR.drawable.ic_filter_vector, view)
+        settingsCustomizeNotifications.pillRow(bell, view)
+        settingsManageSyncedCalendars.pillRow(R.drawable.ic_repeat_outline_vector, connect)
+        settingsManageAutomaticBackups.pillRow(cog, share)
+        eventsExport.pillRow(CR.drawable.ic_share_vector, share)
+        eventsImport.pillRow(CR.drawable.ic_folder_open_vector, share)
+        settingsExport.pillRow(CR.drawable.ic_share_vector, share)
+        settingsImport.pillRow(CR.drawable.ic_folder_open_vector, share)
+        // deletes after a confirmation: red, and no ›
+        settingsDeleteAllEvents.pillRow(CR.drawable.ic_delete_vector, ThemeSlot.MENU_ROLE_DELETE, opens = false, destructive = true)
+
+        // switches
+        settingsUseEnglish.rowIcon(R.drawable.ic_globe_vector, view)
+        settingsHourFormat.rowIcon(clock, view)
+        settingsHighlightWeekends.rowIcon(R.drawable.ic_today_vector, view)
+        settingsVibrate.rowIcon(CR.drawable.ic_vibrate_vector, view)
+        settingsLoopReminders.rowIcon(R.drawable.ic_repeat_outline_vector, view)
+        settingsUseSameSnooze.rowIcon(bell, view)
+        settingsCaldavSync.rowIcon(R.drawable.ic_repeat_outline_vector, connect)
+        settingsCaldavPullToRefresh.rowIcon(R.drawable.ic_repeat_outline_vector, connect)
+        settingsUseLastEventReminders.rowIcon(bell, view)
+        settingsMidnightSpanEvent.rowIcon(clock, view)
+        settingsAllowCustomizeDayCount.rowIcon(R.drawable.ic_change_view_vector, view)
+        settingsStartWeekWithCurrentDay.rowIcon(R.drawable.ic_today_vector, view)
+        settingsWeekNumbers.rowIcon(R.drawable.ic_calendar_vector, view)
+        settingsShowGrid.rowIcon(R.drawable.ic_change_view_vector, view)
+        settingsDisplayDescription.rowIcon(CR.drawable.ic_info_vector, view)
+        settingsReplaceDescription.rowIcon(CR.drawable.ic_info_vector, view)
+        settingsDimPastEvents.rowIcon(CR.drawable.ic_hide_vector, view)
+        settingsAllowChangingTimeZones.rowIcon(R.drawable.ic_globe_vector, view)
+        settingsAllowCreatingTasks.rowIcon(R.drawable.ic_task_vector, view)
+        settingsDimCompletedTasks.rowIcon(CR.drawable.ic_hide_vector, view)
+        settingsRollOverIncompleteTasks.rowIcon(R.drawable.ic_task_vector, view)
+        settingsEnableAutomaticBackups.rowIcon(clock, share)
+
+        // a label and, beneath it, the value a tap changes
+        settingsLanguageLabel.valueRow(R.drawable.ic_globe_vector, view, settingsLanguage)
+        settingsStartWeekOnLabel.valueRow(R.drawable.ic_calendar_vector, view, settingsStartWeekOn)
+        settingsHighlightWeekendsColorTextLabel.rowIcon(R.drawable.ic_color_outline_vector, view)
+        settingsReminderSoundLabel.valueRow(bell, view, settingsReminderSound)
+        settingsReminderAudioStreamLabel.valueRow(bell, view, settingsReminderAudioStream)
+        settingsSnoozeTimeLabel.valueRow(clock, view, settingsSnoozeTime)
+        settingsDefaultStartTimeLabel.valueRow(clock, view, settingsDefaultStartTime)
+        settingsDefaultDurationLabel.valueRow(clock, view, settingsDefaultDuration)
+        settingsDefaultEventTypeLabel.valueRow(R.drawable.ic_category_outline_vector, view, settingsDefaultCalendar)
+        settingsDefaultReminder1Label.valueRow(bell, view, settingsDefaultReminder1)
+        settingsDefaultReminder2Label.valueRow(bell, view, settingsDefaultReminder2)
+        settingsDefaultReminder3Label.valueRow(bell, view, settingsDefaultReminder3)
+        settingsStartWeeklyAtLabel.valueRow(clock, view, settingsStartWeeklyAt)
+        settingsDisplayPastEventsLabel.valueRow(clock, view, settingsDisplayPastEvents)
+        settingsFontSizeLabel.valueRow(CR.drawable.ic_sort_vector, view, settingsFontSize)
+        settingsListWidgetViewToOpenLabel.valueRow(R.drawable.ic_change_view_vector, view, settingsListWidgetViewToOpen)
+        settingsHomeTimeZoneLabel.valueRow(R.drawable.ic_globe_vector, view, settingsHomeTimeZone)
+    }
+
+    private fun TextView.rowIcon(iconRes: Int, slot: ThemeSlot) {
+        val density = resources.displayMetrics.density
+        val size = (ROW_ICON_DP * density).roundToInt()
+        val icon = resources.getColoredDrawableWithColor(iconRes, themeColor(slot))
+        icon.setBounds(0, 0, size, size)
+        setCompoundDrawablesRelative(icon, null, null, null)
+        compoundDrawablePadding = (ROW_ICON_GAP_DP * density).roundToInt()
+    }
+
+    // The value sits under the label's text, not under its icon; it is what a tap changes, so in the accent.
+    private fun TextView.valueRow(iconRes: Int, slot: ThemeSlot, value: TextView) {
+        rowIcon(iconRes, slot)
+        val inset = ((ROW_ICON_DP + ROW_ICON_GAP_DP) * resources.displayMetrics.density).roundToInt()
+        value.setPaddingRelative(inset, value.paddingTop, value.paddingEnd, value.paddingBottom)
+        value.setTextColor(themeColor(ThemeSlot.SETTINGS_VALUE))
+    }
+
+    // An action row: its label becomes the pill (it hugs the label) and takes the row's tap, so that the
+    // ripple stays inside it.
+    private fun TextView.pillRow(iconRes: Int, slot: ThemeSlot, opens: Boolean = true, destructive: Boolean = false) {
+        val density = resources.displayMetrics.density
+        rowIcon(iconRes, slot)
+        if (getTag(R.id.settings_row_styled) == null) {
+            setTag(R.id.settings_row_styled, true)
+            if (opens) text = "$text  ›"
+            val h = (PILL_PAD_H_DP * density).roundToInt()
+            val v = (PILL_PAD_V_DP * density).roundToInt()
+            setPadding(h, v, h, v)
+            val holder = parent as View
+            val rowPad = (PILL_ROW_PAD_DP * density).roundToInt()
+            holder.minimumHeight = 0
+            holder.setPaddingRelative(holder.paddingStart, rowPad, holder.paddingEnd, rowPad)
+            holder.background = null
+            setOnClickListener { holder.performClick() }
+        }
+        val ink = uiColor(if (destructive) UiRole.BUTTON_DESTRUCTIVE else UiRole.BUTTON_TEXT)
+        val frame = uiColor(if (destructive) UiRole.BUTTON_DESTRUCTIVE else UiRole.BUTTON_FRAME)
+        setTextColor(ink)
+        background = pillDrawable(frame, uiColor(UiRole.BUTTON_GROUND), main = false)
     }
 
     override fun onPause() {
@@ -311,12 +438,6 @@ class SettingsActivity : SimpleActivity() {
         }
     }
 
-    private fun setupCustomizeColors() {
-        binding.settingsColorCustomizationHolder.setOnClickListener {
-            startCustomizationActivity()
-        }
-    }
-
     // The whole "白い熊 予定表 UI" section header is the entry point into the consolidated UI page.
     // It is the page's main action, so it looks like one: a thick outlined pill as wide as its label, bold,
     // with a › for the screen it opens — a bare section label gave no clue that it could be pressed.
@@ -327,9 +448,9 @@ class SettingsActivity : SimpleActivity() {
         val padH = (16 * density).roundToInt()
         val padV = (9 * density).roundToInt()
         label.text = getString(R.string.shiroikuma_ui_category) + "  ›"
-        label.setTextColor(accent)
+        label.setTextColor(uiColor(UiRole.BUTTON_TEXT))
         label.setTypeface(label.typeface, android.graphics.Typeface.BOLD)
-        label.background = outlinedPill(accent, 3f)
+        label.background = pillDrawable(uiColor(UiRole.BUTTON_FRAME), uiColor(UiRole.BUTTON_GROUND), main = true)
         label.setPadding(padH, padV, padH, padV)
         (label.layoutParams as? android.view.ViewGroup.MarginLayoutParams)?.let {
             it.width = android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -563,7 +684,7 @@ class SettingsActivity : SimpleActivity() {
     private fun setupHighlightWeekendsColor() = binding.apply {
         settingsHighlightWeekendsColor.setFillWithStroke(
             config.highlightWeekendsColor,
-            getProperBackgroundColor()
+            themeColor(ThemeSlot.SWATCH_RING)
         )
         settingsHighlightWeekendsColorHolder.setOnClickListener {
             ColorPickerDialog(
@@ -574,7 +695,7 @@ class SettingsActivity : SimpleActivity() {
                     config.highlightWeekendsColor = color
                     settingsHighlightWeekendsColor.setFillWithStroke(
                         color,
-                        getProperBackgroundColor()
+                        themeColor(ThemeSlot.SWATCH_RING)
                     )
                 }
             }
@@ -585,7 +706,8 @@ class SettingsActivity : SimpleActivity() {
         settingsDeleteAllEventsHolder.setOnClickListener {
             ConfirmationDialog(
                 activity = this@SettingsActivity,
-                messageId = R.string.delete_all_events_confirmation
+                messageId = R.string.delete_all_events_confirmation,
+                destructive = true
             ) {
                 eventsHelper.deleteAllEvents()
             }
@@ -1294,12 +1416,7 @@ class SettingsActivity : SimpleActivity() {
                 BACKGROUND_COLOR -> config.backgroundColor = value.toInt()
                 PRIMARY_COLOR -> config.primaryColor = value.toInt()
                 ACCENT_COLOR -> config.accentColor = value.toInt()
-                APP_ICON_COLOR -> {
-                    if (getAppIconColors().contains(value.toInt())) {
-                        config.appIconColor = value.toInt()
-                        checkAppIconColor()
-                    }
-                }
+                // the app icon colour of an old export has nothing to set since commons sk18
 
                 USE_ENGLISH -> config.useEnglish = value.toBoolean()
                 WAS_USE_ENGLISH_TOGGLED -> config.wasUseEnglishToggled = value.toBoolean()

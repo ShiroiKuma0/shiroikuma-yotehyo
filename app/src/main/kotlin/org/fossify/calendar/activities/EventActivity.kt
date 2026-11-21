@@ -1,6 +1,5 @@
 package org.fossify.calendar.activities
 
-import android.app.DatePickerDialog
 import android.content.Intent
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.LayerDrawable
@@ -28,6 +27,7 @@ import org.fossify.calendar.R
 import org.fossify.calendar.adapters.AutoCompleteTextViewAdapter
 import org.fossify.calendar.databinding.ActivityEventBinding
 import org.fossify.calendar.databinding.ItemAttendeeBinding
+import org.fossify.calendar.dialogs.DatePickDialog
 import org.fossify.calendar.dialogs.DeleteEventDialog
 import org.fossify.calendar.dialogs.EditRepeatingEventDialog
 import org.fossify.calendar.dialogs.ReminderWarningDialog
@@ -137,7 +137,6 @@ import org.fossify.commons.extensions.beVisible
 import org.fossify.commons.extensions.beVisibleIf
 import org.fossify.commons.extensions.checkAppSideloading
 import org.fossify.commons.extensions.getColoredDrawableWithColor
-import org.fossify.commons.extensions.getDatePickerDialogTheme
 import org.fossify.commons.extensions.getFormattedMinutes
 import org.fossify.commons.extensions.getIntValue
 import org.fossify.commons.extensions.getProperBackgroundColor
@@ -180,6 +179,9 @@ import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import java.util.TimeZone
 import java.util.regex.Pattern
+import org.fossify.commons.helpers.uiColor
+import org.fossify.commons.helpers.UiRole
+import org.fossify.commons.extensions.circleDrawable
 
 class EventActivity : SimpleActivity() {
     private val LAT_LON_PATTERN =
@@ -249,7 +251,12 @@ class EventActivity : SimpleActivity() {
             val locations = eventsDB.getAllLocations()
 
             runOnUiThread {
-                val adapter = ArrayAdapter(this, R.layout.item_dropdown, locations)
+                val adapter = object : ArrayAdapter<String>(this, R.layout.item_dropdown, locations) {
+                    override fun getView(position: Int, convertView: View?, parent: android.view.ViewGroup): View =
+                        super.getView(position, convertView, parent).also {
+                            (it as? android.widget.TextView)?.setTextColor(uiColor(UiRole.SPINNER_TEXT))
+                        }
+                }
                 binding.eventLocation.setAdapter(adapter)
             }
 
@@ -1436,7 +1443,7 @@ class EventActivity : SimpleActivity() {
             R.drawable.ic_mail_outline_vector
         }
 
-        val icon = resources.getColoredDrawableWithColor(drawable, getProperTextColor())
+        val icon = resources.getColoredDrawableWithColor(drawable, themeColor(ThemeSlot.EDITOR_ICON))
         view.setImageDrawable(icon)
     }
 
@@ -1521,7 +1528,7 @@ class EventActivity : SimpleActivity() {
 
     private fun updateEventColorInfo(defaultColor: Int) {
         val eventColor = if (mEventColor == 0) defaultColor else mEventColor
-        binding.eventColor.setFillWithStroke(eventColor, getProperBackgroundColor())
+        binding.eventColor.setFillWithStroke(eventColor, themeColor(ThemeSlot.SWATCH_RING))
     }
 
     private fun getEventColors(calendar: CalendarEntity): IntArray {
@@ -1972,7 +1979,7 @@ class EventActivity : SimpleActivity() {
             return
         }
         val textColor = if (zonedStartTS() > zonedEndTS()) {
-            resources.getColor(R.color.red_text)
+            themeColor(ThemeSlot.STATUS_WARNING)
         } else {
             getProperTextColor()
         }
@@ -2003,7 +2010,7 @@ class EventActivity : SimpleActivity() {
         summary.applyThemeFont(ThemeSlot.TIME_ZONE_TEXT)
         if (endTS < startTS) {
             summary.text = "⚠  " + getString(R.string.zone_summary_negative)
-            summary.setTextColor(resources.getColor(R.color.red_text))
+            summary.setTextColor(themeColor(ThemeSlot.STATUS_WARNING))
             return
         }
         val format = config.eventTimeFormat
@@ -2057,17 +2064,7 @@ class EventActivity : SimpleActivity() {
 
     private fun setupStartDate() {
         hideKeyboard()
-        val datePicker = DatePickerDialog(
-            this,
-            getDatePickerDialogTheme(),
-            startDateSetListener,
-            mEventStartDateTime.year,
-            mEventStartDateTime.monthOfYear - 1,
-            mEventStartDateTime.dayOfMonth
-        )
-
-        datePicker.datePicker.firstDayOfWeek = getJavaDayOfWeekFromISO(config.firstDayOfWeek)
-        datePicker.show()
+        DatePickDialog(this, mEventStartDateTime.year, mEventStartDateTime.monthOfYear - 1, mEventStartDateTime.dayOfMonth, startDateSetListener)
     }
 
     private fun setupStartTime() {
@@ -2083,17 +2080,7 @@ class EventActivity : SimpleActivity() {
 
     private fun setupEndDate() {
         hideKeyboard()
-        val datePicker = DatePickerDialog(
-            this,
-            getDatePickerDialogTheme(),
-            endDateSetListener,
-            mEventEndDateTime.year,
-            mEventEndDateTime.monthOfYear - 1,
-            mEventEndDateTime.dayOfMonth
-        )
-
-        datePicker.datePicker.firstDayOfWeek = getJavaDayOfWeekFromISO(config.firstDayOfWeek)
-        datePicker.show()
+        DatePickDialog(this, mEventEndDateTime.year, mEventEndDateTime.monthOfYear - 1, mEventEndDateTime.dayOfMonth, endDateSetListener)
     }
 
     private fun setupEndTime() {
@@ -2107,13 +2094,11 @@ class EventActivity : SimpleActivity() {
         }
     }
 
-    private val startDateSetListener =
-        DatePickerDialog.OnDateSetListener { _, year, monthOfYear, dayOfMonth ->
+    private val startDateSetListener = { year: Int, monthOfYear: Int, dayOfMonth: Int ->
             dateSet(year, monthOfYear, dayOfMonth, true)
         }
 
-    private val endDateSetListener =
-        DatePickerDialog.OnDateSetListener { _, year, monthOfYear, dayOfMonth ->
+    private val endDateSetListener = { year: Int, monthOfYear: Int, dayOfMonth: Int ->
             dateSet(year, monthOfYear, dayOfMonth, false)
         }
 
@@ -2315,11 +2300,7 @@ class EventActivity : SimpleActivity() {
         attendeeHolder.apply {
             eventContactAttendee.beVisible()
 
-            val attendeeStatusBackground =
-                resources.getDrawable(R.drawable.attendee_status_circular_background)
-            (attendeeStatusBackground as LayerDrawable).findDrawableByLayerId(
-                R.id.attendee_status_circular_background
-            ).applyColorFilter(getProperBackgroundColor())
+            val attendeeStatusBackground = circleDrawable(themeColor(ThemeSlot.SWATCH_RING))
             eventContactStatusImage.apply {
                 background = attendeeStatusBackground
                 setImageDrawable(getAttendeeStatusImage(attendee))
@@ -2541,8 +2522,8 @@ class EventActivity : SimpleActivity() {
     }
 
     private fun updateIconColors() = binding.apply {
-        eventShowOnMap.applyColorFilter(getProperPrimaryColor())
-        val textColor = getProperTextColor()
+        eventShowOnMap.applyColorFilter(themeColor(ThemeSlot.EDITOR_MAP_ICON))
+        val textColor = themeColor(ThemeSlot.EDITOR_ICON)
         arrayOf(
             eventTimeImage,
             eventTimeZoneImage,
@@ -2561,6 +2542,8 @@ class EventActivity : SimpleActivity() {
         ).forEach {
             it.applyColorFilter(textColor)
         }
+        // about people, so in the contact colour
+        eventAttendeesImage.applyColorFilter(themeColor(ThemeSlot.EDITOR_ICON_PEOPLE))
     }
 
     private fun updateActionBarTitle() {

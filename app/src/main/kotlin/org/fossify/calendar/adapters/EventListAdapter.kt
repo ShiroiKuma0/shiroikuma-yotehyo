@@ -1,5 +1,6 @@
 package org.fossify.calendar.adapters
 
+import org.fossify.commons.extensions.sectionFrameDrawable
 import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
@@ -25,6 +26,10 @@ import org.fossify.commons.helpers.MEDIUM_ALPHA
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.interfaces.RefreshRecyclerViewListener
 import org.fossify.commons.views.MyRecyclerView
+import org.fossify.calendar.extensions.themeColor
+import org.fossify.calendar.extensions.ThemeSlot
+import org.fossify.calendar.extensions.eventColorBarDrawable
+import org.fossify.commons.extensions.rowSelectorDrawable
 
 class EventListAdapter(
     activity: SimpleActivity, var listItems: ArrayList<ListItem>, val allowLongClick: Boolean, val listener: RefreshRecyclerViewListener?,
@@ -45,6 +50,7 @@ class EventListAdapter(
     private val zoneLinesWidth = activity.zoneLinesAvailableWidth()
 
     init {
+        textColor = activity.themeColor(ThemeSlot.LIST_ITEM_TEXT)
         setupDragListener(true)
         val firstNonPastSectionIndex = listItems.indexOfFirst { it is ListSectionDay && !it.isPastSection }
         if (firstNonPastSectionIndex != -1) {
@@ -126,22 +132,24 @@ class EventListAdapter(
     fun togglePrintMode() {
         isPrintVersion = !isPrintVersion
         textColor = if (isPrintVersion) {
-            resources.getColor(org.fossify.commons.R.color.theme_light_text_color)
+            PRINT_TEXT_COLOR
         } else {
-            activity.getProperTextColor()
+            activity.themeColor(ThemeSlot.LIST_ITEM_TEXT)
         }
         notifyDataSetChanged()
     }
 
     private fun setupListEvent(view: View, listEvent: ListEvent) {
         EventListItemBinding.bind(view).apply {
+            if (eventItemHolder.foreground == null) eventItemHolder.foreground = activity.rowSelectorDrawable()
             eventItemHolder.isSelected = selectedKeys.contains(listEvent.hashCode())
             // Category background fills the row when set; otherwise restore the default stroke.
             if (listEvent.categoryBackgroundColor != THEME_UNSET) {
                 eventItemHolder.setBackgroundColor(listEvent.categoryBackgroundColor)
             } else {
-                eventItemHolder.setBackgroundResource(org.fossify.commons.R.drawable.section_holder_stroke)
-                eventItemHolder.background.applyColorFilter(textColor)
+                // a printed page keeps the text colour of the print; on screen the frame has its role
+                eventItemHolder.background = activity.sectionFrameDrawable()
+                if (isPrintVersion) eventItemHolder.background.applyColorFilter(textColor)
             }
             eventItemTitle.text = listEvent.title
             eventItemTitle.checkViewStrikeThrough(listEvent.shouldStrikeThrough())
@@ -160,7 +168,7 @@ class EventListAdapter(
 
             eventItemDescription.text = if (replaceDescription) listEvent.location else listEvent.description.replace("\n", " ")
             eventItemDescription.beVisibleIf(displayDescription && eventItemDescription.text.isNotEmpty())
-            eventItemColorBar.background.applyColorFilter(listEvent.color)
+            eventItemColorBar.background = activity.eventColorBarDrawable(listEvent.color)
 
             var newTextColor = textColor
             if (listEvent.isAllDay || listEvent.startTS <= now && listEvent.endTS <= now) {

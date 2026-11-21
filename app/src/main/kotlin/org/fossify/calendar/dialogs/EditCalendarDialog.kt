@@ -27,6 +27,8 @@ import org.fossify.commons.extensions.value
 import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.models.RadioItem
+import org.fossify.calendar.extensions.themeColor
+import org.fossify.calendar.extensions.ThemeSlot
 
 class EditCalendarDialog(
     val activity: Activity,
@@ -76,7 +78,7 @@ class EditCalendarDialog(
 
             typeBackgroundColor.setOnClickListener {
                 val current = if (calendar!!.backgroundColor == THEME_UNSET) {
-                    activity.getProperBackgroundColor()
+                    activity.themeColor(ThemeSlot.VIEW_GROUND)
                 } else {
                     calendar!!.backgroundColor
                 }
@@ -158,25 +160,25 @@ class EditCalendarDialog(
     }
 
     private fun setupColor(view: ImageView) {
-        view.setFillWithStroke(calendar!!.color, activity.getProperBackgroundColor())
+        view.setFillWithStroke(calendar!!.color, activity.themeColor(ThemeSlot.SWATCH_RING))
     }
 
     private fun setupBackgroundColor(view: ImageView) {
         val shown = if (calendar!!.backgroundColor == THEME_UNSET) {
-            activity.getProperBackgroundColor()
+            activity.themeColor(ThemeSlot.VIEW_GROUND)
         } else {
             calendar!!.backgroundColor
         }
-        view.setFillWithStroke(shown, activity.getProperBackgroundColor())
+        view.setFillWithStroke(shown, activity.themeColor(ThemeSlot.SWATCH_RING))
     }
 
     private fun setupDayFrameColor(view: ImageView) {
         val shown = if (calendar!!.dayFrameColor == THEME_UNSET) {
-            activity.getProperBackgroundColor()
+            activity.themeColor(ThemeSlot.VIEW_GROUND)
         } else {
             calendar!!.dayFrameColor
         }
-        view.setFillWithStroke(shown, activity.getProperBackgroundColor())
+        view.setFillWithStroke(shown, activity.themeColor(ThemeSlot.SWATCH_RING))
     }
 
     private fun sizeLabel(sp: Int) = if (sp > 0) "$sp sp" else activity.getString(R.string.theme_size_default)

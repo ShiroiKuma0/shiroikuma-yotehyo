@@ -67,7 +67,7 @@ class DayFragment : Fragment() {
     }
 
     private fun setupButtons() {
-        mTextColor = requireContext().getProperTextColor()
+        mTextColor = requireContext().themeColor(ThemeSlot.NAV_ARROW)
 
         topNavigationBinding.topLeftArrow.apply {
             applyColorFilter(mTextColor)
@@ -102,7 +102,7 @@ class DayFragment : Fragment() {
             setOnClickListener {
                 (activity as MainActivity).showGoToDateDialog()
             }
-            setTextColor(context.getProperTextColor())
+            setTextColor(context.themeColor(ThemeSlot.NAV_TITLE))
             applyThemeFont(ThemeSlot.TEXT)
         }
 
@@ -196,7 +196,7 @@ class DayFragment : Fragment() {
         topNavigationBinding.apply {
             topLeftArrow.beGone()
             topRightArrow.beGone()
-            topValue.setTextColor(resources.getColor(org.fossify.commons.R.color.theme_light_text_color))
+            topValue.setTextColor(PRINT_TEXT_COLOR)
             (binding.dayEvents.adapter as? DayEventsAdapter)?.togglePrintMode()
 
             Handler().postDelayed({
@@ -205,7 +205,7 @@ class DayFragment : Fragment() {
                 Handler().postDelayed({
                     topLeftArrow.beVisible()
                     topRightArrow.beVisible()
-                    topValue.setTextColor(requireContext().getProperTextColor())
+                    topValue.setTextColor(requireContext().themeColor(ThemeSlot.NAV_TITLE))
                     (binding.dayEvents.adapter as? DayEventsAdapter)?.togglePrintMode()
                 }, 1000)
             }, 1000)

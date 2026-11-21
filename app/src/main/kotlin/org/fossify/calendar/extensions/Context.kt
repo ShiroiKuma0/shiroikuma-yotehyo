@@ -811,8 +811,7 @@ fun Context.addDayEvents(
             it.endTS
         }
     }.thenBy { it.title }).forEach {
-        val backgroundDrawable = res.getDrawable(R.drawable.day_monthly_event_background)
-        backgroundDrawable.applyColorFilter(it.color)
+        val backgroundDrawable = eventBlockDrawable(it.color)
         eventLayoutParams.setMargins(dividerMargin, 0, dividerMargin, dividerMargin)
 
         var textColor = it.color.getContrastColor()
@@ -1232,8 +1231,8 @@ fun Context.scheduleDummyAlarm() {
 // yellow (accent) ring so it stays visible against the dark page; other colours get a subtle
 // background-coloured ring. Shared by Manage Calendars and the calendar-picker dialog.
 fun Context.calendarColorDrop(fill: Int, forceVisibleBorder: Boolean = false): GradientDrawable {
-    val needsAccentBorder = forceVisibleBorder || fill == Color.BLACK
-    val strokeColor = if (needsAccentBorder) getProperPrimaryColor() else getProperBackgroundColor()
+    val needsAccentBorder = forceVisibleBorder || fill == getProperBackgroundColor()
+    val strokeColor = themeColor(if (needsAccentBorder) ThemeSlot.SWATCH_RING_EMPTY else ThemeSlot.SWATCH_RING)
     val strokePx = (2 * resources.displayMetrics.density).toInt()
     return GradientDrawable().apply {
         shape = GradientDrawable.OVAL

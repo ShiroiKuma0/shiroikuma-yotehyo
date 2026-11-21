@@ -15,7 +15,6 @@
             android:id="@+id/task_toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="@color/color_primary"
             app:menu="@menu/menu_task"
             app:title="@string/app_launcher_name"
             app:titleTextAppearance="@style/AppTheme.ActionBar.TitleTextStyle" />
@@ -66,15 +65,13 @@
                 android:textCursorDrawable="@null"
                 android:textSize="@dimen/day_text_size" />
 
-            <ImageView
+            <org.fossify.commons.views.MyDivider
                 android:id="@+id/task_description_divider"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/divider_height"
                 android:layout_below="@+id/task_description"
                 android:layout_marginTop="@dimen/activity_margin"
-                android:layout_marginBottom="@dimen/normal_margin"
-                android:background="@color/divider_grey"
-                android:importantForAccessibility="no" />
+                android:layout_marginBottom="@dimen/normal_margin" />
 
             <ImageView
                 android:id="@+id/task_time_image"
@@ -137,15 +134,13 @@
                 android:textSize="@dimen/day_text_size"
                 tools:text="00:00" />
 
-            <ImageView
+            <org.fossify.commons.views.MyDivider
                 android:id="@+id/task_date_time_divider"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/divider_height"
                 android:layout_below="@+id/task_date"
                 android:layout_marginTop="@dimen/medium_margin"
-                android:layout_marginBottom="@dimen/medium_margin"
-                android:background="@color/divider_grey"
-                android:importantForAccessibility="no" />
+                android:layout_marginBottom="@dimen/medium_margin" />
 
             <!-- A record rather than a to-do: no checkbox anywhere, and the rollover leaves it put. -->
             <RelativeLayout
@@ -236,15 +231,13 @@
                 android:visibility="gone"
                 tools:text="@string/add_another_reminder" />
 
-            <ImageView
+            <org.fossify.commons.views.MyDivider
                 android:id="@+id/task_caldav_calendar_divider"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/divider_height"
                 android:layout_below="@+id/task_reminder_3"
                 android:layout_marginTop="@dimen/medium_margin"
-                android:layout_marginBottom="@dimen/medium_margin"
-                android:background="@color/divider_grey"
-                android:importantForAccessibility="no" />
+                android:layout_marginBottom="@dimen/medium_margin" />
 
             <ImageView
                 android:id="@+id/task_repetition_image"
@@ -334,14 +327,12 @@
                     android:textSize="@dimen/day_text_size" />
             </RelativeLayout>
 
-            <ImageView
+            <org.fossify.commons.views.MyDivider
                 android:id="@+id/task_repetition_divider"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/divider_height"
                 android:layout_below="@+id/task_repetition_limit_holder"
-                android:layout_marginTop="@dimen/medium_margin"
-                android:background="@color/divider_grey"
-                android:importantForAccessibility="no" />
+                android:layout_marginTop="@dimen/medium_margin" />
 
             <ImageView
                 android:id="@+id/calendar_image"
@@ -392,14 +383,12 @@
 
             </RelativeLayout>
 
-            <ImageView
+            <org.fossify.commons.views.MyDivider
                 android:id="@+id/calendar_divider"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/divider_height"
                 android:layout_below="@+id/calendar_holder"
-                android:layout_marginBottom="@dimen/normal_margin"
-                android:background="@color/divider_grey"
-                android:importantForAccessibility="no" />
+                android:layout_marginBottom="@dimen/normal_margin" />
 
             <ImageView
                 android:id="@+id/task_color_image"
@@ -445,14 +434,12 @@
 
             </RelativeLayout>
 
-            <ImageView
+            <org.fossify.commons.views.MyDivider
                 android:id="@+id/task_color_divider"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/divider_height"
                 android:layout_below="@+id/task_color_image"
-                android:layout_marginTop="@dimen/medium_margin"
-                android:background="@color/divider_grey"
-                android:importantForAccessibility="no" />
+                android:layout_marginTop="@dimen/medium_margin" />
 
             <android.widget.TextView
                 android:id="@+id/toggle_mark_complete"

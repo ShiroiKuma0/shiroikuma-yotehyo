@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.DatePicker
 import androidx.viewpager.widget.ViewPager
 import org.fossify.calendar.activities.MainActivity
 import org.fossify.calendar.adapters.MyDayPagerAdapter
@@ -18,7 +17,10 @@ import org.fossify.commons.extensions.getAlertDialogBuilder
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.commons.views.MyViewPager
+import org.fossify.commons.views.FamilyDatePicker
 import org.joda.time.DateTime
+import org.fossify.calendar.extensions.themeColor
+import org.fossify.calendar.extensions.ThemeSlot
 
 class DayFragmentsHolder : MyFragmentHolder(), NavigationListener {
     private val PREFILLED_DAYS = 251
@@ -39,7 +41,7 @@ class DayFragmentsHolder : MyFragmentHolder(), NavigationListener {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val binding = FragmentDaysHolderBinding.inflate(inflater, container, false)
-        binding.root.background = ColorDrawable(requireContext().getProperBackgroundColor())
+        binding.root.background = ColorDrawable(requireContext().themeColor(ThemeSlot.VIEW_GROUND))
         viewPager = binding.fragmentDaysViewpager
         viewPager.id = (System.currentTimeMillis() % 100000).toInt()
         setupFragment()
@@ -105,9 +107,8 @@ class DayFragmentsHolder : MyFragmentHolder(), NavigationListener {
             return
         }
 
-        val datePicker = getDatePickerView()
         val dateTime = getCurrentDate()!!
-        datePicker.init(dateTime.year, dateTime.monthOfYear - 1, dateTime.dayOfMonth, null)
+        val datePicker = getDatePickerView(dateTime)
 
         activity?.getAlertDialogBuilder()!!
             .setNegativeButton(org.fossify.commons.R.string.cancel, null)
@@ -117,7 +118,7 @@ class DayFragmentsHolder : MyFragmentHolder(), NavigationListener {
             }
     }
 
-    private fun dateSelected(dateTime: DateTime, datePicker: DatePicker) {
+    private fun dateSelected(dateTime: DateTime, datePicker: FamilyDatePicker) {
         val month = datePicker.month + 1
         val year = datePicker.year
         val day = datePicker.dayOfMonth

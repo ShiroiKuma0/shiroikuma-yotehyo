@@ -95,13 +95,11 @@
 
         </RelativeLayout>
 
-        <ImageView
+        <org.fossify.commons.views.MyDivider
             android:id="@+id/backup_past_entries_divider"
             android:layout_width="match_parent"
             android:layout_height="@dimen/divider_height"
-            android:layout_marginStart="@dimen/activity_margin"
-            android:background="@color/divider_grey"
-            android:importantForAccessibility="no" />
+            android:layout_marginStart="@dimen/activity_margin" />
 
         <RelativeLayout
             android:id="@+id/backup_past_events_checkbox_holder"
@@ -124,13 +122,11 @@
 
         </RelativeLayout>
 
-        <ImageView
+        <org.fossify.commons.views.MyDivider
             android:id="@+id/select_event_types_divider"
             android:layout_width="match_parent"
             android:layout_height="@dimen/divider_height"
-            android:layout_marginStart="@dimen/activity_margin"
-            android:background="@color/divider_grey"
-            android:importantForAccessibility="no" />
+            android:layout_marginStart="@dimen/activity_margin" />
 
         <RelativeLayout
             android:id="@+id/manage_calendars_holder"

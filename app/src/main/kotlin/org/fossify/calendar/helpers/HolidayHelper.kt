@@ -56,7 +56,7 @@ class HolidayHelper(private val activity: SimpleActivity) {
             if (!config.saveHolidaySelection(selectedPaths, reminders, "")) return ImportResult.IMPORT_FAIL
             if (calendarId == -1L && holidays.isNotEmpty()) {
                 calendarId = activity.eventsHelper.createPredefinedCalendar(
-                    activity.getString(R.string.holidays), R.color.default_holidays_color, HOLIDAY_EVENT
+                    activity.getString(R.string.holidays), DEFAULT_HOLIDAYS_COLOR, HOLIDAY_EVENT
                 )
             }
             val removed = replaceHolidays(calendarId, holidays)

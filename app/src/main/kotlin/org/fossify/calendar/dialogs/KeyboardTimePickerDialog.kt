@@ -14,6 +14,9 @@ import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.commons.extensions.showKeyboard
 import org.fossify.commons.extensions.viewBinding
 import java.text.DateFormatSymbols
+import org.fossify.commons.helpers.uiColor
+import org.fossify.commons.helpers.UiRole
+import org.fossify.calendar.extensions.timeCellDrawable
 
 // Keyboard-entry time picker: HH:MM as four single-digit cells (a 2×2 grid of black/yellow boxes)
 // instead of the circular clock. Each cell holds one digit; the focused cell inverts (yellow fill,
@@ -46,6 +49,7 @@ class KeyboardTimePickerDialog(
         prefill(displayHour, minute)
         setupAmPm()
         setupCellBehavior()
+        applyRoles()
 
         activity.getAlertDialogBuilder()
             .setPositiveButton(org.fossify.commons.R.string.ok) { _, _ -> confirmTime() }
@@ -61,6 +65,21 @@ class KeyboardTimePickerDialog(
     }
 
     // 24-hour value -> 1..12 for display in 12-hour mode (0 and 12 both show as 12).
+    // Every colour of the entry is a role: the digits and the colon the time picker's, the boxes this app's own.
+    private fun applyRoles() {
+        val digits = activity.uiColor(UiRole.PICKER_TIME_DIGITS)
+        cells.forEach {
+            it.background = activity.timeCellDrawable()
+            it.setTextColor(digits)
+            it.highlightColor = android.graphics.Color.TRANSPARENT
+        }
+        binding.timePickerColon.setTextColor(activity.uiColor(UiRole.PICKER_TIME_SEPARATOR))
+        binding.timePickerAmpm.background = activity.timeCellDrawable()
+        binding.timePickerAmpm.setTextColor(activity.uiColor(UiRole.PICKER_AM_PM))
+        val caption = activity.uiColor(UiRole.DIALOG_TEXT)
+        listOf(binding.timePickerLabelHour, binding.timePickerLabelMinute).forEach { it.setTextColor(caption) }
+    }
+
     private fun to12Hour(hour24: Int): Int {
         val h = hour24 % 12
         return if (h == 0) 12 else h

@@ -185,6 +185,7 @@ const val LAST_USED_EVENT_SPAN = "last_used_event_span"
 // Granular theming (白い熊 予定表 UI)
 const val THEME_V1_SEEDED = "theme_v1_seeded"
 const val DIALOG_STYLE_SEEDED = "dialog_style_seeded" // one-time seed of the yellow dialog border/buttons
+const val SLOTS_TO_ROLES_MIGRATED = "theme_slots_to_roles_migrated" // one-time move of slot overrides to the commons roles (sk18)
 const val PURE_YELLOW_MIGRATED = "pure_yellow_migrated" // one-time #FFEB3B → #FFFF00 rewrite of persisted colors
 const val TODAY_BOX_BORDER_SEEDED = "today_box_border_seeded" // one-time seed of the blue today box border
 const val TODAY_BOX_BORDER_THICKNESS_DEFAULT = 3 // dp, thick enough to spot today's cell at a glance
@@ -199,6 +200,19 @@ const val PALETTE_BLUE = 0xFF2979FF.toInt()
 const val PALETTE_CYAN = 0xFF00FFFF.toInt() // about a contact or person
 const val PALETTE_ORANGE = 0xFFFF8000.toInt() // copies, shares, exports
 const val PALETTE_RED = 0xFFFF0000.toInt() // deletes — the warning colour
+const val PALETTE_GREEN = 0xFF00FF00.toInt() // connects, synchronises
+const val PALETTE_MAGENTA = 0xFFFF00FF.toInt() // blocks, locks, keeps secret
+const val PALETTE_WARNING = 0xFFFF5252.toInt() // a warning that is only read
+const val PALETTE_WEEKEND = 0xFFEC2E2A.toInt() // the weekend highlight's default
+
+// What a calendar made by the app starts with; it is data from then on, set per calendar in Manage calendars
+const val DEFAULT_BIRTHDAYS_COLOR = 0xFF1565C0.toInt()
+const val DEFAULT_HOLIDAYS_COLOR = 0xFF50A43B.toInt()
+const val DEFAULT_ANNIVERSARIES_COLOR = 0xFFEC2E2A.toInt()
+
+// The UI page: the order 白い熊 dragged its sections into, and the ones left open ("theme_" so both travel in the export)
+const val UI_SECTION_ORDER = "theme_ui_section_order"
+const val UI_SECTIONS_OPEN = "theme_ui_sections_open"
 const val PILL_DIALOG_SEEDED = "pill_dialog_seeded" // one-time switch to commons' pill dialog buttons
 
 // Per-element fonts: one entry per text slot, keyed by the slot key.
@@ -457,3 +471,4 @@ fun getAccessLevelStringFromEventAccessLevel(accessLevel: Int): String {
         else -> PUBLIC
     }
 }
+const val PRINT_TEXT_COLOR = 0xFF2D2D2D.toInt() // ink on a printed (white) page — not a surface colour of the app

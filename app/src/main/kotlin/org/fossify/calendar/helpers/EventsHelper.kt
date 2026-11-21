@@ -3,7 +3,6 @@ package org.fossify.calendar.helpers
 import android.app.Activity
 import android.content.Context
 import android.widget.Toast
-import androidx.annotation.ColorRes
 import androidx.collection.LongSparseArray
 import org.fossify.calendar.R
 import org.fossify.calendar.extensions.calDAVHelper
@@ -597,12 +596,12 @@ class EventsHelper(val context: Context) {
     }
 
     fun createPredefinedCalendar(
-        title: String, @ColorRes colorResId: Int, type: Int, caldav: Boolean = false
+        title: String, color: Int, type: Int, caldav: Boolean = false
     ): Long {
         val calendar = CalendarEntity(
             id = null,
             title = title,
-            color = context.resources.getColor(colorResId),
+            color = color,
             type = type
         )
 
@@ -624,7 +623,7 @@ class EventsHelper(val context: Context) {
         if (calendarId == -1L && createIfNotExists) {
             val birthdays = context.getString(R.string.birthdays)
             calendarId =
-                createPredefinedCalendar(birthdays, R.color.default_birthdays_color, BIRTHDAY_EVENT)
+                createPredefinedCalendar(birthdays, DEFAULT_BIRTHDAYS_COLOR, BIRTHDAY_EVENT)
         }
         return calendarId
     }
@@ -635,7 +634,7 @@ class EventsHelper(val context: Context) {
             val anniversaries = context.getString(R.string.anniversaries)
             calendarId = createPredefinedCalendar(
                 anniversaries,
-                R.color.default_anniversaries_color,
+                DEFAULT_ANNIVERSARIES_COLOR,
                 ANNIVERSARY_EVENT
             )
         }

@@ -23,6 +23,8 @@ import com.google.android.material.materialswitch.MaterialSwitch
 import org.fossify.calendar.extensions.ThemeSlot
 import org.fossify.calendar.extensions.themeColor
 import kotlin.math.roundToInt
+import org.fossify.commons.helpers.uiColor
+import org.fossify.commons.helpers.UiRole
 
 /**
  * The theme's switch: an outlined pill with the background showing through and a solid dot inside it —
@@ -36,6 +38,8 @@ import kotlin.math.roundToInt
 class OutlinedSwitchDrawable(
     private val on: Int,
     private val off: Int,
+    private val onDot: Int,
+    private val offDot: Int,
     private val width: Int,
     private val height: Int,
     strokeWidth: Float,
@@ -59,7 +63,7 @@ class OutlinedSwitchDrawable(
         stroke.color = color
         canvas.drawRoundRect(rect, rect.height() / 2f, rect.height() / 2f, stroke)
 
-        fill.color = color
+        fill.color = ColorUtils.blendARGB(offDot, onDot, progress)
         val half = h / 2f
         val startX = bounds.left + half
         val endX = bounds.right - half
@@ -123,8 +127,10 @@ class OutlinedSwitchDrawable(
             val w = if (small) SMALL_WIDTH_DP else WIDTH_DP
             val h = if (small) SMALL_HEIGHT_DP else HEIGHT_DP
             return OutlinedSwitchDrawable(
-                on = context.themeColor(ThemeSlot.PRIMARY),
-                off = context.themeColor(ThemeSlot.SWITCH_OFF),
+                on = context.uiColor(UiRole.SWITCH_ON_OUTLINE),
+                off = context.uiColor(UiRole.SWITCH_OFF_OUTLINE),
+                onDot = context.uiColor(UiRole.SWITCH_ON_DOT),
+                offDot = context.uiColor(UiRole.SWITCH_OFF_DOT),
                 width = (w * density).roundToInt(),
                 height = (h * density).roundToInt(),
                 strokeWidth = STROKE_DP * density,

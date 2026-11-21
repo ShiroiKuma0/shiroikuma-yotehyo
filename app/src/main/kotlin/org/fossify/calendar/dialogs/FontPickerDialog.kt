@@ -11,6 +11,8 @@ import org.fossify.commons.extensions.getAlertDialogBuilder
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.setupDialogStuff
+import org.fossify.calendar.extensions.themeColor
+import org.fossify.calendar.extensions.ThemeSlot
 
 // Lists every available font with its name drawn in its own typeface, plus an "Add font…" action.
 class FontPickerDialog(
@@ -22,8 +24,8 @@ class FontPickerDialog(
     private val binding = DialogFontPickerBinding.inflate(activity.layoutInflater)
 
     init {
-        val textColor = activity.getProperTextColor()
-        val primaryColor = activity.getProperPrimaryColor()
+        val textColor = activity.themeColor(ThemeSlot.FONT_OPTION_TEXT)
+        val primaryColor = activity.themeColor(ThemeSlot.FONT_ADD_TEXT)
 
         activity.availableFontOptions().forEach { option ->
             val row = ItemFontOptionBinding.inflate(activity.layoutInflater, binding.fontPickerHolder, false)

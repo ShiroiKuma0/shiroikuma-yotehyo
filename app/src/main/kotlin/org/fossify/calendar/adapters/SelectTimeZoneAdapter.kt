@@ -22,7 +22,7 @@ class SelectTimeZoneAdapter(
     private val recentLabel: String,
     val itemClick: (Any) -> Unit,
 ) : RecyclerView.Adapter<SelectTimeZoneAdapter.TimeZoneViewHolder>() {
-    val textColor = activity.getProperTextColor()
+    val textColor = activity.themeColor(ThemeSlot.TIME_ZONE_LIST_TEXT)
     private val detailColor = activity.themeColor(ThemeSlot.TIME_ZONE_TEXT)
     private val tagColor = activity.themeColor(ThemeSlot.TIME_ZONE_TAG)
     private val japanese = activity.config.eventTimeFormat == EVENT_TIME_FORMAT_JAPANESE

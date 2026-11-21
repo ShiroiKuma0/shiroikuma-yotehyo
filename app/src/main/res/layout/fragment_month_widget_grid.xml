@@ -90,7 +90,7 @@
         android:layout_height="match_parent"
         android:layout_below="@+id/first_row_widget"
         android:gravity="center"
-        android:divider="@color/dark_grey"
+        android:divider="#FF333333"
         android:showDividers="middle"
         android:orientation="vertical">
 
@@ -99,7 +99,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:divider="@color/dark_grey"
+            android:divider="#FF333333"
             android:showDividers="middle"
             android:orientation="horizontal">
 
@@ -174,7 +174,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:divider="@color/dark_grey"
+            android:divider="#FF333333"
             android:showDividers="middle|beginning|end"
             android:orientation="horizontal">
 
@@ -249,7 +249,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:divider="@color/dark_grey"
+            android:divider="#FF333333"
             android:showDividers="middle|beginning|end"
             android:orientation="horizontal">
 
@@ -324,7 +324,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:divider="@color/dark_grey"
+            android:divider="#FF333333"
             android:showDividers="middle|beginning|end"
             android:orientation="horizontal">
 
@@ -399,7 +399,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:divider="@color/dark_grey"
+            android:divider="#FF333333"
             android:showDividers="middle|beginning|end"
             android:orientation="horizontal">
 
@@ -474,7 +474,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:divider="@color/dark_grey"
+            android:divider="#FF333333"
             android:showDividers="middle|beginning|end"
             android:orientation="horizontal">
 

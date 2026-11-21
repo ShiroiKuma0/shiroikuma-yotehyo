@@ -1,5 +1,6 @@
 package org.fossify.calendar.activities
 
+import org.fossify.calendar.extensions.styleWidgetConfigControls
 import android.app.Activity
 import android.appwidget.AppWidgetManager
 import android.content.Intent
@@ -13,6 +14,8 @@ import org.fossify.calendar.helpers.MyWidgetDateProvider
 import org.fossify.commons.dialogs.ColorPickerDialog
 import org.fossify.commons.extensions.*
 import org.fossify.commons.helpers.IS_CUSTOMIZING_COLORS
+import org.fossify.commons.helpers.uiColor
+import org.fossify.commons.helpers.UiRole
 
 class WidgetDateConfigureActivity : SimpleActivity() {
     private var mBgAlpha = 0f
@@ -43,7 +46,7 @@ class WidgetDateConfigureActivity : SimpleActivity() {
             configSave.setOnClickListener { saveConfig() }
             configBgColor.setOnClickListener { pickBackgroundColor() }
             configTextColor.setOnClickListener { pickTextColor() }
-            configBgSeekbar.setColors(mTextColor, primaryColor, primaryColor)
+            configBgSeekbar.setColors(mTextColor, uiColor(UiRole.SLIDER_TRACK), uiColor(UiRole.SLIDER_THUMB))
             widgetDateLabel.text = Formatter.getTodayDayNumber()
             widgetMonthLabel.text = Formatter.getCurrentMonthShort()
         }
@@ -65,9 +68,6 @@ class WidgetDateConfigureActivity : SimpleActivity() {
         updateBackgroundColor()
 
         mTextColor = config.widgetTextColor
-        if (mTextColor == resources.getColor(org.fossify.commons.R.color.default_widget_text_color) && isDynamicTheme()) {
-            mTextColor = resources.getColor(org.fossify.commons.R.color.you_primary_color, theme)
-        }
 
         updateTextColor()
     }
@@ -120,7 +120,6 @@ class WidgetDateConfigureActivity : SimpleActivity() {
             configTextColor.setFillWithStroke(mTextColor, mTextColor)
             widgetDateLabel.setTextColor(mTextColor)
             widgetMonthLabel.setTextColor(mTextColor)
-            configSave.setTextColor(getProperPrimaryColor().getContrastColor())
         }
     }
 
@@ -129,7 +128,7 @@ class WidgetDateConfigureActivity : SimpleActivity() {
         binding.apply {
             configDateTimeWrapper.background.applyColorFilter(mBgColor)
             configBgColor.setFillWithStroke(mBgColor, mBgColor)
-            configSave.backgroundTintList = ColorStateList.valueOf(getProperPrimaryColor())
+            styleWidgetConfigControls(configSave, configBgSeekbarHolder)
         }
     }
 }

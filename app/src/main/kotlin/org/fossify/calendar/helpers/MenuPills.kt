@@ -16,6 +16,8 @@ import org.fossify.calendar.R
 import org.fossify.commons.R as CR
 import org.fossify.calendar.extensions.ThemeSlot
 import org.fossify.calendar.extensions.themeColor
+import org.fossify.commons.helpers.uiColor
+import org.fossify.commons.helpers.UiRole
 
 /**
  * What a menu row needs to know to be drawn as a pill (see views/PillMenuItemView, and the Menus section
@@ -32,7 +34,6 @@ object MenuPills {
     const val PILL_MARGIN_DP = 3 // above and below a pill
     const val SIDE_MARGIN_DP = 8 // between a pill and the menu's edge
 
-    private const val DIVIDER_BLEND = 0.7f
     private const val MENU_CHROME_DP = 24
     private const val GROUP_DIVIDER_DP = 9
 
@@ -56,7 +57,7 @@ object MenuPills {
         R.id.go_to_date to Spec(R.drawable.ic_calendar_vector, ThemeSlot.MENU_ROLE_VIEW, opens = true),
         R.id.change_view to Spec(R.drawable.ic_change_view_vector, ThemeSlot.MENU_ROLE_VIEW, opens = true),
         R.id.filter to Spec(CR.drawable.ic_filter_vector, ThemeSlot.MENU_ROLE_VIEW, opens = true),
-        R.id.refresh_caldav_calendars to Spec(R.drawable.ic_repeat_outline_vector, ThemeSlot.MENU_ROLE_VIEW),
+        R.id.refresh_caldav_calendars to Spec(R.drawable.ic_repeat_outline_vector, ThemeSlot.MENU_ROLE_CONNECT),
         R.id.print to Spec(CR.drawable.ic_print_vector, ThemeSlot.MENU_ROLE_SHARE, opens = true),
         R.id.add_holidays to Spec(R.drawable.ic_event_available_vector, ThemeSlot.MENU_ROLE_VIEW, opens = true),
         R.id.add_birthdays to Spec(CR.drawable.ic_person_outline_vector, ThemeSlot.MENU_ROLE_CONTACT, opens = true),
@@ -77,7 +78,7 @@ object MenuPills {
 
     /** The frame and label of a row: the warning colour for a destructive one, else accent and menu text. */
     fun frameColor(context: Context, id: Int): Int =
-        context.themeColor(if (isDestructive(id)) ThemeSlot.MENU_ROLE_DELETE else ThemeSlot.PRIMARY)
+        if (isDestructive(id)) context.themeColor(ThemeSlot.MENU_ROLE_DELETE) else context.uiColor(UiRole.MENU_ROW_FRAME)
 
     fun labelColor(context: Context, id: Int): Int =
         context.themeColor(if (isDestructive(id)) ThemeSlot.MENU_ROLE_DELETE else ThemeSlot.MENU_TEXT)
@@ -88,9 +89,7 @@ object MenuPills {
 
     // The line between two groups of a menu: an opaque darker accent, bright enough to be seen on the
     // background, quieter than a pill frame
-    fun dividerColor(context: Context): Int = ColorUtils.blendARGB(
-        context.themeColor(ThemeSlot.BACKGROUND), context.themeColor(ThemeSlot.PRIMARY), DIVIDER_BLEND
-    )
+    fun dividerColor(context: Context): Int = context.uiColor(UiRole.MENU_DIVIDER)
 
     /** The disabled title line a menu opens with. */
     fun isHeader(item: MenuItem) = !item.isEnabled && item.itemId == 0 && !item.hasSubMenu()

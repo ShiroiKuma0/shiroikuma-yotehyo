@@ -6,7 +6,6 @@ import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.DatePicker
 import androidx.viewpager.widget.ViewPager
 import org.fossify.calendar.activities.MainActivity
 import org.fossify.calendar.adapters.MyWeekGridPagerAdapter
@@ -23,7 +22,10 @@ import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.commons.helpers.WEEK_SECONDS
 import org.fossify.commons.views.MyViewPager
+import org.fossify.commons.views.FamilyDatePicker
 import org.joda.time.DateTime
+import org.fossify.calendar.extensions.themeColor
+import org.fossify.calendar.extensions.ThemeSlot
 
 // Hosts a swipeable pager of WeekGridFragment pages (one per week), for the Pimlical-style
 // "day box" weekly layout. Used both for the dedicated WEEKLY_GRID_VIEW and for the standard
@@ -50,7 +52,7 @@ class WeekGridFragmentsHolder : MyFragmentHolder() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         binding = FragmentWeekGridHolderBinding.inflate(inflater, container, false)
-        binding.root.background = ColorDrawable(requireContext().getProperBackgroundColor())
+        binding.root.background = ColorDrawable(requireContext().themeColor(ThemeSlot.VIEW_GROUND))
         viewPager = binding.weekGridViewPager
         viewPager.id = (System.currentTimeMillis() % 100000).toInt()
         setupFragment()
@@ -117,9 +119,8 @@ class WeekGridFragmentsHolder : MyFragmentHolder() {
             return
         }
 
-        val datePicker = getDatePickerView()
         val dateTime = getCurrentDate() ?: DateTime()
-        datePicker.init(dateTime.year, dateTime.monthOfYear - 1, dateTime.dayOfMonth, null)
+        val datePicker = getDatePickerView(dateTime)
 
         activity?.getAlertDialogBuilder()!!
             .setNegativeButton(org.fossify.commons.R.string.cancel, null)
@@ -129,7 +130,7 @@ class WeekGridFragmentsHolder : MyFragmentHolder() {
             }
     }
 
-    private fun dateSelected(dateTime: DateTime, datePicker: DatePicker) {
+    private fun dateSelected(dateTime: DateTime, datePicker: FamilyDatePicker) {
         val newDateTime = dateTime.withDate(datePicker.year, datePicker.month + 1, datePicker.dayOfMonth)
         currentWeekTS = getWeekStart(newDateTime).seconds()
         setupFragment()

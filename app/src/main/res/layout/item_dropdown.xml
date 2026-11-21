@@ -13,7 +13,7 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<!-- Copied from simple_list_item_1.xml, textColor is needed in light mode-->
+<!-- Copied from simple_list_item_1.xml; its text colour is a role, set by the adapter -->
 <org.fossify.commons.views.MyTextView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@android:id/text1"
     android:layout_width="match_parent"
@@ -22,5 +22,4 @@
     android:gravity="center_vertical"
     android:paddingStart="?android:attr/listPreferredItemPaddingStart"
     android:paddingEnd="?android:attr/listPreferredItemPaddingEnd"
-    android:minHeight="?android:attr/listPreferredItemHeightSmall"
-    android:textColor="?android:attr/textColorAlertDialogListItem" />
+    android:minHeight="?android:attr/listPreferredItemHeightSmall" />

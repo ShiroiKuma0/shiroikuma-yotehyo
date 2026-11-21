@@ -1,5 +1,7 @@
 package org.fossify.calendar.adapters
 
+import org.fossify.commons.extensions.sectionFrameDrawable
+import org.fossify.calendar.helpers.PRINT_TEXT_COLOR
 import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
@@ -20,6 +22,10 @@ import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.helpers.MEDIUM_ALPHA
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.views.MyRecyclerView
+import org.fossify.calendar.extensions.themeColor
+import org.fossify.calendar.extensions.ThemeSlot
+import org.fossify.calendar.extensions.eventColorBarDrawable
+import org.fossify.commons.extensions.rowSelectorDrawable
 
 class DayEventsAdapter(activity: SimpleActivity, val events: ArrayList<Event>, recyclerView: MyRecyclerView, var dayCode: String, itemClick: (Any) -> Unit) :
     MyRecyclerViewAdapter(activity, recyclerView, itemClick) {
@@ -34,6 +40,7 @@ class DayEventsAdapter(activity: SimpleActivity, val events: ArrayList<Event>, r
     private val zoneLinesWidth = activity.zoneLinesAvailableWidth()
 
     init {
+        textColor = activity.themeColor(ThemeSlot.LIST_ITEM_TEXT)
         setupDragListener(true)
     }
 
@@ -79,9 +86,9 @@ class DayEventsAdapter(activity: SimpleActivity, val events: ArrayList<Event>, r
     fun togglePrintMode() {
         isPrintVersion = !isPrintVersion
         textColor = if (isPrintVersion) {
-            resources.getColor(org.fossify.commons.R.color.theme_light_text_color)
+            PRINT_TEXT_COLOR
         } else {
-            activity.getProperTextColor()
+            activity.themeColor(ThemeSlot.LIST_ITEM_TEXT)
         }
 
         notifyDataSetChanged()
@@ -89,14 +96,16 @@ class DayEventsAdapter(activity: SimpleActivity, val events: ArrayList<Event>, r
 
     private fun setupView(view: View, event: Event) {
         EventListItemBinding.bind(view).apply {
+            if (eventItemHolder.foreground == null) eventItemHolder.foreground = activity.rowSelectorDrawable()
             eventItemHolder.isSelected = selectedKeys.contains(event.id?.toInt())
             // Category background fills the row when set (selection still shows via the foreground);
             // otherwise restore the default stroke. Reset on every bind so recycled rows stay correct.
             if (event.categoryBackgroundColor != THEME_UNSET) {
                 eventItemHolder.setBackgroundColor(event.categoryBackgroundColor)
             } else {
-                eventItemHolder.setBackgroundResource(org.fossify.commons.R.drawable.section_holder_stroke)
-                eventItemHolder.background.applyColorFilter(textColor)
+                // a printed page keeps the text colour of the print; on screen the frame has its role
+                eventItemHolder.background = activity.sectionFrameDrawable()
+                if (isPrintVersion) eventItemHolder.background.applyColorFilter(textColor)
             }
             eventItemTitle.text = event.title
             eventItemTitle.checkViewStrikeThrough(event.shouldStrikeThrough())
@@ -122,7 +131,7 @@ class DayEventsAdapter(activity: SimpleActivity, val events: ArrayList<Event>, r
 
             eventItemDescription.text = if (replaceDescriptionWithLocation) event.location else event.description.replace("\n", " ")
             eventItemDescription.beVisibleIf(displayDescription && eventItemDescription.text.isNotEmpty())
-            eventItemColorBar.background.applyColorFilter(event.color)
+            eventItemColorBar.background = activity.eventColorBarDrawable(event.color)
 
             var newTextColor = textColor
 

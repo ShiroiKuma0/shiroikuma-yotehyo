@@ -9,7 +9,6 @@
         android:id="@+id/checkable_color_button"
         android:layout_width="@dimen/smaller_icon_size"
         android:layout_height="@dimen/smaller_icon_size"
-        android:background="@drawable/button_background_rounded"
         android:clickable="true"
         android:focusable="true"
         android:padding="@dimen/medium_margin"

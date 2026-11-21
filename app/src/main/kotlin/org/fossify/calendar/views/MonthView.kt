@@ -1,5 +1,6 @@
 package org.fossify.calendar.views
 
+import org.fossify.calendar.helpers.PRINT_TEXT_COLOR
 import android.content.Context
 import android.graphics.*
 import android.text.TextPaint
@@ -32,6 +33,8 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
+import org.fossify.calendar.extensions.themeColor
+import org.fossify.calendar.extensions.ThemeSlot
 
 // used in the Monthly view fragment, 1 view per screen
 class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(context, attrs, defStyle) {
@@ -94,10 +97,10 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
     constructor(context: Context, attrs: AttributeSet) : this(context, attrs, 0)
 
     init {
-        primaryColor = context.getProperPrimaryColor()
+        primaryColor = context.themeColor(ThemeSlot.SELECTED_DAY_RING)
         todayColor = context.themeColor(ThemeSlot.TODAY_HIGHLIGHT)
         backgroundColor = context.themeColor(ThemeSlot.BACKGROUND)
-        textColor = context.getProperTextColor()
+        textColor = context.themeColor(ThemeSlot.DAY_NUMBER)
         weekendsTextColor = resolveWeekendsTextColor()
         showWeekNumbers = config.showWeekNumbers
         dimPastEvents = config.dimPastEvents
@@ -399,7 +402,7 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
         for (i in 0 until ROW_COUNT) {
             val weekDays = days.subList(i * 7, i * 7 + 7)
             val isCurrentWeek = weekDays.any { it.isToday && !isPrintVersion }
-            weekNumberPaint.color = if (isCurrentWeek) getCurrentWeekNumberColor() else dimmedColor(textColor)
+            weekNumberPaint.color = if (isCurrentWeek) getCurrentWeekNumberColor() else dimmedColor(if (isPrintVersion) textColor else context.themeColor(ThemeSlot.WEEK_NUMBER))
 
             // fourth day of the week determines the week of the year number
             val weekOfYear = days.getOrNull(i * 7 + 3)?.weekOfYear ?: 1
@@ -740,9 +743,9 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
     fun togglePrintMode() {
         isPrintVersion = !isPrintVersion
         textColor = if (isPrintVersion) {
-            resources.getColor(org.fossify.commons.R.color.theme_light_text_color, null)
+            PRINT_TEXT_COLOR
         } else {
-            context.getProperTextColor()
+            context.themeColor(ThemeSlot.DAY_NUMBER)
         }
 
         textPaint.color = textColor

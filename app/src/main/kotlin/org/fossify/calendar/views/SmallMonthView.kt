@@ -1,5 +1,6 @@
 package org.fossify.calendar.views
 
+import org.fossify.calendar.helpers.PRINT_TEXT_COLOR
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Canvas
@@ -16,6 +17,7 @@ import org.fossify.commons.extensions.adjustAlpha
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.helpers.MEDIUM_ALPHA
+import org.fossify.calendar.extensions.themeColor
 
 // used for displaying months at Yearly view
 class SmallMonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(context, attrs, defStyle) {
@@ -58,8 +60,7 @@ class SmallMonthView(context: Context, attrs: AttributeSet, defStyle: Int) : Vie
             attributes.recycle()
         }
 
-        val baseColor = context.getProperTextColor()
-        textColor = baseColor.adjustAlpha(MEDIUM_ALPHA)
+        textColor = context.themeColor(ThemeSlot.YEAR_DAY_NUMBER)
         weekendsTextColor = context.config.highlightWeekendsColor.adjustAlpha(MEDIUM_ALPHA)
         highlightWeekends = context.config.highlightWeekends
 
@@ -71,7 +72,7 @@ class SmallMonthView(context: Context, attrs: AttributeSet, defStyle: Int) : Vie
         }
 
         todayCirclePaint = Paint(paint)
-        todayCirclePaint.color = context.getProperPrimaryColor().adjustAlpha(MEDIUM_ALPHA)
+        todayCirclePaint.color = context.themeColor(ThemeSlot.YEAR_TODAY_MARK)
         isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
     }
 
@@ -126,9 +127,9 @@ class SmallMonthView(context: Context, attrs: AttributeSet, defStyle: Int) : Vie
     fun togglePrintMode() {
         isPrintVersion = !isPrintVersion
         textColor = if (isPrintVersion) {
-            resources.getColor(org.fossify.commons.R.color.theme_light_text_color, null)
+            PRINT_TEXT_COLOR
         } else {
-            context.getProperTextColor().adjustAlpha(MEDIUM_ALPHA)
+            context.themeColor(ThemeSlot.YEAR_DAY_NUMBER)
         }
 
         paint.color = textColor

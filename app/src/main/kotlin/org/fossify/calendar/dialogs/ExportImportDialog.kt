@@ -29,6 +29,11 @@ import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.commons.helpers.ensureBackgroundThread
+import org.fossify.calendar.extensions.themeColor
+import org.fossify.calendar.extensions.ThemeSlot
+import org.fossify.commons.helpers.uiColor
+import org.fossify.commons.helpers.UiRole
+import org.fossify.commons.extensions.pillDrawable
 
 /**
  * The Export/Import panel opened from the top section of 白い熊 予定表 UI (Kōjiki flow): the persisted
@@ -50,9 +55,9 @@ class ExportImportDialog(
     private var folderValueTv: TextView? = null
     private var statusTv: TextView? = null
 
-    private val accentColor = activity.getProperPrimaryColor()
-    private val textColor = activity.getProperTextColor()
-    private val backgroundColor = activity.getProperBackgroundColor()
+    private val accentColor = activity.themeColor(ThemeSlot.EXIM_CAPTION)
+    private val textColor = activity.themeColor(ThemeSlot.EXIM_TEXT)
+    private val backgroundColor = activity.themeColor(ThemeSlot.EXIM_BOX_GROUND)
     private val density = activity.resources.displayMetrics.density
 
     init {
@@ -104,7 +109,7 @@ class ExportImportDialog(
             background = GradientDrawable().apply {
                 cornerRadius = 10 * density
                 setColor(backgroundColor)
-                setStroke(dp(2), accentColor)
+                setStroke(dp(2), activity.themeColor(ThemeSlot.EXIM_BOX_FRAME))
             }
             setOnClickListener { launchDirPicker(SettingsTransfer.dirUri(activity)) }
         }
@@ -190,7 +195,7 @@ class ExportImportDialog(
             setTextColor(textColor)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
             if (bold) typeface = Typeface.DEFAULT_BOLD
-            buttonTintList = ColorStateList.valueOf(accentColor)
+            buttonTintList = ColorStateList.valueOf(activity.uiColor(UiRole.CHECK_ON))
             setPadding(dp(8), dp(7), 0, dp(7))
             if (indent > 0) {
                 layoutParams = LinearLayout.LayoutParams(
@@ -201,23 +206,19 @@ class ExportImportDialog(
 
     private fun divider(): View = View(activity).apply {
         layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1))
-        setBackgroundColor(accentColor)
-        alpha = 0.4f
+        setBackgroundColor(activity.themeColor(ThemeSlot.EXIM_DIVIDER))
     }
 
     // A round-pill outline button (ArcaneChat recipe): theme-background fill, huge corner radius,
     // thin accent stroke, accent text, accent ripple.
     private fun pillButton(@StringRes labelRes: Int): Button {
-        val pill = GradientDrawable().apply {
-            cornerRadius = 100 * density // > half the height → a pill
-            setColor(backgroundColor)
-            setStroke((1.5f * density).toInt(), accentColor)
-        }
-        val ripple = RippleDrawable(ColorStateList.valueOf(accentColor.adjustAlpha(0.2f)), pill, null)
+        val ripple = activity.pillDrawable(
+            activity.uiColor(UiRole.DIALOG_BUTTON_FRAME), activity.uiColor(UiRole.DIALOG_BUTTON_GROUND), main = false
+        )
         return Button(activity).apply {
             text = activity.getString(labelRes)
             isAllCaps = false
-            setTextColor(accentColor)
+            setTextColor(activity.uiColor(UiRole.DIALOG_BUTTON_TEXT))
             background = ripple
             stateListAnimator = null
             minWidth = 0
@@ -236,9 +237,9 @@ class ExportImportDialog(
             val (status, warn) = SettingsTransfer.lastExportStatus(activity)
             activity.runOnUiThread {
                 folderValueTv?.text = name ?: activity.getString(R.string.eim_dir_unset)
-                folderValueTv?.setTextColor(if (name == null) SettingsTransfer.WARN_COLOR else textColor)
+                folderValueTv?.setTextColor(if (name == null) activity.themeColor(ThemeSlot.STATUS_WARNING) else textColor)
                 statusTv?.text = status
-                statusTv?.setTextColor(if (warn) SettingsTransfer.WARN_COLOR else textColor)
+                statusTv?.setTextColor(if (warn) activity.themeColor(ThemeSlot.STATUS_WARNING) else textColor)
                 statusTv?.alpha = if (warn) 1f else 0.8f
             }
         }
