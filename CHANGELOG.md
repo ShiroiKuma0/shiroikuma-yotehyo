@@ -4,6 +4,58 @@ This file carries **both** histories. The 白い熊 予定表 fork releases come
 everything below the `# Changelog` heading further down is Fossify Calendar's own changelog,
 kept verbatim.
 
+## 白い熊 予定表 1.10.3+089 — 2026-11-21
+Built on Fossify Calendar 1.10.3.
+
+Every colour of the app is now a settable role and none is written in XML; the UI page folds, has a
+chip index, and shows an icon on every row.
+
+### UI & theming
+- **Every colour is a role, set on the UI page.** The role table grows from about 40 to **86 roles**
+  of the app's own, beside the roles of the shared commons library, which are shown too. No layout,
+  style or in-app drawable carries a colour any more and `colors.xml` is gone; the app's shapes are
+  built in code. The defaults are the two primaries, pure yellow `#FFFF00` on black `#000000`, and
+  every default equals what the item showed before.
+- **New roles of their own for:** the calendar views (background, heading, arrows, day numbers, week
+  number, hours, the tapped slot, the ring round the selected day), the year view, the event list,
+  the event and task editors (row icons, attendees icon, map button), the + menu, the keyboard time
+  entry, the Manage calendars list, the quick filter, the time zone list, the ring round every colour
+  drop, the Export / Import panel, the font picker, the widget setup screens, the Settings screen's
+  headings and values, and warnings.
+- **The 白い熊 予定表 UI page is a folding accordion with a chip index.** Under the App settings pill
+  sits a wrapping grid of small chips, one per section: a tap unfolds the section and scrolls to it,
+  a long-press drags the chip — the chips reorder live under the finger and the sections follow.
+  Every section is folded by default; order and fold state are remembered and travel in the UI
+  export.
+- **An icon on every row of the UI page**, coloured by what the row does.
+- **Maintenance** (new section): **Reset section order** and **Reset all colours**.
+- The former "Calendar" section is split into **Calendar views**, **Day boxes**, **Events** and
+  **Event and task editors**; the commons roles appear in **Text**, **Text fields and pickers**,
+  **Buttons**, **Dialogs**, **Switches**, **Check boxes and radio buttons**, **Menus**, **Lists**,
+  **Bars** and **Toasts**.
+- **Settings screen:** an icon on every row; rows that open a screen or a panel are outlined pills
+  with ›; **Delete all events and tasks** is a red pill.
+- **Deleting confirms in red:** an event, a calendar and "delete all" confirm with a red pill.
+- **Switches** read four roles — outline and dot, on and off. **Menu rows** read the menu row frame
+  and divider roles; *Refresh CalDAV calendars* has a green icon.
+- **Date pickers are the app family's own picker** in an ordinary themed dialog, instead of the
+  platform's. It follows the app's first day of the week; "Go to date" in the month view shows month
+  and year only, in the year view the year only.
+- **The keyboard time entry** takes the time-picker roles and two of its own (digit box frame and
+  ground).
+- The week view's thin frame lines follow the grid-line colour instead of a fixed grey.
+- A colour swatch's tick is drawn in a colour readable on the swatch.
+
+### Fixes & behavior
+- **Customize colors is removed** from Settings; the UI page replaces it. Colour overrides stored by
+  earlier builds are moved to the new roles at start and after an import.
+- An export written by an older build still imports: its colour keys are moved to the roles.
+
+### Packaging
+- Built against the patched commons **6.1.6-sk19** (was sk14).
+- The default colours of the calendars the app creates (birthdays, anniversaries, holidays) moved
+  from resources to code; they are unchanged.
+
 ## 白い熊 予定表 1.10.3+085 — 2026-11-17
 Built on Fossify Calendar 1.10.3.
 
