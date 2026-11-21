@@ -162,13 +162,14 @@ When the user instructs a rebase to a new upstream release:
 ## Patched Fossify Commons (anti-tamper removed + fork-package fixes)
 
 This fork builds against **our patched Fossify Commons**, not the upstream binary. Upstream Commons
-6.1.x shows a "You are using a fake version of the app…" dialog (and silently breaks "Customize
-colors") whenever the installed app id is not `org.fossify.*` — always the case for us (`shiroikuma.*`).
+6.1.x shows a "You are using a fake version of the app…" dialog whenever the installed app id is not
+`org.fossify.*` — always the case for us (`shiroikuma.*`). (Its "Customize colors" screen is gone from
+the fork as of `-sk18`; this app has no such Settings row and no `CustomizationActivity` entry.)
 
 - **Source:** the `shiroikuma-commons` fork (`~/git/shiroikuma-commons`, branch `custom`), which strips
   Commons' anti-tamper "fake version" / sideloading checks out entirely **and** carries fork-package
   fixes for spots where Commons hard-codes `org.fossify.*` (documented in that repo's CLAUDE.md).
-- **Delivery:** published to the local Maven repo, consumed as `commons = "6.1.6-sk10"` in
+- **Delivery:** published to the local Maven repo, consumed as `commons = "6.1.6-sk19"` in
   `gradle/libs.versions.toml` (`mavenLocal()` is already a repository in `settings.gradle.kts`).
 - Because Commons itself no longer nags, this app carries **no** in-app workaround — no `getPackageName`
   spoof, no `SIDELOADING_FALSE`, no `res/raw/keep.xml`.
@@ -191,12 +192,12 @@ merges in are not what grants access — neither is the shared `shiroikuma-denwa
 answers only while its "Show private contacts…" setting is on. Nothing to change in this repo beyond
 the pin.
 
-**Dialog accent border (`-sk3`):** the commons fork adds opt-in `BaseConfig` settings
-(`dialogBorderColor`, `dialogBorderWidth`, `styledDialogButtons`) that `setupDialogStuff` uses to draw a
-configurable accent border + boxed buttons around every dialog — so a dialog is visible against the
-black app background. This app seeds the defaults once (`seedDialogStyleIfNeeded`, pure yellow
-`#FFFF00` / 2 dp / on) and exposes them under the "Dialogs" section of 白い熊 予定表 UI
-(`ThemeActivity`).
+**Dialog frame and buttons (`-sk3`, `-sk12`, `-sk18`):** `setupDialogStuff` draws a frame round every
+dialog — so a dialog is visible against the black app background — and its buttons as outlined pills.
+The frame's colour is the commons role `UiRole.DIALOG_FRAME`, which follows the accent until it is set
+on the UI page; it is not seeded. This app seeds only the width (2 dp) and the boxed-button switch
+(`seedDialogStyleIfNeeded`) and turns the pill buttons on (`seedPillDialogButtonsIfNeeded`); all of it
+is under "Dialogs" in 白い熊 予定表 UI (`ThemeActivity`).
 
 **Black/yellow CAB + popup menus (`-sk4`/`-sk5`, `-sk8`):** the contextual action bar is colored in
 code (`MyRecyclerViewAdapter`, and `MyRecyclerViewListAdapter` as of `-sk8`) — black bar with
@@ -213,8 +214,33 @@ worker) borrows the resumed activity via `helpers/ForegroundActivity` when the a
 drops custom toast views from a backgrounded app. So the "Saving…" flash on saving an event is themed.
 
 **UI default palette:** black `#000000` + **pure yellow `#FFFF00`** (`PALETTE_BLACK` /
-`PALETTE_YELLOW` in `helpers/Constants.kt`, mirrored by `yotehyo_time_picker_fg` in
-`res/values/colors.xml`). Never material yellow `#FFEB3B`.
+`PALETTE_YELLOW` in `helpers/Constants.kt`, written there once). Never material yellow `#FFEB3B`.
+
+### Colours are roles — nothing in XML (`-sk18`/`-sk19`, +086 to +089)
+
+- **The role tables.** The commons' is `helpers/UiRoles.kt` (`UiRole`; `uiColor` / `setUiColor` /
+  `resetUiColor`, stored under `ui_role_<key>`). This app's own is `ThemeSlot` in
+  `extensions/ThemeColors.kt` (86 roles). A slot with `role = UiRole.X` IS that commons role under the
+  app's label; `migrateSlotsToRoles()` moves older overrides at every start and after an import.
+  Defaults live in `themeDefault()` and name only the `PALETTE_*` constants or another role.
+- **No colour in XML.** No layout, style or in-app drawable carries a colour, and
+  `res/values/colors.xml` is gone. Shapes are built in code: `extensions/Shapes.kt` (event block, list
+  colour bar, time-entry digit box, shortcut icon, the week view's hairlines) and the commons helpers
+  (`pillDrawable`, `rowSelectorDrawable`, `circleDrawable`, `sectionFrameDrawable`). **A new widget
+  gets a new role in the same change**, shown on the UI page in the section of its item. Left in XML
+  on purpose: the launcher icon grounds, the home-screen widgets' shapes and grid lines (the launcher
+  draws them), and the white placeholder fill of vector icons.
+- **The UI page** (`activities/ThemeActivity.kt`) is a folding accordion with a draggable chip index
+  (`UiSection`, `addSectionIndex`, `addSection`). Section order and fold state are
+  `Config.uiSectionOrder` / `uiSectionsOpen`, stored under `theme_ui_…` so they travel in the UI
+  export. **Section keys are stored — never rename one.** Every row has an icon (`RowIcon`); "Reset
+  section order" and "Reset all colours" are in Maintenance.
+- **The Settings screen's** icons and pills are applied in `SettingsActivity.styleRows()`; a new
+  Settings row is added there too.
+- **Date pickers** are the commons `FamilyDatePicker` through `dialogs/DatePickDialog.kt`
+  (`familyDatePicker`; `showDays` / `showMonth` for the month and year "go to" dialogs), never the
+  platform `DatePickerDialog`.
+- The full rules are the global **black-yellow-theme** skill.
 
 **On a fresh machine, or after an upstream bump changes the Commons version — republish before building:**
 
@@ -224,7 +250,7 @@ git checkout <new-commons-tag>     # then re-apply all patches (anti-tamper stri
 JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 ./gradlew :commons:publishToMavenLocal -PVERSION=<ver>-skN
 ```
 
-Then set this app's `commons` pin to the same `<ver>-skN` (currently `6.1.6-sk10`; `-skN` is our patch
+Then set this app's `commons` pin to the same `<ver>-skN` (currently `6.1.6-sk19`; `-skN` is our patch
 revision — see the commons fork's CLAUDE.md). The patched AAR lives only in `~/.m2`, not in the repo.
 
 ## Commit convention — no Claude attribution
