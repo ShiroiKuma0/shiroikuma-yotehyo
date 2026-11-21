@@ -157,6 +157,9 @@ import java.util.Locale
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.FragmentManager
+import org.fossify.commons.helpers.uiColor
+import org.fossify.commons.helpers.UiRole
+import org.fossify.calendar.extensions.shortcutIconDrawable
 
 class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
     override var isSearchBarEnabled = true
@@ -305,11 +308,10 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
             storeStateVariables()
             updateWidgets()
             updateTextColors(calendarCoordinator)
-            fabExtendedOverlay.background =
-                getProperBackgroundColor().adjustAlpha(0.8f).toDrawable()
+            fabExtendedOverlay.background = themeColor(ThemeSlot.FAB_MENU_SCRIM).toDrawable()
             styleFabMenu()
 
-            searchHolder.background = getProperBackgroundColor().toDrawable()
+            searchHolder.background = themeColor(ThemeSlot.VIEW_GROUND).toDrawable()
             checkSwipeRefreshAvailability()
             checkShortcuts()
 
@@ -625,9 +627,7 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
     @SuppressLint("NewApi")
     private fun getNewEventShortcut(appIconColor: Int): ShortcutInfo {
         val newEvent = getString(R.string.new_event)
-        val newEventDrawable = resources.getDrawable(R.drawable.shortcut_event, theme)
-        (newEventDrawable as LayerDrawable).findDrawableByLayerId(R.id.shortcut_event_background)
-            .applyColorFilter(appIconColor)
+        val newEventDrawable = shortcutIconDrawable(R.drawable.ic_today_vector, appIconColor)
         val newEventBitmap = newEventDrawable.convertToBitmap()
 
         val newEventIntent = Intent(this, SplashActivity::class.java)
@@ -643,9 +643,7 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
     @SuppressLint("NewApi")
     private fun getNewTaskShortcut(appIconColor: Int): ShortcutInfo {
         val newTask = getString(R.string.new_task)
-        val newTaskDrawable = resources.getDrawable(R.drawable.shortcut_task, theme)
-        (newTaskDrawable as LayerDrawable).findDrawableByLayerId(R.id.shortcut_task_background)
-            .applyColorFilter(appIconColor)
+        val newTaskDrawable = shortcutIconDrawable(R.drawable.ic_task_vector, appIconColor)
         val newTaskBitmap = newTaskDrawable.convertToBitmap()
         val newTaskIntent = Intent(this, SplashActivity::class.java)
         newTaskIntent.action = SHORTCUT_NEW_TASK
@@ -910,7 +908,7 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
         if (calendarId == -1L) {
             calendarId = eventsHelper.createPredefinedCalendar(
                 title = getString(R.string.holidays),
-                colorResId = R.color.default_holidays_color,
+                color = org.fossify.calendar.helpers.DEFAULT_HOLIDAYS_COLOR,
                 type = HOLIDAY_EVENT,
                 caldav = true
             )
@@ -1367,12 +1365,13 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
     // The + menu: two unfilled pills stacked above the button, each a Material extended FAB in a
     // 2 dp accent frame with accent text — the same size and shape as 白い熊 鍵暗号's add menu.
     private fun styleFabMenu() = binding.apply {
-        val accent = getProperPrimaryColor()
+        val accent = uiColor(UiRole.FAB_FRAME)
+        val fabIcon = uiColor(UiRole.FAB_ICON)
         // the + button itself: an unfilled round pill — background showing through, a 3 dp accent
         // ring (it is the screen's main action), the icon in the accent, no shadow. Re-applied on
         // every resume, after commons' updateTextColors has filled it with the accent again.
         calendarFab.apply {
-            backgroundTintList = android.content.res.ColorStateList.valueOf(getProperBackgroundColor())
+            backgroundTintList = android.content.res.ColorStateList.valueOf(uiColor(UiRole.FAB_GROUND))
             shapeAppearanceModel = com.google.android.material.shape.ShapeAppearanceModel.builder()
                 .setAllCornerSizes(com.google.android.material.shape.RelativeCornerSize(0.5f))
                 .build()
@@ -1383,17 +1382,18 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
                 setStroke((3 * resources.displayMetrics.density).toInt(), accent)
                 setColor(android.graphics.Color.TRANSPARENT)
             }
-            applyColorFilter(accent)
+            applyColorFilter(fabIcon)
         }
+        val pillFrame = themeColor(ThemeSlot.FAB_MENU_FRAME)
         val pillStroke = (2 * resources.displayMetrics.density).toInt()
         arrayOf(fabEventLabel, fabTaskLabel).forEach { pill ->
             pill.backgroundTintList =
-                android.content.res.ColorStateList.valueOf(getProperBackgroundColor())
-            pill.strokeColor = android.content.res.ColorStateList.valueOf(accent)
+                android.content.res.ColorStateList.valueOf(themeColor(ThemeSlot.FAB_MENU_GROUND))
+            pill.strokeColor = android.content.res.ColorStateList.valueOf(pillFrame)
             pill.strokeWidth = pillStroke
-            pill.setTextColor(accent)
+            pill.setTextColor(themeColor(ThemeSlot.FAB_MENU_TEXT))
             pill.rippleColor = android.content.res.ColorStateList.valueOf(
-                (accent and 0x00FFFFFF) or (0x4D shl 24)
+                (pillFrame and 0x00FFFFFF) or (0x4D shl 24)
             )
         }
     }
@@ -1486,7 +1486,7 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
             R.drawable.ic_today_vector
         }
         val newDrawable =
-            resources.getColoredDrawableWithColor(newDrawableId, getProperPrimaryColor())
+            resources.getColoredDrawableWithColor(newDrawableId, uiColor(UiRole.FAB_ICON))
         binding.calendarFab.setImageDrawable(newDrawable)
     }
 

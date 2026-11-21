@@ -8,15 +8,13 @@
         android:id="@+id/week_top_holder"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/stroke_bottom"
         android:gravity="center_vertical">
 
         <LinearLayout
             android:id="@+id/week_letters_holder"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/stroke_bottom"
-            android:gravity="center_vertical"
+                android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingBottom="@dimen/small_margin" />
 
@@ -52,7 +50,7 @@
                 android:id="@+id/week_events_columns_holder"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
+                android:background="@null"
                 android:orientation="horizontal" />
 
         </RelativeLayout>

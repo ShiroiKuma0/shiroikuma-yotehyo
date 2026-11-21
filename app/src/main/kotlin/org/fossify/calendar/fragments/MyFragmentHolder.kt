@@ -1,12 +1,8 @@
 package org.fossify.calendar.fragments
 
-import android.graphics.Color
-import android.widget.DatePicker
 import androidx.fragment.app.Fragment
-import org.fossify.calendar.databinding.DatePickerDarkBinding
-import org.fossify.calendar.databinding.DatePickerLightBinding
-import org.fossify.commons.extensions.getContrastColor
-import org.fossify.commons.extensions.getProperBackgroundColor
+import org.fossify.calendar.dialogs.familyDatePicker
+import org.fossify.commons.views.FamilyDatePicker
 import org.joda.time.DateTime
 
 abstract class MyFragmentHolder : Fragment() {
@@ -26,11 +22,15 @@ abstract class MyFragmentHolder : Fragment() {
 
     abstract fun getCurrentDate(): DateTime?
 
-    fun getDatePickerView(): DatePicker {
-        return if (requireActivity().getProperBackgroundColor().getContrastColor() == Color.WHITE) {
-            DatePickerDarkBinding.inflate(layoutInflater).datePicker
-        } else {
-            DatePickerLightBinding.inflate(layoutInflater).datePicker
+    /**
+     * The picker of a "go to date" dialog: a view that jumps by month drops the day grid, one that
+     * jumps by year the month row as well.
+     */
+    fun getDatePickerView(dateTime: DateTime, showDays: Boolean = true, showMonth: Boolean = true): FamilyDatePicker {
+        val day = if (showDays) dateTime.dayOfMonth else 1
+        return requireActivity().familyDatePicker(dateTime.year, dateTime.monthOfYear - 1, day).also {
+            it.showDays = showDays
+            it.showMonth = showMonth
         }
     }
 }

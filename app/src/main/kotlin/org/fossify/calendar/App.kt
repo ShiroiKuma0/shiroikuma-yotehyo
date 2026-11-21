@@ -1,6 +1,7 @@
 package org.fossify.calendar
 
 import org.fossify.calendar.extensions.hasDummyAlarm
+import org.fossify.calendar.extensions.migrateSlotsToRoles
 import org.fossify.calendar.extensions.migrateToPureYellowIfNeeded
 import org.fossify.calendar.extensions.seedBlackYellowThemeIfNeeded
 import org.fossify.calendar.extensions.seedDialogStyleIfNeeded
@@ -21,6 +22,7 @@ class App : FossifyApp() {
         seedTodayBoxBorderIfNeeded()
         // Rewrite any persisted material-yellow (#FFEB3B) colors to pure yellow once (alpha kept).
         migrateToPureYellowIfNeeded()
+        migrateSlotsToRoles()
         if (!hasDummyAlarm()) {
             AppStartupWorker.start(this)
         }

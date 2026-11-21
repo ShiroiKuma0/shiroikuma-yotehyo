@@ -39,7 +39,6 @@
             android:gravity="center"
             android:includeFontPadding="false"
             android:paddingTop="@dimen/medium_margin"
-            android:textColor="@color/md_grey_white"
             android:textSize="26sp"
             tools:text="1" />
 
@@ -56,7 +55,6 @@
             android:gravity="center"
             android:includeFontPadding="false"
             android:paddingBottom="@dimen/medium_margin"
-            android:textColor="@color/md_grey_white"
             android:textSize="@dimen/bigger_text_size"
             tools:text="Jan" />
 

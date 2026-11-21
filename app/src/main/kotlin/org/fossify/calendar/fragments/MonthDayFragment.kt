@@ -27,6 +27,8 @@ import org.fossify.commons.extensions.beVisibleIf
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.interfaces.RefreshRecyclerViewListener
 import org.joda.time.DateTime
+import org.fossify.calendar.extensions.themeColor
+import org.fossify.calendar.extensions.ThemeSlot
 
 class MonthDayFragment : Fragment(), MonthlyCalendar, RefreshRecyclerViewListener {
     private var mShowWeekNumbers = false
@@ -162,10 +164,9 @@ class MonthDayFragment : Fragment(), MonthlyCalendar, RefreshRecyclerViewListene
     }
 
     private fun setupButtons() {
-        val textColor = requireContext().getProperTextColor()
         binding.apply {
-            monthDaySelectedDayLabel.setTextColor(textColor)
-            monthDayNoEventsPlaceholder.setTextColor(textColor)
+            monthDaySelectedDayLabel.setTextColor(requireContext().themeColor(ThemeSlot.NAV_TITLE))
+            monthDayNoEventsPlaceholder.setTextColor(requireContext().themeColor(ThemeSlot.LIST_PLACEHOLDER))
         }
     }
 

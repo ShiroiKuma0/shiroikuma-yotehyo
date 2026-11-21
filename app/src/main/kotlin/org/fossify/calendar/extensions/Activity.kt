@@ -1,5 +1,10 @@
 package org.fossify.calendar.extensions
 
+import org.fossify.commons.helpers.uiColor
+import org.fossify.commons.helpers.UiRole
+import android.widget.TextView
+import android.view.View
+import android.content.Context
 import android.app.Activity
 import android.net.Uri
 import org.fossify.calendar.BuildConfig
@@ -127,4 +132,14 @@ fun SimpleActivity.tryImportEventsFromFile(uri: Uri, callback: (Boolean) -> Unit
 
 fun SimpleActivity.showImportEventsDialog(path: String, callback: (Boolean) -> Unit) {
     ImportEventsDialog(this, path, callback)
+}
+
+/**
+ * The controls of a widget configuration screen sit on the wallpaper, so each needs a ground of its own:
+ * the save button is the screen's main pill, the transparency slider lies in a thin one.
+ */
+fun Context.styleWidgetConfigControls(save: TextView, sliderHolder: View) {
+    save.setTextColor(uiColor(UiRole.BUTTON_TEXT))
+    save.background = pillDrawable(uiColor(UiRole.BUTTON_FRAME), uiColor(UiRole.BUTTON_GROUND), main = true)
+    sliderHolder.background = pillDrawable(uiColor(UiRole.BUTTON_FRAME), uiColor(UiRole.BACKGROUND), main = false)
 }

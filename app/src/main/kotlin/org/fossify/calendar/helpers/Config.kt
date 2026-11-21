@@ -388,7 +388,7 @@ class Config(context: Context) : BaseConfig(context) {
             .apply()
 
     var highlightWeekendsColor: Int
-        get() = prefs.getInt(HIGHLIGHT_WEEKENDS_COLOR, context.resources.getColor(R.color.red_text))
+        get() = prefs.getInt(HIGHLIGHT_WEEKENDS_COLOR, PALETTE_WEEKEND)
         set(highlightWeekendsColor) = prefs.edit()
             .putInt(HIGHLIGHT_WEEKENDS_COLOR, highlightWeekendsColor).apply()
 
@@ -409,6 +409,10 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(PURE_YELLOW_MIGRATED, false)
         set(value) = prefs.edit().putBoolean(PURE_YELLOW_MIGRATED, value).apply()
 
+    var slotsToRolesMigrated: Boolean
+        get() = prefs.getBoolean(SLOTS_TO_ROLES_MIGRATED, false)
+        set(value) = prefs.edit().putBoolean(SLOTS_TO_ROLES_MIGRATED, value).apply()
+
     var todayBoxBorderSeeded: Boolean
         get() = prefs.getBoolean(TODAY_BOX_BORDER_SEEDED, false)
         set(value) = prefs.edit().putBoolean(TODAY_BOX_BORDER_SEEDED, value).apply()
@@ -417,6 +421,16 @@ class Config(context: Context) : BaseConfig(context) {
     var themeRevision: Int
         get() = prefs.getInt(THEME_REVISION, 0)
         set(value) = prefs.edit().putInt(THEME_REVISION, value).apply()
+
+    /** The UI page's sections in the order 白い熊 dragged their chips into (keys, comma-separated). */
+    var uiSectionOrder: String
+        get() = prefs.getString(UI_SECTION_ORDER, "")!!
+        set(value) = prefs.edit().putString(UI_SECTION_ORDER, value).apply()
+
+    /** The sections of the UI page that are unfolded; every other one is folded. */
+    var uiSectionsOpen: Set<String>
+        get() = prefs.getString(UI_SECTIONS_OPEN, "")!!.split(',').filter { it.isNotEmpty() }.toSet()
+        set(value) = prefs.edit().putString(UI_SECTIONS_OPEN, value.joinToString(",")).apply()
 
     private fun bumpThemeRevision() = prefs.edit().putInt(THEME_REVISION, themeRevision + 1).apply()
 

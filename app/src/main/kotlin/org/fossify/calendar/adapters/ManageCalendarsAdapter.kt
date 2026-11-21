@@ -1,5 +1,6 @@
 package org.fossify.calendar.adapters
 
+import org.fossify.commons.extensions.rowSelectorDrawable
 import android.graphics.Color
 import android.view.ContextThemeWrapper
 import android.view.Gravity
@@ -25,6 +26,8 @@ import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.toast
 import org.fossify.commons.models.RadioItem
 import org.fossify.commons.views.MyRecyclerView
+import org.fossify.calendar.extensions.themeColor
+import org.fossify.calendar.extensions.ThemeSlot
 
 class ManageCalendarsAdapter(
     activity: SimpleActivity,
@@ -95,6 +98,7 @@ class ManageCalendarsAdapter(
 
     private fun setupView(view: View, calendar: CalendarEntity) {
         ItemCalendarBinding.bind(view).apply {
+            eventItemFrame.foreground = activity.rowSelectorDrawable()
             eventItemFrame.isSelected = selectedKeys.contains(calendar.id?.toInt())
             calendarTitle.text = calendar.getDisplayTitle()
             // Two drops: the foreground (text) colour and the background colour. A black drop gets a
@@ -105,11 +109,11 @@ class ManageCalendarsAdapter(
             } else {
                 activity.calendarColorDrop(Color.TRANSPARENT, forceVisibleBorder = true)
             }
-            calendarTitle.setTextColor(textColor)
+            calendarTitle.setTextColor(activity.themeColor(ThemeSlot.CALENDAR_LIST_TITLE))
 
             overflowMenuIcon.drawable.apply {
                 mutate()
-                setTint(activity.getProperTextColor())
+                setTint(activity.themeColor(ThemeSlot.CALENDAR_LIST_ICON))
             }
 
             overflowMenuIcon.setOnClickListener {
@@ -183,7 +187,7 @@ class ManageCalendarsAdapter(
                         deleteCalendars(it == DELETE_EVENTS)
                     }
                 } else {
-                    ConfirmationDialog(activity) {
+                    ConfirmationDialog(activity, destructive = true) {
                         deleteCalendars(true)
                     }
                 }

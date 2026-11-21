@@ -58,7 +58,6 @@
             android:paddingStart="6dp"
             android:paddingEnd="6dp"
             android:text=":"
-            android:textColor="@color/yotehyo_time_picker_fg"
             android:textSize="32sp"
             android:textStyle="bold" />
 
@@ -107,14 +106,12 @@
             android:id="@+id/time_picker_ampm"
             android:layout_width="wrap_content"
             android:layout_height="64dp"
-            android:background="@drawable/time_picker_cell_bg"
             android:clickable="true"
             android:focusable="true"
             android:gravity="center"
             android:minWidth="56dp"
             android:paddingStart="8dp"
             android:paddingEnd="8dp"
-            android:textColor="@color/yotehyo_time_picker_fg"
             android:textSize="16sp"
             android:textStyle="bold" />
 

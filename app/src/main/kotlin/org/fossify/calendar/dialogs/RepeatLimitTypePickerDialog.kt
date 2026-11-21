@@ -1,7 +1,6 @@
 package org.fossify.calendar.dialogs
 
 import android.app.Activity
-import android.app.DatePickerDialog
 import androidx.appcompat.app.AlertDialog
 import org.fossify.calendar.R
 import org.fossify.calendar.databinding.DialogRepeatLimitTypePickerBinding
@@ -10,7 +9,6 @@ import org.fossify.calendar.extensions.seconds
 import org.fossify.calendar.helpers.Formatter
 import org.fossify.calendar.helpers.getNowSeconds
 import org.fossify.commons.extensions.*
-import org.fossify.commons.helpers.getJavaDayOfWeekFromISO
 import org.joda.time.DateTime
 
 class RepeatLimitTypePickerDialog(val activity: Activity, var repeatLimit: Long, val startTS: Long, val callback: (repeatLimit: Long) -> Unit) {
@@ -88,16 +86,13 @@ class RepeatLimitTypePickerDialog(val activity: Activity, var repeatLimit: Long,
 
     private fun showRepetitionLimitDialog() {
         val repeatLimitDateTime = Formatter.getDateTimeFromTS(if (repeatLimit != 0L) repeatLimit else getNowSeconds())
-        val datePicker = DatePickerDialog(
-            activity, activity.getDatePickerDialogTheme(), repetitionLimitDateSetListener, repeatLimitDateTime.year,
-            repeatLimitDateTime.monthOfYear - 1, repeatLimitDateTime.dayOfMonth
+        DatePickDialog(
+            activity, repeatLimitDateTime.year, repeatLimitDateTime.monthOfYear - 1, repeatLimitDateTime.dayOfMonth,
+            repetitionLimitDateSetListener,
         )
-
-        datePicker.datePicker.firstDayOfWeek = getJavaDayOfWeekFromISO(activity.config.firstDayOfWeek)
-        datePicker.show()
     }
 
-    private val repetitionLimitDateSetListener = DatePickerDialog.OnDateSetListener { _, year, monthOfYear, dayOfMonth ->
+    private val repetitionLimitDateSetListener = { year: Int, monthOfYear: Int, dayOfMonth: Int ->
         val repeatLimitDateTime = DateTime().withDate(year, monthOfYear + 1, dayOfMonth).withTime(23, 59, 59, 0)
         repeatLimit = if (repeatLimitDateTime.seconds() < startTS) {
             0

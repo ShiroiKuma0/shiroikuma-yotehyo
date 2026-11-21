@@ -1,5 +1,6 @@
 package org.fossify.calendar.fragments
 
+import org.fossify.calendar.helpers.PRINT_TEXT_COLOR
 import android.annotation.SuppressLint
 import android.content.ClipData
 import android.content.ClipDescription
@@ -90,6 +91,7 @@ import java.util.Calendar
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
+import org.fossify.calendar.extensions.edgeLines
 
 class WeekFragment : Fragment(), WeeklyCalendar {
     private val WEEKLY_EVENT_ID_LABEL = "event_id_label"
@@ -165,6 +167,9 @@ class WeekFragment : Fragment(), WeeklyCalendar {
     ): View {
         val fullHeight = requireContext().getWeeklyViewItemHeight().toInt() * 24
         binding = FragmentWeekBinding.inflate(inflater, container, false).apply {
+            // the hairline under the day letters and under the all-day rows, in the grid-line colour
+            weekTopHolder.background = requireContext().edgeLines(bottom = true)
+            weekLettersHolder.background = requireContext().edgeLines(bottom = true)
             scrollView = weekEventsScrollview
             weekHorizontalGridHolder.layoutParams.height = fullHeight
             weekEventsColumnsHolder.layoutParams.height = fullHeight
@@ -289,8 +294,8 @@ class WeekFragment : Fragment(), WeeklyCalendar {
             val textColor = when {
                 !isPrintVersion && todayCode == dayCode -> todayColor
                 highlightWeekends && isWeekend(curDay.dayOfWeek) -> config.highlightWeekendsColor
-                isPrintVersion -> resources.getColor(org.fossify.commons.R.color.theme_light_text_color)
-                else -> requireContext().getProperTextColor()
+                isPrintVersion -> PRINT_TEXT_COLOR
+                else -> requireContext().themeColor(ThemeSlot.DAY_NUMBER)
             }
 
             val label = WeeklyViewDayLetterBinding.inflate(
@@ -462,11 +467,12 @@ class WeekFragment : Fragment(), WeeklyCalendar {
                 val hour = (event.y / rowHeight).toInt()
                 selectedGrid = WeekGridItemBinding.inflate(layoutInflater).root.apply {
                     view.addView(this)
-                    background = ColorDrawable(primaryColor)
+                    val mark = requireContext().themeColor(ThemeSlot.NEW_EVENT_MARK)
+                    background = ColorDrawable(mark)
                     layoutParams.width = view.width
                     layoutParams.height = rowHeight.toInt()
                     y = hour * rowHeight - hour / 2
-                    applyColorFilter(primaryColor.getContrastColor())
+                    applyColorFilter(mark.getContrastColor())
 
                     setOnClickListener {
                         val timestamp =

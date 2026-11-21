@@ -1,12 +1,10 @@
 package org.fossify.calendar.fragments
 
-import android.content.res.Resources
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.DatePicker
 import androidx.viewpager.widget.ViewPager
 import org.fossify.calendar.activities.MainActivity
 import org.fossify.calendar.adapters.MyYearPagerAdapter
@@ -20,7 +18,10 @@ import org.fossify.commons.extensions.getAlertDialogBuilder
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.commons.views.MyViewPager
+import org.fossify.commons.views.FamilyDatePicker
 import org.joda.time.DateTime
+import org.fossify.calendar.extensions.themeColor
+import org.fossify.calendar.extensions.ThemeSlot
 
 class YearFragmentsHolder : MyFragmentHolder(), NavigationListener {
     private val PREFILLED_YEARS = 61
@@ -42,7 +43,7 @@ class YearFragmentsHolder : MyFragmentHolder(), NavigationListener {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val binding = FragmentYearsHolderBinding.inflate(inflater, container, false)
-        binding.root.background = ColorDrawable(requireContext().getProperBackgroundColor())
+        binding.root.background = ColorDrawable(requireContext().themeColor(ThemeSlot.VIEW_GROUND))
         viewPager = binding.fragmentYearsViewpager
         viewPager.id = (System.currentTimeMillis() % 100000).toInt()
         setupFragment()
@@ -100,12 +101,8 @@ class YearFragmentsHolder : MyFragmentHolder(), NavigationListener {
             return
         }
 
-        val datePicker = getDatePickerView()
-        datePicker.findViewById<View>(Resources.getSystem().getIdentifier("day", "id", "android")).beGone()
-        datePicker.findViewById<View>(Resources.getSystem().getIdentifier("month", "id", "android")).beGone()
-
         val dateTime = DateTime(Formatter.getDateTimeFromCode("${currentYear}0523").toString())
-        datePicker.init(dateTime.year, dateTime.monthOfYear - 1, 1, null)
+        val datePicker = getDatePickerView(dateTime, showDays = false, showMonth = false)
 
         activity?.getAlertDialogBuilder()!!
             .setNegativeButton(org.fossify.commons.R.string.cancel, null)
@@ -115,7 +112,7 @@ class YearFragmentsHolder : MyFragmentHolder(), NavigationListener {
             }
     }
 
-    private fun datePicked(datePicker: DatePicker) {
+    private fun datePicked(datePicker: FamilyDatePicker) {
         val pickedYear = datePicker.year
         if (currentYear != pickedYear) {
             currentYear = datePicker.year

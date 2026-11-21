@@ -8,13 +8,12 @@
     android:layout_marginStart="@dimen/activity_margin"
     android:layout_marginEnd="@dimen/activity_margin"
     android:layout_marginBottom="@dimen/medium_margin"
-    android:background="@drawable/section_holder_stroke"
-    android:foreground="@drawable/selector_rounded">
+    >
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/ripple_all_corners"
+        android:background="?attr/selectableItemBackground"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -25,7 +24,6 @@
             android:layout_width="@dimen/event_color_bar_width"
             android:layout_height="0dp"
             android:layout_marginEnd="@dimen/small_margin"
-            android:background="@drawable/event_list_color_bar"
             android:contentDescription="@null"
             app:layout_constraintBottom_toBottomOf="@+id/event_item_description"
             app:layout_constraintStart_toStartOf="parent"

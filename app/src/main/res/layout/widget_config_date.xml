@@ -25,7 +25,6 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:paddingTop="@dimen/medium_margin"
-                android:textColor="@color/md_grey_white"
                 android:textSize="28sp"
                 tools:text="13" />
 
@@ -38,7 +37,6 @@
                 android:layout_alignEnd="@+id/widget_date_label"
                 android:gravity="center"
                 android:paddingBottom="@dimen/medium_margin"
-                android:textColor="@color/md_grey_white"
                 android:textSize="@dimen/bigger_text_size"
                 tools:text="Jan" />
 
@@ -58,8 +56,7 @@
             android:layout_alignTop="@+id/config_bg_color"
             android:layout_alignBottom="@+id/config_bg_color"
             android:layout_marginStart="@dimen/medium_margin"
-            android:layout_toEndOf="@+id/config_bg_color"
-            android:background="@drawable/widget_config_seekbar_background">
+            android:layout_toEndOf="@+id/config_bg_color">
 
             <org.fossify.commons.views.MySeekBar
                 android:id="@+id/config_bg_seekbar"

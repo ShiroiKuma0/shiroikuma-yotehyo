@@ -34,8 +34,7 @@
             android:layout_alignTop="@+id/config_bg_color"
             android:layout_alignBottom="@+id/config_bg_color"
             android:layout_marginStart="@dimen/medium_margin"
-            android:layout_toEndOf="@+id/config_bg_color"
-            android:background="@drawable/widget_config_seekbar_background">
+            android:layout_toEndOf="@+id/config_bg_color">
 
             <org.fossify.commons.views.MySeekBar
                 android:id="@+id/config_bg_seekbar"
@@ -65,12 +64,9 @@
             <org.fossify.commons.views.MyMaterialSwitch
                 android:id="@+id/config_grid"
                 android:paddingHorizontal="16dp"
-                android:background="@drawable/widget_config_seekbar_background"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/show_a_grid"
-                android:textColor="@color/dark_grey"
-                app:thumbTint="@color/white"
                 />
         </RelativeLayout>
 

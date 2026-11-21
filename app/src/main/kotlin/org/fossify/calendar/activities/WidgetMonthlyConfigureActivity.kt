@@ -1,5 +1,8 @@
 package org.fossify.calendar.activities
 
+import org.fossify.calendar.extensions.styleWidgetConfigControls
+import org.fossify.commons.helpers.uiColor
+import org.fossify.commons.helpers.UiRole
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.appwidget.AppWidgetManager
@@ -26,6 +29,8 @@ import org.fossify.commons.extensions.*
 import org.fossify.commons.helpers.IS_CUSTOMIZING_COLORS
 import org.fossify.commons.helpers.LOWER_ALPHA
 import org.joda.time.DateTime
+import org.fossify.calendar.extensions.themeColor
+import org.fossify.calendar.extensions.ThemeSlot
 
 class WidgetMonthlyConfigureActivity : SimpleActivity(), MonthlyCalendar {
     private var mDays: List<DayMonthly>? = null
@@ -62,7 +67,7 @@ class WidgetMonthlyConfigureActivity : SimpleActivity(), MonthlyCalendar {
             configBgColor.setOnClickListener { pickBackgroundColor() }
             configTextColor.setOnClickListener { pickTextColor() }
             configGrid.setOnClickListener { pickGridShow() }
-            configBgSeekbar.setColors(mTextColor, primaryColor, primaryColor)
+            configBgSeekbar.setColors(mTextColor, uiColor(UiRole.SLIDER_TRACK), uiColor(UiRole.SLIDER_THUMB))
             configGrid.isChecked = mShowGrid
         }
     }
@@ -84,9 +89,6 @@ class WidgetMonthlyConfigureActivity : SimpleActivity(), MonthlyCalendar {
         updateBackgroundColor()
 
         mTextColor = config.widgetTextColor
-        if (mTextColor == resources.getColor(org.fossify.commons.R.color.default_widget_text_color) && isDynamicTheme()) {
-            mTextColor = resources.getColor(org.fossify.commons.R.color.you_primary_color, theme)
-        }
 
         updateTextColor()
         updateGridShow()
@@ -183,7 +185,6 @@ class WidgetMonthlyConfigureActivity : SimpleActivity(), MonthlyCalendar {
         topNavigationBinding.topRightArrow.applyColorFilter(mTextColor)
         topNavigationBinding.topValue.setTextColor(mTextColor)
         binding.configTextColor.setFillWithStroke(mTextColor, mTextColor)
-        binding.configSave.setTextColor(getProperPrimaryColor().getContrastColor())
         updateLabels()
     }
 
@@ -191,11 +192,8 @@ class WidgetMonthlyConfigureActivity : SimpleActivity(), MonthlyCalendar {
         mBgColor = mBgColorWithoutTransparency.adjustAlpha(mBgAlpha)
         binding.configCalendar.root.background.applyColorFilter(mBgColor)
         binding.configBgColor.setFillWithStroke(mBgColor, mBgColor)
-        binding.configGrid.trackTintList = ColorStateList(
-            arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
-            intArrayOf(getProperPrimaryColor(), Color.GRAY)
-        )
-        binding.configSave.backgroundTintList = ColorStateList.valueOf(getProperPrimaryColor())
+        binding.configGrid.background = pillDrawable(uiColor(UiRole.BUTTON_FRAME), uiColor(UiRole.BACKGROUND), main = false)
+        styleWidgetConfigControls(binding.configSave, binding.configBgSeekbarHolder)
     }
 
     private fun updateDays() {
@@ -258,8 +256,8 @@ class WidgetMonthlyConfigureActivity : SimpleActivity(), MonthlyCalendar {
             }
 
             if (day.isToday) {
-                dayMonthlyNumberBackground.setColorFilter(getProperPrimaryColor())
-                dayMonthlyNumberId.setTextColor(getProperPrimaryColor().getContrastColor())
+                dayMonthlyNumberBackground.setColorFilter(themeColor(ThemeSlot.WIDGET_SAMPLE_TODAY))
+                dayMonthlyNumberId.setTextColor(themeColor(ThemeSlot.WIDGET_SAMPLE_TODAY).getContrastColor())
             }
         }
     }

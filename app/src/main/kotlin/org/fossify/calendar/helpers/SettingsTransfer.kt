@@ -13,6 +13,7 @@ import androidx.annotation.StringRes
 import androidx.documentfile.provider.DocumentFile
 import org.fossify.calendar.BuildConfig
 import org.fossify.calendar.R
+import org.fossify.calendar.extensions.migrateSlotsToRoles
 import org.fossify.calendar.extensions.calendarsDB
 import org.fossify.calendar.extensions.config
 import org.fossify.calendar.extensions.eventsHelper
@@ -85,7 +86,6 @@ typealias ProgressReporter = (current: Long, total: Long, unit: String, text: St
 object SettingsTransfer {
     const val FORMAT = "yotehyo-export"
     const val VERSION = 1
-    const val WARN_COLOR = 0xFFFF5252.toInt() // warn-red for "no directory / no export yet" statuses
 
     // The app's English dash-separated name, and the prefix every export of ours starts with — the whole
     // family names its backups "<app-name>_<yyyy-MM-dd_HH-mm-ss>.zip", so 白い熊 can keep every app's
@@ -194,8 +194,8 @@ object SettingsTransfer {
     )
 
     // theme_* covers the slots/revision/seed, font_* the global size + per-slot triples,
-    // day_box_* the header format/alignment/thicknesses, dialog_border_* the accent border.
-    private val UI_PREFIXES = listOf("theme_", "font_", "week_grid_line_", "day_box_", "dialog_border_")
+    // day_box_* the header format/alignment/thicknesses, dialog_border_* the dialog frame, ui_role_* the commons colour roles.
+    private val UI_PREFIXES = listOf("theme_", "font_", "week_grid_line_", "day_box_", "dialog_border_", "ui_role_")
 
     /** Which category a prefs key belongs to; null = device-local, never exported or imported. */
     private fun categoryOf(key: String): Category? = when {
@@ -411,6 +411,7 @@ object SettingsTransfer {
             parts.add("${context.getString(cat.labelRes)}: $count")
         }
         if (Category.UI_THEME in cats || Category.UI_THEME_FONTS in cats || Category.WIDGETS in cats) {
+            context.migrateSlotsToRoles()
             // Repaint everything with the imported look on the next resume.
             context.config.themeRevision = context.config.themeRevision + 1
         }

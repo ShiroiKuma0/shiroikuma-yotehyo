@@ -12,6 +12,7 @@ import org.fossify.calendar.helpers.IcsImporter.ImportResult.IMPORT_PARTIAL
 import org.fossify.calendar.models.CalendarEntity
 import org.fossify.calendar.models.Event
 import org.fossify.calendar.models.Reminder
+import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.areDigitsOnly
 import org.fossify.commons.extensions.showErrorToast
 import org.fossify.commons.helpers.HOUR_SECONDS
@@ -518,7 +519,7 @@ class IcsImporter(val activity: Context) {
         val calendarId = eventsHelper.getCalendarIdWithTitle(calendarTitle)
         curCalendarId = if (calendarId == -1L) {
             val newTypeColor = if (curCategoryColor == -2) {
-                activity.resources.getColor(org.fossify.commons.R.color.color_primary)
+                activity.getProperPrimaryColor()
             } else {
                 curCategoryColor
             }

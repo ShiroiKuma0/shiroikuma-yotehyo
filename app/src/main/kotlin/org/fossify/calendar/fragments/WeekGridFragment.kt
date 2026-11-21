@@ -81,7 +81,7 @@ class WeekGridFragment : Fragment() {
             binding.weekGridCell0, binding.weekGridCell1, binding.weekGridCell2, binding.weekGridCell3,
             binding.weekGridCell4, binding.weekGridCell5, binding.weekGridCell6
         )
-        binding.weekGridRoot.background = ColorDrawable(requireContext().getProperBackgroundColor())
+        binding.weekGridRoot.background = ColorDrawable(requireContext().themeColor(ThemeSlot.VIEW_GROUND))
         setupDayBoxes()
         fetchEvents()
         return binding.root
@@ -111,7 +111,7 @@ class WeekGridFragment : Fragment() {
         val ctx = requireContext()
         val highlightWeekends = ctx.config.highlightWeekends
         val todayCode = Formatter.getTodayCode()
-        val backgroundColor = ctx.getProperBackgroundColor()
+        val backgroundColor = ctx.themeColor(ThemeSlot.VIEW_GROUND)
 
         val headerGravity = when (ctx.config.dayBoxHeaderAlignment) {
             DAY_BOX_ALIGN_START -> Gravity.START

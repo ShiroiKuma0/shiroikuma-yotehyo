@@ -9,6 +9,8 @@ import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.setFillWithStroke
+import org.fossify.calendar.extensions.themeColor
+import org.fossify.calendar.extensions.ThemeSlot
 
 class FilterCalendarAdapter(
     val activity: SimpleActivity,
@@ -64,7 +66,7 @@ class FilterCalendarAdapter(
                 filterCalendarCheckbox.text = calendar.getDisplayTitle()
                 filterCalendarColor.setFillWithStroke(
                     calendar.color,
-                    activity.getProperBackgroundColor()
+                    activity.themeColor(ThemeSlot.SWATCH_RING)
                 )
                 filterCalendarHolder.setOnClickListener {
                     viewClicked(!isSelected, calendar)

@@ -90,10 +90,8 @@
                 android:layout_marginBottom="@dimen/activity_margin"
                 android:contentDescription="@string/new_event"
                 android:src="@drawable/ic_plus_vector"
-                app:backgroundTint="@color/color_primary"
                 app:layout_constraintBottom_toTopOf="@+id/quick_calendar_filter"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:rippleColor="@color/pressed_item_foreground" />
+                app:layout_constraintEnd_toEndOf="parent" />
 
             <org.fossify.commons.views.MyRecyclerView
                 android:id="@+id/quick_calendar_filter"
@@ -105,8 +103,7 @@
                 app:layoutManager="org.fossify.commons.views.MyLinearLayoutManager"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:rippleColor="@color/pressed_item_foreground" />
+                app:layout_constraintStart_toStartOf="parent" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

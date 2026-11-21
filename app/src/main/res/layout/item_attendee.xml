@@ -44,7 +44,6 @@
             android:layout_alignEnd="@+id/event_contact_image"
             android:layout_alignBottom="@+id/event_contact_image"
             android:adjustViewBounds="true"
-            android:background="@drawable/attendee_status_circular_background"
             android:padding="@dimen/tiny_margin"
             android:src="@drawable/ic_question_yellow"
             android:visibility="gone" />

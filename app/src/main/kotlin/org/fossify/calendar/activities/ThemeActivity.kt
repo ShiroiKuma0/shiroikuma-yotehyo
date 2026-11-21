@@ -3,7 +3,15 @@ package org.fossify.calendar.activities
 import android.graphics.Typeface
 import android.util.TypedValue
 import android.widget.LinearLayout
-import org.fossify.calendar.extensions.outlinedPill
+import android.view.DragEvent
+import android.view.Gravity
+import android.view.HapticFeedbackConstants
+import android.graphics.drawable.GradientDrawable
+import com.google.android.material.chip.ChipGroup
+import org.fossify.calendar.extensions.resetAllThemeColors
+import org.fossify.commons.extensions.getColoredDrawableWithColor
+import org.fossify.commons.extensions.pillDrawable
+import org.fossify.commons.extensions.rippleDrawable
 import org.fossify.calendar.views.applyOutlinedSwitch
 import kotlin.math.roundToInt
 import android.content.ClipData
@@ -24,7 +32,6 @@ import org.fossify.calendar.databinding.ActivityThemeBinding
 import org.fossify.calendar.databinding.DialogDayBoxDateFormatBinding
 import org.fossify.calendar.databinding.DialogDayOffTitleBinding
 import org.fossify.calendar.databinding.ItemThemeColorBinding
-import org.fossify.calendar.databinding.ItemThemeSectionBinding
 import org.fossify.calendar.databinding.ItemThemeSliderBinding
 import org.fossify.calendar.databinding.ItemThemeSubsectionBinding
 import org.fossify.calendar.databinding.ItemThemeTextBinding
@@ -60,10 +67,15 @@ import org.fossify.calendar.helpers.EVENT_TIME_FORMAT_JAPANESE
 import org.fossify.calendar.helpers.DAY_BOX_THICKNESS_INHERIT
 import org.fossify.calendar.helpers.DAY_OFF_TITLE_DEFAULT
 import org.fossify.calendar.helpers.MAX_FONT_SIZE_SP
-import org.fossify.calendar.helpers.PALETTE_YELLOW
 import org.fossify.calendar.helpers.SettingsTransfer
 import org.fossify.calendar.helpers.THEME_UNSET
 import org.fossify.calendar.helpers.formatDayBoxHeader
+import org.fossify.commons.helpers.uiColor
+import org.fossify.commons.helpers.setUiColor
+import org.fossify.commons.helpers.resetUiColor
+import org.fossify.commons.helpers.isUiColorSet
+import org.fossify.commons.helpers.UiRoleSection
+import org.fossify.commons.helpers.UiRole
 import org.fossify.commons.dialogs.ConfirmationDialog
 import org.fossify.commons.dialogs.RadioGroupDialog
 import org.fossify.commons.extensions.beVisibleIf
@@ -82,7 +94,46 @@ import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.helpers.isRPlus
 import org.fossify.commons.models.RadioItem
 
-// The consolidated "白い熊 予定表 UI" screen. Built from a section -> (optional subsection) -> rows
+/** A top-level section of the page: its stored [key] (never rename one), its heading, and what builds its rows. */
+private class UiSection(val key: String, val title: String, val fill: () -> Unit)
+
+/**
+ * The icon a row of the page carries, coloured by what the row does. The colours are the menu icon
+ * roles, so a row and a menu line that do the same wear the same colour.
+ */
+private enum class RowIcon(val res: Int, val role: ThemeSlot) {
+    SETTINGS(org.fossify.commons.R.drawable.ic_settings_cog_vector, ThemeSlot.MENU_ROLE_VIEW),
+    TOGGLE(org.fossify.commons.R.drawable.ic_check_circle_vector, ThemeSlot.MENU_ROLE_VIEW),
+    COLOR(R.drawable.ic_color_outline_vector, ThemeSlot.MENU_ROLE_VIEW),
+    FONT(org.fossify.commons.R.drawable.ic_label_vector, ThemeSlot.MENU_ROLE_VIEW),
+    WEIGHT(org.fossify.commons.R.drawable.ic_edit_vector, ThemeSlot.MENU_ROLE_VIEW),
+    SIZE(org.fossify.commons.R.drawable.ic_sort_vector, ThemeSlot.MENU_ROLE_VIEW),
+    VALUE(org.fossify.commons.R.drawable.ic_edit_vector, ThemeSlot.MENU_ROLE_VIEW),
+    TIME(org.fossify.commons.R.drawable.ic_clock_vector, ThemeSlot.MENU_ROLE_VIEW),
+    DATE(R.drawable.ic_calendar_vector, ThemeSlot.MENU_ROLE_VIEW),
+    RESET(org.fossify.commons.R.drawable.ic_reset_vector, ThemeSlot.MENU_ROLE_CONNECT),
+    SECRET(org.fossify.commons.R.drawable.ic_lock_vector, ThemeSlot.MENU_ROLE_BLOCK),
+    SHARE(org.fossify.commons.R.drawable.ic_share_vector, ThemeSlot.MENU_ROLE_SHARE),
+    DIRECTORY(org.fossify.commons.R.drawable.ic_folder_vector, ThemeSlot.MENU_ROLE_SHARE),
+    AUTOMATION(org.fossify.commons.R.drawable.ic_code_vector, ThemeSlot.MENU_ROLE_SHARE),
+    DELETE(org.fossify.commons.R.drawable.ic_delete_vector, ThemeSlot.MENU_ROLE_DELETE),
+}
+
+// The chip index under the app-settings pill, the folding headings, and a row's icon.
+private const val INDEX_GAP_DP = 6f
+private const val INDEX_TEXT_SP = 13f
+private const val INDEX_PAD_H_DP = 10f
+private const val INDEX_PAD_V_DP = 5f
+private const val INDEX_DRAGGED_ALPHA = 0.3f
+private const val SECTION_GAP_DP = 10f
+private const val SECTION_HEADER_PAD_DP = 8f
+private const val SECTION_TITLE_SP = 20f
+private const val SECTION_CHEVRON_SP = 22f
+private const val ROW_ICON_DP = 20f
+private const val ROW_ICON_GAP_DP = 10f
+
+// The consolidated "白い熊 予定表 UI" screen: the way to the app's own settings, a chip index, then the
+// sections — each a folding block, folded unless 白い熊 opened it, in the order the chips were dragged into. Built from a section -> (optional subsection) -> rows
 // hierarchy: section headers carry a full-width accent underline, subsections a short one, color
 // rows show a "Default" badge while inherited, and text elements get a font / weight / size block
 // with a live sample beneath. Every colour is picked with an alpha-enabled dialog.
@@ -103,6 +154,16 @@ class ThemeActivity : SimpleActivity() {
     private var primaryColor = 0
     private var indentStepPx = 0
     private var currentRowIndent = 0
+
+    // Where the row builders add their rows: the page itself, or the body of the section being filled.
+    private lateinit var body: ViewGroup
+
+    // The page's sections in their shown order, and each one's views by its key.
+    private var sections: List<UiSection> = emptyList()
+    private val sectionWrappers = HashMap<String, View>()
+    private val sectionBodies = HashMap<String, LinearLayout>()
+    private val sectionChevrons = HashMap<String, TextView>()
+    private val sectionsFilled = HashSet<String>()
 
     // The automation token row, kept so the "Use authorization token?" switch can show and hide it.
     private var tokenRow: ItemThemeTokenBinding? = null
@@ -151,48 +212,101 @@ class ThemeActivity : SimpleActivity() {
         binding.themeHolder.removeAllViews()
         previews.clear()
         defaultBadges.clear()
+        sectionWrappers.clear()
+        sectionBodies.clear()
+        sectionChevrons.clear()
+        sectionsFilled.clear()
+        tokenRow = null
+        body = binding.themeHolder
         textColor = getProperTextColor()
         primaryColor = getProperPrimaryColor()
         indentStepPx = 3 * resources.getDimensionPixelSize(org.fossify.commons.R.dimen.activity_margin)
         currentRowIndent = 0
 
-        // The page's link to the app's own settings: the first, thick pill, right under the title.
+        // The page's link to the app's own settings: the first, thick pill, right under the title. Not a section.
         addActionRow(
             getString(R.string.theme_app_settings), getString(R.string.theme_app_settings_desc),
-            main = true, opens = true
+            main = true, opens = true, icon = RowIcon.SETTINGS
         ) { openAppSettings() }
 
-        // Export / Import — the first, separated section (same idea and flow as the Kōjiki page).
-        addSection(R.string.eim_heading)
-        addExportImportRow()
-        // Automation sits directly below the export row it drives — the placement every sister app
-        // shares, so 白い熊 finds it where backup lives.
-        addSubsection(R.string.automation)
-        addAutomationRows()
+        val built = ArrayList<UiSection>()
+        fun section(key: String, @StringRes titleRes: Int, fill: () -> Unit) =
+            built.add(UiSection(key, getString(titleRes), fill))
+        fun slots(group: ThemeGroup) = slotsOf(group).forEach { addSlot(it) }
 
-        // Foundation — the base colors that cascade through the whole app.
-        addSection(R.string.theme_group_foundation)
-        slotsOf(ThemeGroup.FOUNDATION).forEach { addSlot(it) }
-
-        // Search bar.
-        addSection(R.string.theme_group_search)
-        slotsOf(ThemeGroup.SEARCH).forEach { addSlot(it) }
-
-        // Top bar action/overflow icons, overflow-menu text, and the Settings toolbar foreground.
-        addSection(R.string.theme_group_chrome)
-        slotsOf(ThemeGroup.CHROME).forEach { addSlot(it) }
-
+        // Your data first (backup, housekeeping), then the look, surface by surface.
+        section("exim", R.string.eim_heading) {
+            addExportImportRow()
+            // Automation sits directly below the export row it drives — the placement every sister app shares.
+            addSubsection(R.string.automation)
+            addAutomationRows()
+        }
+        section("maintenance", R.string.theme_maintenance) { addMaintenanceRows() }
+        section("foundation", R.string.theme_group_foundation) { slots(ThemeGroup.FOUNDATION) }
+        section("text", UiRoleSection.TEXT.labelRes) {
+            slots(ThemeGroup.TEXT_STATUS)
+            addRoleRows(UiRoleSection.TEXT)
+        }
+        section("fields", UiRoleSection.FIELDS.labelRes) { addRoleRows(UiRoleSection.FIELDS) }
+        section("buttons", UiRoleSection.BUTTONS.labelRes) {
+            addRoleRows(UiRoleSection.BUTTONS)
+            addSubsection(R.string.theme_sub_fab_menu)
+            slots(ThemeGroup.BUTTONS)
+        }
+        // Dialogs — the frame drawn around every dialog, its buttons, every colour of a dialog and of the pickers.
+        section("dialogs", R.string.theme_group_dialogs) {
+            addThicknessRow(R.string.theme_dialog_border_width, config.dialogBorderWidth, min = 0, max = 8) {
+                config.dialogBorderWidth = it
+            }
+            addToggleRow(R.string.theme_dialog_pill_buttons, config.pillDialogButtons, R.string.theme_dialog_pill_buttons_desc) {
+                config.pillDialogButtons = it
+            }
+            addToggleRow(R.string.theme_dialog_styled_buttons, config.styledDialogButtons) {
+                config.styledDialogButtons = it
+            }
+            addRoleRows(UiRoleSection.DIALOGS)
+            addSubsection(R.string.theme_sub_time_entry)
+            slots(ThemeGroup.DIALOGS)
+            addSubsection(R.string.theme_sub_exim_panel)
+            slots(ThemeGroup.EXIM_PANEL)
+            addSubsection(R.string.theme_sub_font_picker)
+            slots(ThemeGroup.FONT_PICKER)
+        }
+        section("switches", UiRoleSection.SWITCHES.labelRes) {
+            slots(ThemeGroup.SWITCHES)
+            addRoleRows(UiRoleSection.SWITCHES)
+        }
+        section("marks", UiRoleSection.MARKS.labelRes) { addRoleRows(UiRoleSection.MARKS) }
         // Menus — every action row is an outlined pill; its icon is coloured by what the row does.
-        addSection(R.string.theme_group_menus)
-        addDescriptionRow(R.string.theme_menus_note)
-        slotsOf(ThemeGroup.MENUS).forEach { addSlot(it) }
+        section("menus", R.string.theme_group_menus) {
+            addDescriptionRow(R.string.theme_menus_note)
+            slots(ThemeGroup.MENUS)
+            addRoleRows(UiRoleSection.MENUS)
+        }
+        section("lists", UiRoleSection.LISTS.labelRes) {
+            addRoleRows(UiRoleSection.LISTS)
+            addSubsection(R.string.theme_sub_calendar_lists)
+            slots(ThemeGroup.LISTS)
+        }
+        section("search", R.string.theme_group_search) { slots(ThemeGroup.SEARCH) }
+        section("chrome", R.string.theme_group_chrome) { slots(ThemeGroup.CHROME) }
+        section("bars", UiRoleSection.BARS.labelRes) { addRoleRows(UiRoleSection.BARS) }
+        section("settings_page", R.string.theme_group_settings_page) { slots(ThemeGroup.SETTINGS_PAGE) }
+        section("cal_views", R.string.theme_sub_views) { addCalendarViewRows() }
+        section("cal_boxes", R.string.theme_sub_day_boxes) { addDayBoxRows() }
+        section("cal_events", R.string.theme_sub_events) { addEventRows() }
+        section("editor", R.string.theme_sub_editor) { slots(ThemeGroup.EDITOR) }
+        section("widget_setup", R.string.theme_sub_widget_setup) { slots(ThemeGroup.WIDGET_SETUP) }
+        section("toasts", UiRoleSection.TOASTS.labelRes) { addRoleRows(UiRoleSection.TOASTS) }
+        sections = orderedSections(built)
 
-        // Settings pages — the dim gold of explanations and their rule, and a switch that is off.
-        addSection(R.string.theme_group_settings_page)
-        slotsOf(ThemeGroup.SETTINGS_PAGE).forEach { addSlot(it) }
+        addSectionIndex()
+        sections.forEachIndexed { index, section -> addSection(section, index == 0) }
+    }
 
-        // Calendar — grouped by surface.
-        addSection(R.string.theme_group_calendar)
+    // What every calendar view shares, the weekly view, the year view and the grid lines.
+    private fun addCalendarViewRows() {
+        slotsOf(ThemeGroup.VIEWS).forEach { addSlot(it) }
         addSubsection(R.string.theme_sub_weekly_view)
         addToggleRow(R.string.theme_show_time_grid_weekly, config.showTimeGridWeekly) {
             config.showTimeGridWeekly = it
@@ -200,10 +314,15 @@ class ThemeActivity : SimpleActivity() {
         addToggleRow(R.string.theme_show_box_grid_weekly, config.showBoxGridWeekly) {
             config.showBoxGridWeekly = it
         }
-        addSubsection(R.string.theme_sub_events)
-        addSlot(ThemeSlot.EVENT_TEXT)
-        addEventTimeFormatRow()
-        addSubsection(R.string.theme_sub_day_boxes)
+        addSubsection(R.string.theme_sub_year_view)
+        slotsOf(ThemeGroup.YEAR).forEach { addSlot(it) }
+        addSubsection(R.string.theme_sub_grid_lines)
+        addSlot(ThemeSlot.GRID_LINES)
+        WeekGridLine.entries.forEach { addGridLineRows(it) }
+    }
+
+    // The day boxes of 週 and 月: every day, today, the weekend, and 休み.
+    private fun addDayBoxRows() {
         addSlot(ThemeSlot.DAY_BOX_HEADER)
         addSlot(ThemeSlot.DAY_BOX_HEADER_TEXT)
         addHeaderAlignmentRow()
@@ -251,33 +370,224 @@ class ThemeActivity : SimpleActivity() {
         addSlot(ThemeSlot.DAY_OFF_ENTRY_BACKGROUND)
         addSlot(ThemeSlot.DAY_OFF_FRAME)
         addSlot(ThemeSlot.DAY_OFF_DATE_TEXT)
+    }
+
+    // An event as the views draw it, its time zone lines, and the event list.
+    private fun addEventRows() {
+        addSlot(ThemeSlot.EVENT_TEXT)
+        addEventTimeFormatRow()
         addSubsection(R.string.theme_sub_time_zones)
         addSlot(ThemeSlot.TIME_ZONE_TEXT)
         addSlot(ThemeSlot.TIME_ZONE_TAG)
-        addSubsection(R.string.theme_sub_grid_lines)
-        addSlot(ThemeSlot.GRID_LINES)
-        WeekGridLine.entries.forEach { addGridLineRows(it) }
+        addSubsection(R.string.theme_sub_event_list)
+        slotsOf(ThemeGroup.EVENT_LIST).forEach { addSlot(it) }
+    }
 
-        // Dialogs — the accent border drawn around every dialog (so it stands out from a same-colored
-        // app background) and the boxed button style. Read by Commons' patched setupDialogStuff.
-        addSection(R.string.theme_group_dialogs)
-        addDialogBorderColorRow()
-        addThicknessRow(R.string.theme_dialog_border_width, config.dialogBorderWidth, min = 0, max = 8) {
-            config.dialogBorderWidth = it
+    /** The stored order applied to [built]: stored keys first, then sections a later build added, at their place. */
+    private fun orderedSections(built: List<UiSection>): List<UiSection> {
+        val byKey = built.associateBy { it.key }
+        val stored = config.uiSectionOrder.split(',').mapNotNull { byKey[it] }.distinct()
+        return stored + built.filter { it !in stored }
+    }
+
+    // The jump index: a wrapping grid of small outlined chips, one per section. A tap unfolds the section
+    // and scrolls to it; a long-press lifts the chip, the chips reorder live under the finger, and the
+    // sections follow on drop.
+    private fun addSectionIndex() {
+        val margin = resources.getDimensionPixelSize(org.fossify.commons.R.dimen.activity_margin)
+        val group = ChipGroup(this).apply {
+            chipSpacingHorizontal = px(INDEX_GAP_DP)
+            chipSpacingVertical = px(INDEX_GAP_DP)
+            setPaddingRelative(margin, px(INDEX_GAP_DP), margin, px(INDEX_GAP_DP))
         }
-        addToggleRow(R.string.theme_dialog_pill_buttons, config.pillDialogButtons, R.string.theme_dialog_pill_buttons_desc) {
-            config.pillDialogButtons = it
+        sections.forEach { section ->
+            group.addView(TextView(this).apply {
+                text = section.title
+                tag = section.key
+                setTextColor(uiColor(UiRole.BUTTON_TEXT))
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, INDEX_TEXT_SP)
+                setPadding(px(INDEX_PAD_H_DP), px(INDEX_PAD_V_DP), px(INDEX_PAD_H_DP), px(INDEX_PAD_V_DP))
+                background = pillDrawable(uiColor(UiRole.BUTTON_FRAME), uiColor(UiRole.BUTTON_GROUND), main = false)
+                setOnClickListener { jumpToSection(section.key) }
+                setOnLongClickListener { chip ->
+                    chip.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                    chip.startDragAndDrop(null, View.DragShadowBuilder(chip), chip, 0)
+                    chip.alpha = INDEX_DRAGGED_ALPHA
+                    true
+                }
+            })
         }
-        addToggleRow(R.string.theme_dialog_styled_buttons, config.styledDialogButtons) {
-            config.styledDialogButtons = it
+
+        val orderBefore = sections.map { it.key }
+        // The chip last moved past: the same chip is not swapped again until the finger has been over the
+        // dragged one, or two chips of unequal width would swap back and forth under a still finger.
+        var lastTarget: View? = null
+        group.setOnDragListener { _, event ->
+            val dragged = event.localState as? View
+            if (dragged == null || dragged.parent !== group) return@setOnDragListener false
+            when (event.action) {
+                DragEvent.ACTION_DRAG_LOCATION -> {
+                    val target = (0 until group.childCount).map { group.getChildAt(it) }
+                        .firstOrNull { event.x >= it.left && event.x < it.right && event.y >= it.top && event.y < it.bottom }
+                    if (target === dragged) {
+                        lastTarget = null
+                    } else if (target != null && target !== lastTarget) {
+                        val to = group.indexOfChild(target)
+                        group.removeView(dragged)
+                        group.addView(dragged, to)
+                        lastTarget = target
+                    }
+                }
+
+                DragEvent.ACTION_DRAG_ENDED -> {
+                    dragged.alpha = 1f
+                    val order = (0 until group.childCount).map { group.getChildAt(it).tag as String }
+                    if (order != orderBefore) {
+                        config.uiSectionOrder = order.joinToString(",")
+                        // not from inside the drag dispatch: the rebuild removes the view being dispatched to
+                        group.post { buildRows() }
+                    }
+                }
+            }
+            true
         }
+        binding.themeHolder.addView(group)
+    }
+
+    // A folding section: the 1 px darker-accent line above it (every section but the first; it stays whether
+    // the section is folded or open), its bold heading underlined as wide as its text with › folded / ⌄ open
+    // at the right, and its rows in a body that folds away.
+    private fun addSection(section: UiSection, first: Boolean) {
+        val margin = resources.getDimensionPixelSize(org.fossify.commons.R.dimen.activity_margin)
+        val wrap = ViewGroup.LayoutParams.WRAP_CONTENT
+        val wrapper = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        if (!first) {
+            wrapper.addView(
+                View(this).apply { setBackgroundColor(uiColor(UiRole.LIST_DIVIDER)) },
+                LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 1).apply { topMargin = px(SECTION_GAP_DP) },
+            )
+        }
+
+        val label = TextView(this).apply {
+            text = section.title
+            setTextColor(primaryColor)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, SECTION_TITLE_SP)
+            setTypeface(typeface, Typeface.BOLD)
+        }
+        val labelColumn = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(label, LinearLayout.LayoutParams(wrap, wrap))
+            // as wide as the column, which is as wide as the label's text
+            addView(
+                View(this@ThemeActivity).apply { setBackgroundColor(primaryColor) },
+                LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, px(2.5f)).apply { topMargin = px(2f) },
+            )
+        }
+        val chevron = TextView(this).apply {
+            setTextColor(primaryColor)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, SECTION_CHEVRON_SP)
+            includeFontPadding = false
+        }
+        val header = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPaddingRelative(margin, px(SECTION_HEADER_PAD_DP), margin, px(SECTION_HEADER_PAD_DP))
+            background = rippleDrawable()
+            addView(labelColumn, LinearLayout.LayoutParams(wrap, wrap))
+            addView(View(this@ThemeActivity), LinearLayout.LayoutParams(0, 0, 1f))
+            addView(chevron)
+            setOnClickListener { setSectionOpen(section.key, section.key !in config.uiSectionsOpen) }
+        }
+        wrapper.addView(header)
+
+        val inner = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        wrapper.addView(inner)
+        binding.themeHolder.addView(wrapper)
+
+        sectionWrappers[section.key] = wrapper
+        sectionBodies[section.key] = inner
+        sectionChevrons[section.key] = chevron
+        showSectionState(section.key, section.key in config.uiSectionsOpen)
+    }
+
+    private fun setSectionOpen(key: String, open: Boolean) {
+        val stored = config.uiSectionsOpen
+        config.uiSectionsOpen = if (open) stored + key else stored - key
+        showSectionState(key, open)
+    }
+
+    // A folded section's rows are not built until it is first opened.
+    private fun showSectionState(key: String, open: Boolean) {
+        val inner = sectionBodies[key] ?: return
+        if (open && sectionsFilled.add(key)) {
+            // rows are added to `body`; it points here only while this section's own rows are built
+            body = inner
+            currentRowIndent = 1
+            sections.firstOrNull { it.key == key }?.fill?.invoke()
+            body = binding.themeHolder
+            currentRowIndent = 0
+        }
+        inner.beVisibleIf(open)
+        sectionChevrons[key]?.text = if (open) "⌄" else "›"
+    }
+
+    /** A tap on an index chip: unfold the section and scroll to it. */
+    private fun jumpToSection(key: String) {
+        val wrapper = sectionWrappers[key] ?: return
+        setSectionOpen(key, true)
+        binding.themeHolder.post { binding.themeNestedScrollview.smoothScrollTo(0, wrapper.top) }
+    }
+
+    // ---- Maintenance ----
+
+    private fun addMaintenanceRows() {
+        addActionRow(
+            getString(R.string.theme_reset_section_order), getString(R.string.theme_reset_section_order_desc),
+            main = false, opens = false, icon = RowIcon.RESET
+        ) {
+            config.uiSectionOrder = ""
+            config.uiSectionsOpen = emptySet()
+            buildRows()
+        }
+        addActionRow(
+            getString(R.string.theme_reset_all_colours), getString(R.string.theme_reset_all_colours_desc),
+            main = false, opens = false, icon = RowIcon.DELETE, destructive = true
+        ) {
+            ConfirmationDialog(
+                activity = this,
+                message = getString(R.string.theme_reset_all_colours_confirm),
+                positive = R.string.theme_reset_action,
+                negative = org.fossify.commons.R.string.cancel,
+                destructive = true,
+            ) {
+                resetAllThemeColors()
+                recreate()
+            }
+        }
+    }
+
+    // The row's icon, before its label and in the colour of what the row does.
+    private fun TextView.setRowIcon(icon: RowIcon, color: Int = themeColor(icon.role)) {
+        val size = px(ROW_ICON_DP)
+        val drawable = resources.getColoredDrawableWithColor(icon.res, color)
+        drawable.setBounds(0, 0, size, size)
+        setCompoundDrawablesRelative(drawable, null, null, null)
+        compoundDrawablePadding = px(ROW_ICON_GAP_DP)
+    }
+
+    // A swatch: the colour inside a thin ring of the text role, so a swatch in the background colour shows.
+    private fun swatch(color: Int) = GradientDrawable().apply {
+        shape = GradientDrawable.OVAL
+        setColor(color)
+        setStroke(px(1f), textColor)
     }
 
     // The Export/Import panel: the section's main pill, with a status line beneath that is refreshed
     // with the newest export in the chosen directory every time the page opens (buildRows runs in onResume).
     private fun addExportImportRow() {
         val statusView = addActionRow(
-            getString(R.string.eim_heading), getString(R.string.eim_desc), main = true, opens = true
+            getString(R.string.eim_heading), getString(R.string.eim_desc), main = true, opens = true,
+            icon = RowIcon.SHARE
         ) { openExportImport() } ?: return
         // Query the export directory for the latest export off the main thread — SAF listing is slow.
         // Warnings (no directory set / no export yet) show in red, like in the panel.
@@ -286,7 +596,7 @@ class ThemeActivity : SimpleActivity() {
             runOnUiThread {
                 statusView.text = status
                 if (warn) {
-                    statusView.setTextColor(SettingsTransfer.WARN_COLOR)
+                    statusView.setTextColor(themeColor(ThemeSlot.STATUS_WARNING))
                 }
             }
         }
@@ -308,11 +618,14 @@ class ThemeActivity : SimpleActivity() {
         // switch, which now ships ON; then "Use authorization token?", which ships OFF; then the token
         // itself, shown ONLY while the second switch is on. A 48-character secret sitting under an off
         // switch invites 白い熊 to paste it somewhere it will do nothing.
-        addToggleRow(R.string.enable_automation, config.automationEnabled, R.string.enable_automation_desc) {
+        addToggleRow(
+            R.string.enable_automation, config.automationEnabled, R.string.enable_automation_desc, RowIcon.AUTOMATION
+        ) {
             config.automationEnabled = it
         }
         addToggleRow(
-            R.string.automation_require_token, config.automationRequireToken, R.string.automation_require_token_desc
+            R.string.automation_require_token, config.automationRequireToken, R.string.automation_require_token_desc,
+            RowIcon.SECRET
         ) {
             config.automationRequireToken = it
             showTokenRow(it)
@@ -332,15 +645,17 @@ class ThemeActivity : SimpleActivity() {
      * and a Regenerate action on the right that warns pasted copies stop working.
      */
     private fun addTokenRow() {
-        val row = ItemThemeTokenBinding.inflate(layoutInflater, binding.themeHolder, false)
+        val row = ItemThemeTokenBinding.inflate(layoutInflater, body, false)
         tokenRow = row
         row.themeTokenLabel.text = getString(R.string.automation_token)
         row.themeTokenLabel.setTextColor(textColor)
+        row.themeTokenLabel.setRowIcon(RowIcon.SECRET)
         row.themeTokenValue.setTextColor(noteColor())
         row.themeTokenRegenerate.text = getString(R.string.automation_token_regenerate)
-        row.themeTokenRegenerate.setTextColor(primaryColor)
+        row.themeTokenRegenerate.setTextColor(uiColor(UiRole.BUTTON_TEXT))
         // An action in place, after a confirmation: a thin pill, no ›
-        row.themeTokenRegenerate.background = outlinedPill(primaryColor)
+        row.themeTokenRegenerate.background =
+            pillDrawable(uiColor(UiRole.BUTTON_FRAME), uiColor(UiRole.BUTTON_GROUND), main = false)
         row.themeTokenRegenerate.setPadding(px(16f), px(9f), px(16f), px(9f))
         row.root.setOnClickListener {
             // Not commons' copyToClipboard: that one toasts the value itself, which would put the full
@@ -362,7 +677,7 @@ class ThemeActivity : SimpleActivity() {
         }
         tighten(row.root)
         indentView(row.root, currentRowIndent)
-        binding.themeHolder.addView(row.root)
+        body.addView(row.root)
     }
 
     /**
@@ -391,7 +706,9 @@ class ThemeActivity : SimpleActivity() {
     private fun addAllFilesAccessRow() {
         val granted = Environment.isExternalStorageManager()
         val status = getString(if (granted) R.string.all_files_access_granted else R.string.all_files_access_needed)
-        val statusView = addActionRow(getString(R.string.all_files_access), status, main = false, opens = true) {
+        val statusView = addActionRow(
+            getString(R.string.all_files_access), status, main = false, opens = true, icon = RowIcon.DIRECTORY
+        ) {
             try {
                 startActivity(
                     Intent(
@@ -408,7 +725,7 @@ class ThemeActivity : SimpleActivity() {
             }
         }
         if (!granted) {
-            statusView?.setTextColor(SettingsTransfer.WARN_COLOR)
+            statusView?.setTextColor(themeColor(ThemeSlot.STATUS_WARNING))
         }
     }
 
@@ -422,7 +739,7 @@ class ThemeActivity : SimpleActivity() {
             )
         }
         indentView(view, currentRowIndent)
-        binding.themeHolder.addView(view)
+        body.addView(view)
     }
 
     private fun openExportImport() {
@@ -435,25 +752,36 @@ class ThemeActivity : SimpleActivity() {
         )
     }
 
-    // Standalone colour row for the dialog accent border (not a ThemeSlot). The "Default" badge shows
-    // while the colour is still the fork default; the picker's default button resets to it.
-    private fun addDialogBorderColorRow() {
-        val row = ItemThemeColorBinding.inflate(layoutInflater, binding.themeHolder, false)
-        row.themeColorLabel.text = getString(R.string.theme_dialog_border_color)
+    // ---- Colour roles of what the commons draws (helpers/UiRoles.kt) ----
+
+    // One swatch row per role of [section] that no slot of this app already shows under its own label.
+    private fun addRoleRows(section: UiRoleSection) {
+        val shownAsSlots = ThemeSlot.entries.mapNotNull { it.role }.toSet()
+        UiRole.entries.filter { it.section == section && it !in shownAsSlots }.forEach { addRoleRow(it) }
+    }
+
+    // The "Default" badge shows while the role follows its default; the picker's default button resets it.
+    private fun addRoleRow(role: UiRole) {
+        val row = ItemThemeColorBinding.inflate(layoutInflater, body, false)
+        fun refresh() {
+            row.themeColorPreview.background = swatch(uiColor(role))
+            row.themeColorDefault.beVisibleIf(!isUiColorSet(role))
+        }
+        row.themeColorLabel.text = getString(role.labelRes)
         row.themeColorLabel.setTextColor(textColor)
-        row.themeColorPreview.background.setTint(config.dialogBorderColor)
+        row.themeColorLabel.setRowIcon(RowIcon.COLOR)
         row.themeColorDefault.setTextColor(noteColor())
-        row.themeColorDefault.beVisibleIf(config.dialogBorderColor == PALETTE_YELLOW)
+        refresh()
         row.root.setOnClickListener {
-            AlphaColorPickerDialog(this, config.dialogBorderColor, addDefaultColorButton = true) { wasPositive, color ->
-                config.dialogBorderColor = if (wasPositive) color else PALETTE_YELLOW
-                row.themeColorPreview.background.setTint(config.dialogBorderColor)
-                row.themeColorDefault.beVisibleIf(config.dialogBorderColor == PALETTE_YELLOW)
+            AlphaColorPickerDialog(this, uiColor(role), addDefaultColorButton = true) { wasPositive, color ->
+                if (wasPositive) setUiColor(role, color) else resetUiColor(role)
+                config.themeRevision = config.themeRevision + 1
+                refresh()
             }
         }
         tighten(row.root)
         indentView(row.root, currentRowIndent)
-        binding.themeHolder.addView(row.root)
+        body.addView(row.root)
     }
 
     // Per box-grid grid line: its toggle, then (indented) its colour and thickness. Colour follows
@@ -471,22 +799,23 @@ class ThemeActivity : SimpleActivity() {
     }
 
     private fun addGridLineColorRow(line: WeekGridLine) {
-        val row = ItemThemeColorBinding.inflate(layoutInflater, binding.themeHolder, false)
+        val row = ItemThemeColorBinding.inflate(layoutInflater, body, false)
         row.themeColorLabel.text = getString(R.string.theme_grid_line_color)
         row.themeColorLabel.setTextColor(textColor)
-        row.themeColorPreview.background.setTint(gridLineColor(line))
+        row.themeColorLabel.setRowIcon(RowIcon.COLOR)
+        row.themeColorPreview.background = swatch(gridLineColor(line))
         row.themeColorDefault.setTextColor(noteColor())
         row.themeColorDefault.beVisibleIf(config.getGridLineColor(line.key) == THEME_UNSET)
         row.root.setOnClickListener {
             AlphaColorPickerDialog(this, gridLineColor(line), addDefaultColorButton = true) { wasPositive, color ->
                 config.setGridLineColor(line.key, if (wasPositive) color else THEME_UNSET)
-                row.themeColorPreview.background.setTint(gridLineColor(line))
+                row.themeColorPreview.background = swatch(gridLineColor(line))
                 row.themeColorDefault.beVisibleIf(config.getGridLineColor(line.key) == THEME_UNSET)
             }
         }
         tighten(row.root)
         indentView(row.root, currentRowIndent)
-        binding.themeHolder.addView(row.root)
+        body.addView(row.root)
     }
 
     private fun slotsOf(group: ThemeGroup) = ThemeSlot.entries.filter { it.group == group }
@@ -503,35 +832,22 @@ class ThemeActivity : SimpleActivity() {
         }
     }
 
-    // kxkb-style section header: bold accent title with a text-wide underline, preceded by a thin
-    // full-width hairline spacer on every section but the first.
-    private fun addSection(@StringRes titleRes: Int) {
-        val section = ItemThemeSectionBinding.inflate(layoutInflater, binding.themeHolder, false)
-        section.themeSectionLabel.text = getString(titleRes)
-        section.themeSectionLabel.setTextColor(primaryColor)
-        section.themeSectionUnderline.setBackgroundColor(primaryColor)
-        section.themeSectionDivider.setBackgroundColor(primaryColor)
-        section.themeSectionDivider.beVisibleIf(binding.themeHolder.childCount > 0)
-        indentView(section.root, 0)
-        binding.themeHolder.addView(section.root)
-        currentRowIndent = 1
-    }
-
     private fun addSubsection(@StringRes titleRes: Int) {
-        val sub = ItemThemeSubsectionBinding.inflate(layoutInflater, binding.themeHolder, false)
+        val sub = ItemThemeSubsectionBinding.inflate(layoutInflater, body, false)
         sub.themeSubsectionLabel.text = getString(titleRes)
         sub.themeSubsectionLabel.setTextColor(primaryColor)
         sub.themeSubsectionUnderline.setBackgroundColor(primaryColor)
         indentView(sub.root, 1)
-        binding.themeHolder.addView(sub.root)
+        body.addView(sub.root)
         currentRowIndent = 2
     }
 
     private fun addColorRow(slot: ThemeSlot) {
-        val row = ItemThemeColorBinding.inflate(layoutInflater, binding.themeHolder, false)
+        val row = ItemThemeColorBinding.inflate(layoutInflater, body, false)
         row.themeColorLabel.text = getString(slot.labelRes)
         row.themeColorLabel.setTextColor(textColor)
-        row.themeColorPreview.background.setTint(themeColor(slot))
+        row.themeColorLabel.setRowIcon(RowIcon.COLOR)
+        row.themeColorPreview.background = swatch(themeColor(slot))
         row.themeColorDefault.setTextColor(noteColor())
         row.themeColorDefault.beVisibleIf(followsDefault(slot))
         row.root.setOnClickListener { openColorPicker(slot) }
@@ -539,18 +855,23 @@ class ThemeActivity : SimpleActivity() {
         defaultBadges[slot] = row.themeColorDefault
         tighten(row.root)
         indentView(row.root, currentRowIndent)
-        binding.themeHolder.addView(row.root)
+        body.addView(row.root)
     }
 
     private fun addTextSlot(slot: ThemeSlot) {
-        val b = ItemThemeTextBinding.inflate(layoutInflater, binding.themeHolder, false)
+        val b = ItemThemeTextBinding.inflate(layoutInflater, body, false)
         b.themeTextLabel.text = getString(slot.labelRes)
         listOf(
             b.themeTextLabel, b.themeTextFontTitle, b.themeTextFontValue,
             b.themeTextWeightTitle, b.themeTextWeightValue, b.themeTextSizeTitle, b.themeTextSizeValue
         ).forEach { it.setTextColor(textColor) }
+        // the element's own line sets its colour; the lines beneath set its font, weight and size
+        b.themeTextLabel.setRowIcon(RowIcon.COLOR)
+        b.themeTextFontTitle.setRowIcon(RowIcon.FONT)
+        b.themeTextWeightTitle.setRowIcon(RowIcon.WEIGHT)
+        b.themeTextSizeTitle.setRowIcon(RowIcon.SIZE)
 
-        b.themeTextColorPreview.background.setTint(themeColor(slot))
+        b.themeTextColorPreview.background = swatch(themeColor(slot))
         b.themeTextFontValue.text = fontDisplayName(config.getFontFamily(slot.key))
         b.themeTextWeightValue.text = getString(FontWeightOption.fromValue(config.getFontWeight(slot.key)).labelRes)
         b.themeTextSizeSeekbar.max = MAX_FONT_SIZE_SP
@@ -579,7 +900,7 @@ class ThemeActivity : SimpleActivity() {
         listOf<View>(b.themeTextColorRow, b.themeTextFontRow, b.themeTextWeightRow, b.themeTextSizeRow).forEach { tighten(it) }
         b.themeTextSample.setPaddingRelative(b.themeTextSample.paddingStart, 0, b.themeTextSample.paddingEnd, px(4f))
         indentView(b.root, currentRowIndent)
-        binding.themeHolder.addView(b.root)
+        body.addView(b.root)
     }
 
     /**
@@ -590,13 +911,15 @@ class ThemeActivity : SimpleActivity() {
         @StringRes labelRes: Int,
         isChecked: Boolean,
         @StringRes descRes: Int? = null,
+        icon: RowIcon = RowIcon.TOGGLE,
         onToggle: (Boolean) -> Unit,
     ) {
-        val row = ItemThemeToggleBinding.inflate(layoutInflater, binding.themeHolder, false)
+        val row = ItemThemeToggleBinding.inflate(layoutInflater, body, false)
         row.themeToggleSwitch.text = getString(labelRes)
         row.themeToggleSwitch.setColors(textColor, primaryColor, getProperBackgroundColor())
         row.themeToggleSwitch.isChecked = isChecked
         row.themeToggleSwitch.applyOutlinedSwitch()
+        row.themeToggleSwitch.setRowIcon(icon)
         row.themeToggleHolder.setOnClickListener {
             row.themeToggleSwitch.toggle()
             onToggle(row.themeToggleSwitch.isChecked)
@@ -604,7 +927,7 @@ class ThemeActivity : SimpleActivity() {
         tighten(row.root)
         if (descRes == null) {
             indentView(row.root, currentRowIndent)
-            binding.themeHolder.addView(row.root)
+            body.addView(row.root)
             return
         }
 
@@ -618,11 +941,12 @@ class ThemeActivity : SimpleActivity() {
         }
         val block = ruled(column)
         indentView(block, currentRowIndent)
-        binding.themeHolder.addView(block)
+        body.addView(block)
     }
 
     /** A slot follows its inherited default when it has no explicit override (write-through slots never do). */
     private fun followsDefault(slot: ThemeSlot): Boolean {
+        slot.role?.let { return !slot.isFoundation && !isUiColorSet(it) }
         val isWriteThrough = slot.isFoundation || slot == ThemeSlot.WEEKEND
         return !isWriteThrough && config.getThemeOverride(slot.key) == THEME_UNSET
     }
@@ -645,7 +969,7 @@ class ThemeActivity : SimpleActivity() {
                 // foundation cascades into the chrome + every inheriting preview
                 recreate()
             } else {
-                previews[slot]?.background?.setTint(themeColor(slot))
+                previews[slot]?.background = swatch(themeColor(slot))
                 defaultBadges[slot]?.beVisibleIf(followsDefault(slot))
             }
         }
@@ -657,7 +981,7 @@ class ThemeActivity : SimpleActivity() {
             if (slot.isFoundation) {
                 recreate()
             } else {
-                b.themeTextColorPreview.background.setTint(themeColor(slot))
+                b.themeTextColorPreview.background = swatch(themeColor(slot))
                 refreshSample(b, slot)
             }
         }
@@ -713,15 +1037,16 @@ class ThemeActivity : SimpleActivity() {
 
 
     private fun addHeaderAlignmentRow() {
-        val row = ItemThemeValueBinding.inflate(layoutInflater, binding.themeHolder, false)
+        val row = ItemThemeValueBinding.inflate(layoutInflater, body, false)
         row.themeValueLabel.text = getString(R.string.theme_day_box_header_align)
         row.themeValueLabel.setTextColor(textColor)
+        row.themeValueLabel.setRowIcon(RowIcon.SIZE)
         row.themeValueValue.setTextColor(noteColor())
         row.themeValueValue.text = alignmentText()
         row.root.setOnClickListener { openHeaderAlignmentPicker(row.themeValueValue) }
         tighten(row.root)
         indentView(row.root, currentRowIndent)
-        binding.themeHolder.addView(row.root)
+        body.addView(row.root)
     }
 
     private fun openHeaderAlignmentPicker(valueView: TextView) {
@@ -745,15 +1070,16 @@ class ThemeActivity : SimpleActivity() {
     )
 
     private fun addDateHeaderFormatRow() {
-        val row = ItemThemeValueBinding.inflate(layoutInflater, binding.themeHolder, false)
+        val row = ItemThemeValueBinding.inflate(layoutInflater, body, false)
         row.themeValueLabel.text = getString(R.string.theme_date_header_format)
         row.themeValueLabel.setTextColor(textColor)
+        row.themeValueLabel.setRowIcon(RowIcon.DATE)
         row.themeValueValue.setTextColor(noteColor())
         row.themeValueValue.text = dateFormatSample()
         row.root.setOnClickListener { openDateHeaderFormatPicker(row.themeValueValue) }
         tighten(row.root)
         indentView(row.root, currentRowIndent)
-        binding.themeHolder.addView(row.root)
+        body.addView(row.root)
     }
 
     private fun dateFormatSample() = formatDayBoxHeader(System.currentTimeMillis(), config.dayBoxHeaderDateFormat)
@@ -818,15 +1144,16 @@ class ThemeActivity : SimpleActivity() {
 
     // The title that marks a day off (exact match, surrounding spaces ignored).
     private fun addDayOffTitleRow() {
-        val row = ItemThemeValueBinding.inflate(layoutInflater, binding.themeHolder, false)
+        val row = ItemThemeValueBinding.inflate(layoutInflater, body, false)
         row.themeValueLabel.text = getString(R.string.theme_day_off_title)
         row.themeValueLabel.setTextColor(textColor)
+        row.themeValueLabel.setRowIcon(RowIcon.VALUE)
         row.themeValueValue.setTextColor(noteColor())
         row.themeValueValue.text = config.dayOffTitle
         row.root.setOnClickListener { openDayOffTitleDialog(row.themeValueValue) }
         tighten(row.root)
         indentView(row.root, currentRowIndent)
-        binding.themeHolder.addView(row.root)
+        body.addView(row.root)
     }
 
     private fun openDayOffTitleDialog(valueView: TextView) {
@@ -845,15 +1172,16 @@ class ThemeActivity : SimpleActivity() {
     }
 
     private fun addEventTimeFormatRow() {
-        val row = ItemThemeValueBinding.inflate(layoutInflater, binding.themeHolder, false)
+        val row = ItemThemeValueBinding.inflate(layoutInflater, body, false)
         row.themeValueLabel.text = getString(R.string.theme_event_time_format)
         row.themeValueLabel.setTextColor(textColor)
+        row.themeValueLabel.setRowIcon(RowIcon.TIME)
         row.themeValueValue.setTextColor(noteColor())
         row.themeValueValue.text = eventTimeSample()
         row.root.setOnClickListener { openEventTimeFormatPicker(row.themeValueValue) }
         tighten(row.root)
         indentView(row.root, currentRowIndent)
-        binding.themeHolder.addView(row.root)
+        body.addView(row.root)
     }
 
     // A representative 08:00→09:00 range so the user sees the chosen style at a glance.
@@ -913,9 +1241,10 @@ class ThemeActivity : SimpleActivity() {
     }
 
     private fun addThicknessRow(@StringRes labelRes: Int, current: Int, min: Int = 0, max: Int = 12, onChange: (Int) -> Unit) {
-        val row = ItemThemeSliderBinding.inflate(layoutInflater, binding.themeHolder, false)
+        val row = ItemThemeSliderBinding.inflate(layoutInflater, body, false)
         row.themeSliderLabel.text = getString(labelRes)
         row.themeSliderLabel.setTextColor(textColor)
+        row.themeSliderLabel.setRowIcon(RowIcon.SIZE)
         row.themeSliderValue.setTextColor(noteColor())
         row.themeSliderValue.text = thicknessText(current)
         row.themeSliderSeekbar.min = min
@@ -927,7 +1256,7 @@ class ThemeActivity : SimpleActivity() {
         }
         tighten(row.root)
         indentView(row.root, currentRowIndent)
-        binding.themeHolder.addView(row.root)
+        body.addView(row.root)
     }
 
     // < 0 = inherit the general thickness, 0 = no border, otherwise the dp value.
@@ -978,21 +1307,28 @@ class ThemeActivity : SimpleActivity() {
      * section. The explanation sits beneath in dim gold, aligned with the label, and the two share the
      * rule. Only the pill is the touch target. Returns the explanation, so a caller can refresh it.
      */
+    @Suppress("LongParameterList")
     private fun addActionRow(
         title: String,
         desc: CharSequence?,
         main: Boolean,
         opens: Boolean,
+        icon: RowIcon = RowIcon.SETTINGS,
+        destructive: Boolean = false,
         onClick: () -> Unit,
     ): TextView? {
         val padH = px(16f)
         val padV = px(9f)
+        val ink = uiColor(if (destructive) UiRole.BUTTON_DESTRUCTIVE else UiRole.BUTTON_TEXT)
+        val frame = uiColor(if (destructive) UiRole.BUTTON_DESTRUCTIVE else UiRole.BUTTON_FRAME)
         val pill = TextView(this).apply {
             text = if (opens) "$title  ›" else title
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
-            setTextColor(primaryColor)
+            setTextColor(ink)
             if (main) setTypeface(typeface, Typeface.BOLD)
-            background = outlinedPill(primaryColor, if (main) 3f else 1.25f)
+            gravity = Gravity.CENTER_VERTICAL
+            setRowIcon(icon)
+            background = pillDrawable(frame, uiColor(UiRole.BUTTON_GROUND), main)
             setPadding(padH, padV, padH, padV)
             isClickable = true
             isFocusable = true
@@ -1008,7 +1344,7 @@ class ThemeActivity : SimpleActivity() {
         }
         val descView = desc?.let { text ->
             noteView(text).apply {
-                setPaddingRelative(padH, 0, padH, px(2f))
+                setPaddingRelative(padH + px(ROW_ICON_DP + ROW_ICON_GAP_DP), 0, padH, px(2f))
                 column.addView(this)
             }
         }
@@ -1022,7 +1358,7 @@ class ThemeActivity : SimpleActivity() {
             }
         }
         indentView(row, currentRowIndent)
-        binding.themeHolder.addView(row)
+        body.addView(row)
         return descView
     }
 }

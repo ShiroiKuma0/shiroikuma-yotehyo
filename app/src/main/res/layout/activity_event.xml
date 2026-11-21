@@ -15,7 +15,6 @@
             android:id="@+id/event_toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="@color/color_primary"
             app:menu="@menu/menu_event"
             app:title="@string/app_launcher_name"
             app:titleTextAppearance="@style/AppTheme.ActionBar.TitleTextStyle" />
@@ -95,15 +94,13 @@
                 android:textCursorDrawable="@null"
                 android:textSize="@dimen/day_text_size" />
 
-            <ImageView
+            <org.fossify.commons.views.MyDivider
                 android:id="@+id/event_description_divider"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/divider_height"
                 android:layout_below="@+id/event_description"
                 android:layout_marginTop="@dimen/activity_margin"
-                android:layout_marginBottom="@dimen/normal_margin"
-                android:background="@color/divider_grey"
-                android:importantForAccessibility="no" />
+                android:layout_marginBottom="@dimen/normal_margin" />
 
             <ImageView
                 android:id="@+id/event_time_image"
@@ -383,15 +380,13 @@
 
             </LinearLayout>
 
-            <ImageView
+            <org.fossify.commons.views.MyDivider
                 android:id="@+id/event_date_time_divider"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/divider_height"
                 android:layout_below="@+id/event_date_time_block"
                 android:layout_marginTop="@dimen/medium_margin"
-                android:layout_marginBottom="@dimen/medium_margin"
-                android:background="@color/divider_grey"
-                android:importantForAccessibility="no" />
+                android:layout_marginBottom="@dimen/medium_margin" />
 
             <ImageView
                 android:id="@+id/event_reminder_image"
@@ -498,15 +493,13 @@
                 android:padding="@dimen/medium_margin"
                 android:src="@drawable/ic_bell_outline_vector" />
 
-            <ImageView
+            <org.fossify.commons.views.MyDivider
                 android:id="@+id/event_reminder_divider"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/divider_height"
                 android:layout_below="@+id/event_reminder_3"
                 android:layout_marginTop="@dimen/medium_margin"
-                android:layout_marginBottom="@dimen/medium_margin"
-                android:background="@color/divider_grey"
-                android:importantForAccessibility="no" />
+                android:layout_marginBottom="@dimen/medium_margin" />
 
             <ImageView
                 android:id="@+id/event_repetition_image"
@@ -596,14 +589,12 @@
                     android:textSize="@dimen/day_text_size" />
             </RelativeLayout>
 
-            <ImageView
+            <org.fossify.commons.views.MyDivider
                 android:id="@+id/event_repetition_divider"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/divider_height"
                 android:layout_below="@+id/event_repetition_limit_holder"
-                android:layout_marginTop="@dimen/medium_margin"
-                android:background="@color/divider_grey"
-                android:importantForAccessibility="no" />
+                android:layout_marginTop="@dimen/medium_margin" />
 
             <ImageView
                 android:id="@+id/event_attendees_image"
@@ -625,14 +616,12 @@
                 android:layout_toEndOf="@+id/event_attendees_image"
                 android:orientation="vertical" />
 
-            <ImageView
+            <org.fossify.commons.views.MyDivider
                 android:id="@+id/event_attendees_divider"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/divider_height"
                 android:layout_below="@+id/event_attendees_holder"
-                android:layout_marginTop="@dimen/medium_margin"
-                android:background="@color/divider_grey"
-                android:importantForAccessibility="no" />
+                android:layout_marginTop="@dimen/medium_margin" />
 
             <ImageView
                 android:id="@+id/event_status_image"
@@ -659,14 +648,12 @@
                 android:text="@string/status_confirmed"
                 android:textSize="@dimen/day_text_size" />
 
-            <ImageView
+            <org.fossify.commons.views.MyDivider
                 android:id="@+id/event_status_divider"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/divider_height"
                 android:layout_below="@+id/event_status"
-                android:layout_marginTop="@dimen/medium_margin"
-                android:background="@color/divider_grey"
-                android:importantForAccessibility="no" />
+                android:layout_marginTop="@dimen/medium_margin" />
 
             <ImageView
                 android:id="@+id/event_access_level_image"
@@ -693,14 +680,12 @@
                 android:text="@string/access_level_public"
                 android:textSize="@dimen/day_text_size" />
 
-            <ImageView
+            <org.fossify.commons.views.MyDivider
                 android:id="@+id/event_access_level_divider"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/divider_height"
                 android:layout_below="@+id/event_access_level"
-                android:layout_marginTop="@dimen/medium_margin"
-                android:background="@color/divider_grey"
-                android:importantForAccessibility="no" />
+                android:layout_marginTop="@dimen/medium_margin" />
 
             <ImageView
                 android:id="@+id/event_availability_image"
@@ -727,14 +712,12 @@
                 android:text="@string/status_busy"
                 android:textSize="@dimen/day_text_size" />
 
-            <ImageView
+            <org.fossify.commons.views.MyDivider
                 android:id="@+id/event_availability_divider"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/divider_height"
                 android:layout_below="@+id/event_availability"
-                android:layout_marginTop="@dimen/medium_margin"
-                android:background="@color/divider_grey"
-                android:importantForAccessibility="no" />
+                android:layout_marginTop="@dimen/medium_margin" />
 
             <ImageView
                 android:id="@+id/event_calendar_image"
@@ -786,14 +769,12 @@
 
             </RelativeLayout>
 
-            <ImageView
+            <org.fossify.commons.views.MyDivider
                 android:id="@+id/calendar_divider"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/divider_height"
                 android:layout_below="@+id/event_calendar_holder"
-                android:layout_marginBottom="@dimen/normal_margin"
-                android:background="@color/divider_grey"
-                android:importantForAccessibility="no" />
+                android:layout_marginBottom="@dimen/normal_margin" />
 
             <ImageView
                 android:id="@+id/event_color_image"
@@ -839,14 +820,12 @@
 
             </RelativeLayout>
 
-            <ImageView
+            <org.fossify.commons.views.MyDivider
                 android:id="@+id/event_color_divider"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/divider_height"
                 android:layout_below="@+id/event_color_image"
-                android:layout_marginTop="@dimen/medium_margin"
-                android:background="@color/divider_grey"
-                android:importantForAccessibility="no" />
+                android:layout_marginTop="@dimen/medium_margin" />
 
         </RelativeLayout>
     </androidx.core.widget.NestedScrollView>

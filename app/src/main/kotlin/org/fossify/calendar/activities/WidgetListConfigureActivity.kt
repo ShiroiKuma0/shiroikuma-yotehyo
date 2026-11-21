@@ -1,5 +1,6 @@
 package org.fossify.calendar.activities
 
+import org.fossify.calendar.extensions.styleWidgetConfigControls
 import android.app.Activity
 import android.appwidget.AppWidgetManager
 import android.content.Intent
@@ -29,6 +30,10 @@ import org.fossify.commons.helpers.*
 import org.fossify.commons.models.RadioItem
 import org.joda.time.DateTime
 import java.util.TreeSet
+import org.fossify.calendar.extensions.themeColor
+import org.fossify.calendar.extensions.ThemeSlot
+import org.fossify.commons.helpers.uiColor
+import org.fossify.commons.helpers.UiRole
 
 class WidgetListConfigureActivity : SimpleActivity() {
     private var mBgAlpha = 0f
@@ -61,7 +66,7 @@ class WidgetListConfigureActivity : SimpleActivity() {
                 configWidgetPreview.configEventsList.adapter = this
             }
 
-            periodPickerHolder.background = ColorDrawable(getProperBackgroundColor())
+            periodPickerHolder.background = ColorDrawable(themeColor(ThemeSlot.WIDGET_SETUP_GROUND))
             periodPickerValue.setOnClickListener { showPeriodSelector() }
 
             configSave.setOnClickListener { saveConfig() }
@@ -71,7 +76,7 @@ class WidgetListConfigureActivity : SimpleActivity() {
             periodPickerHolder.beGoneIf(isCustomizingColors)
 
             val primaryColor = getProperPrimaryColor()
-            configBgSeekbar.setColors(mTextColor, primaryColor, primaryColor)
+            configBgSeekbar.setColors(mTextColor, uiColor(UiRole.SLIDER_TRACK), uiColor(UiRole.SLIDER_THUMB))
         }
 
         updateSelectedPeriod(config.lastUsedEventSpan)
@@ -103,9 +108,6 @@ class WidgetListConfigureActivity : SimpleActivity() {
         updateBackgroundColor()
 
         mTextColor = config.widgetTextColor
-        if (mTextColor == resources.getColor(org.fossify.commons.R.color.default_widget_text_color) && isDynamicTheme()) {
-            mTextColor = resources.getColor(org.fossify.commons.R.color.you_primary_color, theme)
-        }
 
         updateTextColor()
     }
@@ -228,14 +230,13 @@ class WidgetListConfigureActivity : SimpleActivity() {
         binding.configWidgetPreview.widgetHeaderInclude.widgetEventNewEvent.setColorFilter(mTextColor)
         (binding.configWidgetPreview.configEventsList.adapter as? EventListAdapter)?.updateTextColor(mTextColor)
         binding.configTextColor.setFillWithStroke(mTextColor, mTextColor)
-        binding.configSave.setTextColor(getProperPrimaryColor().getContrastColor())
     }
 
     private fun updateBackgroundColor() {
         mBgColor = mBgColorWithoutTransparency.adjustAlpha(mBgAlpha)
         binding.configWidgetPreview.widgetConfigEventListBackground.applyColorFilter(mBgColor)
         binding.configBgColor.setFillWithStroke(mBgColor, mBgColor)
-        binding.configSave.backgroundTintList = ColorStateList.valueOf(getProperPrimaryColor())
+        styleWidgetConfigControls(binding.configSave, binding.configBgSeekbarHolder)
     }
 
     private fun getListItems(): ArrayList<ListItem> {
@@ -253,7 +254,7 @@ class WidgetListConfigureActivity : SimpleActivity() {
                 endTS = time.plusMinutes(30).seconds(),
                 title = getString(R.string.sample_title_1),
                 description = getString(R.string.sample_description_1),
-                color = getProperPrimaryColor(),
+                color = themeColor(ThemeSlot.WIDGET_SAMPLE_EVENT),
             )
         )
         time = dateTime.withHourOfDay(8)
@@ -264,7 +265,7 @@ class WidgetListConfigureActivity : SimpleActivity() {
                 endTS = time.plusHours(1).seconds(),
                 title = getString(R.string.sample_title_2),
                 description = getString(R.string.sample_description_2),
-                color = getProperPrimaryColor(),
+                color = themeColor(ThemeSlot.WIDGET_SAMPLE_EVENT),
             )
         )
 
@@ -281,7 +282,7 @@ class WidgetListConfigureActivity : SimpleActivity() {
                 endTS = time.plusHours(1).seconds(),
                 title = getString(R.string.sample_title_3),
                 description = "",
-                color = getProperPrimaryColor(),
+                color = themeColor(ThemeSlot.WIDGET_SAMPLE_EVENT),
             )
         )
         time = dateTime.withHourOfDay(13)
@@ -292,7 +293,7 @@ class WidgetListConfigureActivity : SimpleActivity() {
                 endTS = time.plusHours(1).seconds(),
                 title = getString(R.string.sample_title_4),
                 description = getString(R.string.sample_description_4),
-                color = getProperPrimaryColor(),
+                color = themeColor(ThemeSlot.WIDGET_SAMPLE_EVENT),
             )
         )
         time = dateTime.withHourOfDay(18)
@@ -303,7 +304,7 @@ class WidgetListConfigureActivity : SimpleActivity() {
                 endTS = time.plusMinutes(10).seconds(),
                 title = getString(R.string.sample_title_5),
                 description = "",
-                color = getProperPrimaryColor(),
+                color = themeColor(ThemeSlot.WIDGET_SAMPLE_EVENT),
             )
         )
 

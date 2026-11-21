@@ -1,5 +1,6 @@
 package org.fossify.calendar.fragments
 
+import org.fossify.calendar.helpers.PRINT_TEXT_COLOR
 import android.content.Context
 import android.content.res.Resources
 import android.os.Bundle
@@ -26,6 +27,8 @@ import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
 import org.fossify.commons.extensions.getProperTextColor
 import org.joda.time.DateTime
+import org.fossify.calendar.extensions.themeColor
+import org.fossify.calendar.extensions.ThemeSlot
 
 class MonthFragment : Fragment(), MonthlyCalendar {
     private var mTextColor = 0
@@ -101,7 +104,7 @@ class MonthFragment : Fragment(), MonthlyCalendar {
                 contentDescription = text
 
                 if (activity != null) {
-                    setTextColor(requireActivity().getProperTextColor())
+                    setTextColor(requireActivity().themeColor(ThemeSlot.NAV_TITLE))
                 }
             }
             updateDays(days)
@@ -109,7 +112,7 @@ class MonthFragment : Fragment(), MonthlyCalendar {
     }
 
     private fun setupButtons() {
-        mTextColor = requireContext().getProperTextColor()
+        mTextColor = requireContext().themeColor(ThemeSlot.NAV_ARROW)
 
         topNavigationBinding.topLeftArrow.apply {
             applyColorFilter(mTextColor)
@@ -141,7 +144,7 @@ class MonthFragment : Fragment(), MonthlyCalendar {
             // no padding above or below the month name: the grid takes that height
             setPadding(paddingLeft, 0, paddingRight, 0)
             includeFontPadding = false
-            setTextColor(requireContext().getProperTextColor())
+            setTextColor(requireContext().themeColor(ThemeSlot.NAV_TITLE))
             setOnClickListener {
                 (activity as MainActivity).showGoToDateDialog()
             }
@@ -158,14 +161,14 @@ class MonthFragment : Fragment(), MonthlyCalendar {
         topNavigationBinding.apply {
             topLeftArrow.beGone()
             topRightArrow.beGone()
-            topValue.setTextColor(resources.getColor(org.fossify.commons.R.color.theme_light_text_color))
+            topValue.setTextColor(PRINT_TEXT_COLOR)
             binding.monthViewWrapper.togglePrintMode()
 
             requireContext().printBitmap(binding.monthCalendarHolder.getViewBitmap())
 
             topLeftArrow.beVisible()
             topRightArrow.beVisible()
-            topValue.setTextColor(requireContext().getProperTextColor())
+            topValue.setTextColor(requireContext().themeColor(ThemeSlot.NAV_TITLE))
             binding.monthViewWrapper.togglePrintMode()
         }
     }

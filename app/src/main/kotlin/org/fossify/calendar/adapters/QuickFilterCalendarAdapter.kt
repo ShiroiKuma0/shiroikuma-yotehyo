@@ -11,6 +11,8 @@ import org.fossify.calendar.models.CalendarEntity
 import org.fossify.commons.extensions.adjustAlpha
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.helpers.LOWER_ALPHA
+import org.fossify.calendar.extensions.themeColor
+import org.fossify.calendar.extensions.ThemeSlot
 
 class QuickFilterCalendarAdapter(
     val activity: SimpleActivity,
@@ -22,8 +24,8 @@ class QuickFilterCalendarAdapter(
     private val quickFilterCalendars = ArrayList<CalendarEntity>()
     private val displayCalendars = activity.config.displayCalendars
 
-    private val textColorActive = activity.getProperTextColor()
-    private val textColorInactive = textColorActive.adjustAlpha(LOWER_ALPHA)
+    private val textColorActive = activity.themeColor(ThemeSlot.FILTER_CHIP_TEXT)
+    private val textColorInactive = activity.themeColor(ThemeSlot.FILTER_CHIP_TEXT_OFF)
 
     private val minItemWidth =
         activity.resources.getDimensionPixelSize(R.dimen.quick_filter_min_width)

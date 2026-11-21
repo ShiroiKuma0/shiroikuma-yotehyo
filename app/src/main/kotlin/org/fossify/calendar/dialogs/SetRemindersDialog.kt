@@ -19,6 +19,8 @@ import org.fossify.commons.extensions.openNotificationSettings
 import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.commons.extensions.showPickSecondsDialogHelper
 import org.fossify.commons.extensions.viewBinding
+import org.fossify.calendar.extensions.themeColor
+import org.fossify.calendar.extensions.ThemeSlot
 
 class SetRemindersDialog(
     val activity: SimpleActivity,
@@ -34,7 +36,7 @@ class SetRemindersDialog(
 
     init {
         binding.apply {
-            setRemindersImage.applyColorFilter(activity.getProperTextColor())
+            setRemindersImage.applyColorFilter(activity.themeColor(ThemeSlot.EDITOR_ICON))
             setReminders1.text = activity.getFormattedMinutes(mReminder1Minutes)
             setReminders2.text = activity.getFormattedMinutes(mReminder1Minutes)
             setReminders3.text = activity.getFormattedMinutes(mReminder1Minutes)

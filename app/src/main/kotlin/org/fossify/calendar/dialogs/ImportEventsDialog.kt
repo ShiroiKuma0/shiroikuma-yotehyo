@@ -1,6 +1,7 @@
 package org.fossify.calendar.dialogs
 
 import androidx.appcompat.app.AlertDialog
+import org.fossify.calendar.extensions.themeColor
 import org.fossify.calendar.R
 import org.fossify.calendar.activities.SimpleActivity
 import org.fossify.calendar.databinding.DialogImportEventsBinding
@@ -123,7 +124,7 @@ class ImportEventsDialog(
                 binding.importCalendarTitle.setText(calendar!!.getDisplayTitle())
                 binding.importCalendarColor.setFillWithStroke(
                     calendar.color,
-                    activity.getProperBackgroundColor()
+                    activity.themeColor(org.fossify.calendar.extensions.ThemeSlot.SWATCH_RING)
                 )
             }
         }

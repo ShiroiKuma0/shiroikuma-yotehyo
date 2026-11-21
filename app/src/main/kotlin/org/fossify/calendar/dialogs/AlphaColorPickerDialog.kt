@@ -1,5 +1,6 @@
 package org.fossify.calendar.dialogs
 
+import org.fossify.commons.extensions.colorPickerRing
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.graphics.Color
@@ -18,6 +19,8 @@ import org.fossify.commons.extensions.onGlobalLayout
 import org.fossify.commons.extensions.onTextChangeListener
 import org.fossify.commons.extensions.setFillWithStroke
 import org.fossify.commons.extensions.setupDialogStuff
+import org.fossify.calendar.extensions.themeColor
+import org.fossify.calendar.extensions.ThemeSlot
 
 private const val ALPHA_MAX = 255
 private const val HEX_LENGTH = 6
@@ -45,6 +48,7 @@ class AlphaColorPickerDialog(
     private var ignoreHexChanges = false
 
     init {
+        binding.colorPickerCursor.setImageDrawable(colorPickerRing(activity))
         Color.colorToHSV(color, currentColorHsv)
 
         binding.apply {
@@ -115,7 +119,7 @@ class AlphaColorPickerDialog(
 
         val swatchSize = activity.resources.getDimensionPixelSize(org.fossify.commons.R.dimen.colorpicker_hue_width)
         val gap = activity.resources.getDimensionPixelSize(org.fossify.commons.R.dimen.activity_margin)
-        val backgroundColor = activity.getProperBackgroundColor()
+        val backgroundColor = activity.themeColor(ThemeSlot.SWATCH_RING)
         recents.forEach { recentColor ->
             val swatch = ImageView(activity)
             swatch.layoutParams = LinearLayout.LayoutParams(swatchSize, swatchSize).apply { marginEnd = gap }

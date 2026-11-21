@@ -26,7 +26,6 @@
         android:layout_height="@dimen/quick_filter_inactive_line_size"
         android:layout_above="@id/quick_filter_calendar"
         android:layout_alignParentBottom="true"
-        android:background="@color/color_primary"
         android:clickable="false" />
 
 </RelativeLayout>
