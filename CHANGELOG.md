@@ -4,6 +4,26 @@ This file carries **both** histories. The 白い熊 予定表 fork releases come
 everything below the `# Changelog` heading further down is Fossify Calendar's own changelog,
 kept verbatim.
 
+## 白い熊 予定表 1.10.3+090 — 2026-11-22
+Built on Fossify Calendar 1.10.3.
+
+The app moves to the Commons 7 line of the shared library. Nothing changes on screen.
+
+### Packaging
+- **Patched Fossify Commons 7.1.3-sk1** replaces 6.1.6-sk19. It is every fork patch of the 6.1.6
+  line (`sk1`–`sk19`: no "fake version" check, the role colours, pill buttons and switches, themed
+  toasts and menus, renrakusaki's private contacts, …) replayed onto upstream Commons 7.1.3.
+- **`is_google_play_build` replaces `hide_google_relations`.** Commons 7 renamed the flavour switch
+  and inverted its meaning; the foss and gplay flavours define the new one and the two places that
+  read it ("More apps from us" in the menu, one FAQ entry) follow. The foss build shows neither, as
+  before.
+- The unused `pretend_thank_you_installed` switch is gone, with the "thank you" feature locks that
+  Commons 7 removed upstream.
+
+### Fixes & behavior
+- **No support prompt.** Commons 7 adds a timed donation / rating prompt upstream; in the patched
+  library it does nothing, so the app never asks.
+
 ## 白い熊 予定表 1.10.3+089 — 2026-11-21
 Built on Fossify Calendar 1.10.3.
 

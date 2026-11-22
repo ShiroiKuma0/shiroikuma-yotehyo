@@ -10,7 +10,7 @@ A fork of [Fossify Calendar](https://github.com/FossifyOrg/Calendar) with **majo
 
 Installs **side-by-side** with Fossify Calendar (app id `shiroikuma.yotehyo`).
 
-**📥 Latest release: [`1.10.3+089`](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases)
+**📥 Latest release: [`1.10.3+090`](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases)
 
 </div>
 
