@@ -4,6 +4,43 @@ This file carries **both** histories. The 白い熊 予定表 fork releases come
 everything below the `# Changelog` heading further down is Fossify Calendar's own changelog,
 kept verbatim.
 
+## 白い熊 予定表 1.12.2+002 — 2026-11-22
+Built on Fossify Calendar 1.12.2.
+
+The fork moves from upstream 1.10.3 to **1.12.2**, taking four upstream releases at once (1.11.0,
+1.12.0, 1.12.1, 1.12.2). Every fork feature is carried over. The version code moves to the `25xxxx`
+band, so this installs over any 1.10.3 build.
+
+### From upstream (Fossify Calendar 1.11.0 – 1.12.2)
+- **Manage holidays.** "Add holidays" in the menu is now "Manage holidays": one dialog lists every
+  country, with the public, regional and other holiday sets of each, and holidays can be removed
+  again as well as added. A one-time notice explains the change on the first start after the update.
+- Holidays for more countries, and updated holiday data.
+- A new current-time marker in the week view — a drawn line with a dot.
+- The monthly widgets follow the app's "show a grid" setting; the widget's own grid switch is gone.
+- No padding round the monthly widget, no clipped text in the event-list widget, and correct
+  placement of multi-day events in the monthly widget.
+- CalDAV sync fixed on Android 11 and later; the stuck zoom level of the week view fixed.
+- Updated translations.
+
+### UI & theming
+- **The week view's current-time marker keeps the "today" colour role.** Upstream draws it in the
+  text colour; here it follows the same settable role as the highlighted day.
+- **"Manage holidays" is a pill row of the menu**, with its icon, like every other action.
+- **The Manage holidays dialog lists the chosen countries first, set off from the rest** by a line
+  in the list-divider role. Its buttons are pills and its check boxes take the selection-mark roles.
+- The holiday calendar the app creates starts in the fork's default holiday colour.
+
+### Fixes & behavior
+- The styling of the monthly widget's own grid switch is removed with the switch.
+
+### Packaging
+- Version **1.12.2+002**, version code 250002. Build `+001` was the first build of the 1.12.2 line
+  and was not released.
+- Patched Fossify Commons stays **7.1.3-sk1**; upstream Calendar builds against Commons 7.1.3 too.
+- Upstream's build updates come along: Android Gradle Plugin 9.4.1, KSP 2.3.12, Room 2.8.5,
+  WorkManager 2.12.0.
+
 ## 白い熊 予定表 1.10.3+090 — 2026-11-22
 Built on Fossify Calendar 1.10.3.
 
