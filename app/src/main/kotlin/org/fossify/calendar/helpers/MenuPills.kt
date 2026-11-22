@@ -59,7 +59,7 @@ object MenuPills {
         R.id.filter to Spec(CR.drawable.ic_filter_vector, ThemeSlot.MENU_ROLE_VIEW, opens = true),
         R.id.refresh_caldav_calendars to Spec(R.drawable.ic_repeat_outline_vector, ThemeSlot.MENU_ROLE_CONNECT),
         R.id.print to Spec(CR.drawable.ic_print_vector, ThemeSlot.MENU_ROLE_SHARE, opens = true),
-        R.id.add_holidays to Spec(R.drawable.ic_event_available_vector, ThemeSlot.MENU_ROLE_VIEW, opens = true),
+        R.id.manage_holidays to Spec(R.drawable.ic_event_available_vector, ThemeSlot.MENU_ROLE_VIEW, opens = true),
         R.id.add_birthdays to Spec(CR.drawable.ic_person_outline_vector, ThemeSlot.MENU_ROLE_CONTACT, opens = true),
         R.id.add_anniversaries to Spec(CR.drawable.ic_heart_vector, ThemeSlot.MENU_ROLE_CONTACT, opens = true),
         R.id.settings to Spec(CR.drawable.ic_settings_cog_vector, ThemeSlot.MENU_ROLE_VIEW, opens = true),

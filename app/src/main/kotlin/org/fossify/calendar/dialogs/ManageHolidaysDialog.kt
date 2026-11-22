@@ -1,5 +1,7 @@
 package org.fossify.calendar.dialogs
 
+import android.view.View
+import android.widget.LinearLayout
 import org.fossify.calendar.R
 import org.fossify.calendar.activities.SimpleActivity
 import org.fossify.calendar.databinding.DialogManageHolidaysBinding
@@ -11,6 +13,9 @@ import org.fossify.commons.extensions.beVisibleIf
 import org.fossify.commons.extensions.getAlertDialogBuilder
 import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.commons.extensions.viewBinding
+import org.fossify.commons.helpers.UiRole
+import org.fossify.commons.helpers.uiColor
+import kotlin.math.roundToInt
 
 class ManageHolidaysDialog(
     private val activity: SimpleActivity,
@@ -21,8 +26,13 @@ class ManageHolidaysDialog(
     private val selectedPaths = activity.config.holidayPaths.toMutableSet()
 
     init {
-        countries.sortedWith(compareByDescending<HolidayInfo> { country -> country.paths.any { it in selectedPaths } }
-            .thenBy { it.country }).forEach(::addCountry)
+        // shiroikuma: the chosen countries lead the list as a group of their own, set off from the
+        // rest by the list divider (role LIST_DIVIDER) — groups are visibly separated.
+        val (chosen, rest) = countries.sortedBy { it.country }
+            .partition { country -> country.paths.any { it in selectedPaths } }
+        chosen.forEach(::addCountry)
+        if (chosen.isNotEmpty() && rest.isNotEmpty()) addGroupDivider()
+        rest.forEach(::addCountry)
         activity.getAlertDialogBuilder()
             .setPositiveButton(org.fossify.commons.R.string.ok) { _, _ ->
                 val paths = selectedPaths.toSet()
@@ -37,6 +47,21 @@ class ManageHolidaysDialog(
             .apply {
                 activity.setupDialogStuff(binding.root, this, R.string.manage_holidays)
             }
+    }
+
+    private fun addGroupDivider() {
+        val res = activity.resources
+        val line = View(activity).apply { setBackgroundColor(activity.uiColor(UiRole.LIST_DIVIDER)) }
+        val params = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, res.displayMetrics.density.roundToInt().coerceAtLeast(1)
+        ).apply {
+            marginStart = res.getDimensionPixelSize(org.fossify.commons.R.dimen.activity_margin)
+            marginEnd = res.getDimensionPixelSize(org.fossify.commons.R.dimen.big_margin)
+            val gap = res.getDimensionPixelSize(org.fossify.commons.R.dimen.small_margin)
+            topMargin = gap
+            bottomMargin = gap
+        }
+        binding.holidayCountries.addView(line, params)
     }
 
     private fun addCountry(info: HolidayInfo) {
