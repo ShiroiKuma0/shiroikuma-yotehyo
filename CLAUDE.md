@@ -162,15 +162,20 @@ When the user instructs a rebase to a new upstream release:
 ## Patched Fossify Commons (anti-tamper removed + fork-package fixes)
 
 This fork builds against **our patched Fossify Commons**, not the upstream binary. Upstream Commons
-6.1.x shows a "You are using a fake version of the app…" dialog whenever the installed app id is not
+6.1.x and later shows a "You are using a fake version of the app…" dialog whenever the installed app id is not
 `org.fossify.*` — always the case for us (`shiroikuma.*`). (Its "Customize colors" screen is gone from
 the fork as of `-sk18`; this app has no such Settings row and no `CustomizationActivity` entry.)
 
 - **Source:** the `shiroikuma-commons` fork (`~/git/shiroikuma-commons`, branch `custom`), which strips
   Commons' anti-tamper "fake version" / sideloading checks out entirely **and** carries fork-package
   fixes for spots where Commons hard-codes `org.fossify.*` (documented in that repo's CLAUDE.md).
-- **Delivery:** published to the local Maven repo, consumed as `commons = "6.1.6-sk19"` in
+- **Delivery:** published to the local Maven repo, consumed as `commons = "7.1.3-sk1"` in
   `gradle/libs.versions.toml` (`mavenLocal()` is already a repository in `settings.gradle.kts`).
+- **Commons 7 (+090, 2026-11-22):** `7.1.3-sk1` is every patch of `6.1.6-sk1`–`sk19` replayed onto
+  upstream Commons 7.1.3, so the `-skN` labels below name the 6.1.6-line revision that introduced each
+  patch; all of them are in `7.1.3-sk1`. The move changed only the flavour bool: `hide_google_relations`
+  became `is_google_play_build` (inverted; false for foss, true for gplay) in the flavours' `bools.xml`
+  and in `MainActivity`'s two checks. A further Commons change is published as `7.1.3-sk2`, ….
 - Because Commons itself no longer nags, this app carries **no** in-app workaround — no `getPackageName`
   spoof, no `SIDELOADING_FALSE`, no `res/raw/keep.xml`.
 
@@ -250,7 +255,7 @@ git checkout <new-commons-tag>     # then re-apply all patches (anti-tamper stri
 JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 ./gradlew :commons:publishToMavenLocal -PVERSION=<ver>-skN
 ```
 
-Then set this app's `commons` pin to the same `<ver>-skN` (currently `6.1.6-sk19`; `-skN` is our patch
+Then set this app's `commons` pin to the same `<ver>-skN` (currently `7.1.3-sk1`; `-skN` is our patch
 revision — see the commons fork's CLAUDE.md). The patched AAR lives only in `~/.m2`, not in the repo.
 
 ## Commit convention — no Claude attribution
