@@ -42,18 +42,18 @@ These are wired through `gradle.properties` and `app/build.gradle.kts`:
 We always base our version on upstream and add a fork build increment.
 
 Values live in `gradle.properties`:
-- `VERSION_NAME` — upstream version name (e.g. `1.10.3`).
-- `VERSION_CODE` — upstream version **code** that corresponds to that name (e.g. `20` for 1.10.3).
+- `VERSION_NAME` — upstream version name (e.g. `1.12.2`).
+- `VERSION_CODE` — upstream version **code** that corresponds to that name (e.g. `25` for 1.12.2).
 - `BUILD_NUMBER` — our fork increment ("+N"), stored as a **plain integer**. Starts at `1` for the
   first build of a given upstream version.
 
 `app/build.gradle.kts` computes the installed values:
-- **versionName** = `"<VERSION_NAME>+<BUILD_NUMBER padded to 3 digits>"`  → e.g. `1.10.3+001`
-- **versionCode** = `VERSION_CODE * 10000 + BUILD_NUMBER`  → e.g. `20 * 10000 + 1 = 200001`
+- **versionName** = `"<VERSION_NAME>+<BUILD_NUMBER padded to 3 digits>"`  → e.g. `1.12.2+001`
+- **versionCode** = `VERSION_CODE * 10000 + BUILD_NUMBER`  → e.g. `25 * 10000 + 1 = 250001`
 
 This makes the versionCode strictly increase across every rebuild of the same upstream version
-(`200001`, `200002`, …) so in-place updates on the phone always work, and it jumps to the next
-band when upstream changes (e.g. `1.11.0` code 22 → `220001`).
+(`250001`, `250002`, …) so in-place updates on the phone always work, and it jumps to the next
+band when upstream changes (the 1.10.3 line was `20xxxx`; 1.12.2, code 25, is `25xxxx`).
 
 ### Zero-padding the "+N" (global convention)
 
@@ -73,13 +73,13 @@ keep their unpadded names; the repo adopted the padding at `+053`. For a while t
 *before* the older unpadded ones (`+053` < `+9` as text) — that settles as the old builds age out.
 
 The output APK is named `shiroikuma-yotehyo_<VERSION_NAME>+<NNN>_arm64-v8a.apk`
-(e.g. `shiroikuma-yotehyo_1.10.3+053_arm64-v8a.apk`). The `arm64-v8a` label is a naming convention;
+(e.g. `shiroikuma-yotehyo_1.12.2+001_arm64-v8a.apk`). The `arm64-v8a` label is a naming convention;
 the build produces a single universal APK (no ABI splits), which runs on arm64-v8a.
 
-> Note on the `VERSION_CODE=20` base: upstream's `gradle.properties` briefly carried `21` from a
-> `1.11.0` release that was reverted back to `1.10.3` (version code left at 21). We use `20`, the
-> code that actually corresponds to the `1.10.3` name. On a clean future upstream release the name
-> and code are consistent, so just copy upstream's `VERSION_CODE` verbatim.
+> The fork is on upstream **1.12.2** (`VERSION_CODE=25`) since 2026-11-22; name and code are
+> consistent there, so `VERSION_CODE` is upstream's value verbatim — do the same on every later release.
+> History: the 1.10.3 line (builds `+1` … `+090`) used `20`, because upstream's `gradle.properties`
+> briefly carried `21` from a `1.11.0` release that was reverted back to `1.10.3`.
 
 ### Bump rules
 - **Every build with changes** bumps `BUILD_NUMBER` by 1. The `buildFoss` Gradle task does this
@@ -115,16 +115,17 @@ Release signing is non-interactive via `keystore.properties` (gitignored). This 
 `shiroikuma-denwa` keystore**: `/home/shiroikuma/.android-keystores/shiroikuma-denwa.jks`, alias `denwa`.
 Without `keystore.properties` (or `SIGNING_*` env vars) the build is unsigned and will not install.
 
-## Installing to the phone — STRICT RULE
+## Delivering to the phone — always, never installing
 
-**Never install the APK to the phone, and never push without asking.** After every build:
-1. **Ask** the user whether to push the APK.
-2. Only when the user confirms, `adb push` the APK to `/sdcard/tmp/` on the device:
-   ```bash
-   adb shell mkdir -p /sdcard/tmp
-   adb push ~/tmp/<apk name> /sdcard/tmp/<apk name>
-   ```
-The user installs it manually from `/sdcard/tmp/`.
+**Every signed build is delivered to the phone automatically — no asking** (白い熊, 2026-11-22; this
+replaces the older "ask before every push" rule). After `buildFoss` succeeds, run the global
+**/after-build** flow: `/adb-check` (unsandboxed), then `adb push` the APK to `/sdcard/tmp/`, or `/scp`
+to `skhw:~/tmp/` when adb does not reach the phone — one path only — and disconnect wireless adb at the
+end of the batch.
+
+- **Never install the APK** (`adb install`). It is only pushed; 白い熊 installs it from `/sdcard/tmp/`.
+- **Only the signed release APK is delivered.** An unsigned or debug build stays in `~/tmp`.
+- Say plainly which file landed and where.
 
 ## Committing & pushing — STRICT RULE
 
@@ -139,7 +140,20 @@ When the user instructs a rebase to a new upstream release:
    are intentionally small and isolated (`gradle.properties`, the versioning/`buildFoss`/namespace edits
    in `app/build.gradle.kts`, the `app_launcher_name` string, plus any feature work).
 3. Update `VERSION_NAME`/`VERSION_CODE` to the new upstream values and reset `BUILD_NUMBER=1`.
-4. Build the new `+1` and continue normal `+N` development from there.
+4. Build the new `+001` and continue normal `+N` development from there.
+
+The full procedure, with the conflict patterns met so far, is the **`upstream-new-version` skill**.
+
+**What upstream 1.12.2 changed under the fork** (rebased 2026-11-22, from 1.10.3):
+- The week view's "now" marker is upstream's drawn `views/CurrentTimeIndicatorView` (the `weekly_now`
+  9-patch is gone). The fork adds `setColor()` to it, and `WeekFragment` passes the "today" role.
+- The monthly widget's own "Show a grid" switch and `Config.widgetShowGrid` are gone; the widget follows
+  the app's grid setting.
+- "Add holidays" became **"Manage holidays"** (`R.id.manage_holidays`, `dialogs/ManageHolidaysDialog`),
+  and the import moved from `MainActivity` into `helpers/HolidayHelper`, which takes the fork's
+  `DEFAULT_HOLIDAYS_COLOR` constant. The dialog is a pure choice list of selection marks; the fork adds
+  the `LIST_DIVIDER` line between the chosen countries and the rest.
+- Upstream itself builds against Commons 7.1.3 now, so the `7.1.3-sk1` pin needed no re-cut.
 
 ## Architecture (upstream Fossify Calendar)
 

@@ -3,7 +3,7 @@ name: build-apk
 description: Build the signed foss release APK with the buildFoss Gradle task. Build PROACTIVELY as soon as a coherent code change is complete and compiles — do NOT wait for the user to say "build it". Then deliver the APK automatically via the global /after-build skill (adb push if a phone is connected, else scp to skhw — no transfer prompt). Also use whenever the user explicitly asks to build the app, build the APK, make a release build, or build and send to the phone.
 ---
 
-# Build the foss release APK and optionally send to phone
+# Build the foss release APK and deliver it to the phone
 
 ## When to build
 
@@ -20,7 +20,7 @@ build, send the APK via the global **/after-build** skill (step 3) — no transf
 
 1. **Note the output filename.** Read the current version and build number:
    - `grep -E 'VERSION_NAME|BUILD_NUMBER' gradle.properties`
-   - The APK will be `shiroikuma-yotehyo_<VERSION_NAME>+<NNN>_arm64-v8a.apk`, using the `BUILD_NUMBER` value **before** the build (the task bumps it afterward), **zero-padded to three digits** — `BUILD_NUMBER=53` → `1.10.3+053`. The padding is applied by `app/build.gradle.kts`; `gradle.properties` stores the plain integer.
+   - The APK will be `shiroikuma-yotehyo_<VERSION_NAME>+<NNN>_arm64-v8a.apk`, using the `BUILD_NUMBER` value **before** the build (the task bumps it afterward), **zero-padded to three digits** — `BUILD_NUMBER=3` → `1.12.2+003`. The padding is applied by `app/build.gradle.kts`; `gradle.properties` stores the plain integer.
 
 2. **Build** (the toolchain needs JDK 21 — the default `java` on PATH is too old for AGP 9.x):
    - `JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 ./gradlew buildFoss < /dev/null`  (the `< /dev/null` guarantees it never blocks on stdin — see caveat)
