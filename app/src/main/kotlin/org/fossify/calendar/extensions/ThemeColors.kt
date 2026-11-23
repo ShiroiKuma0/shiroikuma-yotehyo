@@ -8,15 +8,16 @@ import org.fossify.calendar.helpers.DIALOG_BORDER_WIDTH_DEFAULT
 import androidx.core.graphics.ColorUtils
 import org.fossify.calendar.helpers.PALETTE_BLACK
 import org.fossify.calendar.helpers.PALETTE_BLUE
-import org.fossify.calendar.helpers.PALETTE_CYAN
-import org.fossify.calendar.helpers.PALETTE_GREEN
-import org.fossify.calendar.helpers.PALETTE_MAGENTA
 import org.fossify.calendar.helpers.PALETTE_WARNING
 import org.fossify.calendar.helpers.PALETTE_WEEKEND
 import org.fossify.commons.helpers.MEDIUM_ALPHA
 import org.fossify.commons.helpers.resetAllUiColors
 import org.fossify.calendar.helpers.PALETTE_ORANGE
+import org.fossify.calendar.helpers.PALETTE_DEEP_BLUE
+import org.fossify.calendar.helpers.PALETTE_DEEP_GREEN
 import org.fossify.calendar.helpers.PALETTE_RED
+import org.fossify.calendar.helpers.PALETTE_ROSE
+import org.fossify.calendar.helpers.PALETTE_SKY
 import org.fossify.calendar.helpers.PALETTE_YELLOW
 import org.fossify.calendar.helpers.THEME_UNSET
 import org.fossify.calendar.helpers.TODAY_BOX_BORDER_THICKNESS_DEFAULT
@@ -59,6 +60,7 @@ enum class ThemeGroup(@StringRes val labelRes: Int) {
     EXIM_PANEL(R.string.theme_sub_exim_panel),
     FONT_PICKER(R.string.theme_sub_font_picker),
     WIDGET_SETUP(R.string.theme_sub_widget_setup),
+    SECTION_ICONS(R.string.theme_sub_section_icons),
 }
 
 enum class ThemeSlot(
@@ -146,6 +148,17 @@ enum class ThemeSlot(
     FAB_MENU_FRAME("theme_fab_menu_frame", ThemeGroup.BUTTONS, R.string.theme_fab_menu_frame),
     FAB_MENU_GROUND("theme_fab_menu_ground", ThemeGroup.BUTTONS, R.string.theme_fab_menu_ground),
     FAB_MENU_SCRIM("theme_fab_menu_scrim", ThemeGroup.BUTTONS, R.string.theme_fab_menu_scrim),
+    FAB_MENU_PANEL_FRAME("theme_fab_menu_panel_frame", ThemeGroup.BUTTONS, R.string.theme_fab_menu_panel_frame),
+    FAB_MENU_PANEL_GROUND("theme_fab_menu_panel_ground", ThemeGroup.BUTTONS, R.string.theme_fab_menu_panel_ground),
+
+    // The UI page's section icons, on heading and chip: the colour says what kind of thing the section is
+    SECTION_BASE("theme_section_base", ThemeGroup.SECTION_ICONS, R.string.theme_section_base),
+    SECTION_CONTROLS("theme_section_controls", ThemeGroup.SECTION_ICONS, R.string.theme_section_controls),
+    SECTION_WORDS("theme_section_words", ThemeGroup.SECTION_ICONS, R.string.theme_section_words),
+    SECTION_FRAME("theme_section_frame", ThemeGroup.SECTION_ICONS, R.string.theme_section_frame),
+    SECTION_REACH("theme_section_reach", ThemeGroup.SECTION_ICONS, R.string.theme_section_reach),
+    SECTION_WARNING("theme_section_warning", ThemeGroup.SECTION_ICONS, R.string.theme_section_warning),
+    SECTION_FLASH("theme_section_flash", ThemeGroup.SECTION_ICONS, R.string.theme_section_flash),
 
     // The keyboard time entry: one box per digit
     TIME_CELL_FRAME("theme_time_cell_frame", ThemeGroup.DIALOGS, R.string.theme_time_cell_frame),
@@ -258,12 +271,12 @@ private fun Context.themeDefault(slot: ThemeSlot): Int = when (slot) {
     ThemeSlot.TIME_ZONE_TEXT -> dimmedColor(themeColor(ThemeSlot.TEXT))
     ThemeSlot.TIME_ZONE_TAG -> themeColor(ThemeSlot.PRIMARY)
 
-    ThemeSlot.MENU_ROLE_CONTACT -> PALETTE_CYAN
+    ThemeSlot.MENU_ROLE_CONTACT -> PALETTE_SKY
     ThemeSlot.MENU_ROLE_SHARE -> PALETTE_ORANGE
     ThemeSlot.MENU_ROLE_VIEW -> themeColor(ThemeSlot.PRIMARY)
     ThemeSlot.MENU_ROLE_DELETE -> PALETTE_RED
-    ThemeSlot.MENU_ROLE_CONNECT -> PALETTE_GREEN
-    ThemeSlot.MENU_ROLE_BLOCK -> PALETTE_MAGENTA
+    ThemeSlot.MENU_ROLE_CONNECT -> PALETTE_DEEP_GREEN
+    ThemeSlot.MENU_ROLE_BLOCK -> PALETTE_ROSE
 
     ThemeSlot.STATUS_WARNING -> PALETTE_WARNING
 
@@ -271,6 +284,15 @@ private fun Context.themeDefault(slot: ThemeSlot): Int = when (slot) {
     ThemeSlot.FAB_MENU_FRAME -> uiColor(UiRole.BUTTON_FRAME)
     ThemeSlot.FAB_MENU_GROUND -> uiColor(UiRole.BUTTON_GROUND)
     ThemeSlot.FAB_MENU_SCRIM -> themeColor(ThemeSlot.BACKGROUND).adjustAlpha(SCRIM_ALPHA)
+    ThemeSlot.FAB_MENU_PANEL_FRAME -> uiColor(UiRole.MENU_FRAME)
+    ThemeSlot.FAB_MENU_PANEL_GROUND -> uiColor(UiRole.MENU_GROUND)
+    ThemeSlot.SECTION_BASE -> themeColor(ThemeSlot.PRIMARY)
+    ThemeSlot.SECTION_CONTROLS -> PALETTE_DEEP_GREEN
+    ThemeSlot.SECTION_WORDS -> PALETTE_SKY
+    ThemeSlot.SECTION_FRAME -> PALETTE_DEEP_BLUE
+    ThemeSlot.SECTION_REACH -> PALETTE_ORANGE
+    ThemeSlot.SECTION_WARNING -> PALETTE_RED
+    ThemeSlot.SECTION_FLASH -> PALETTE_ROSE
 
     ThemeSlot.TIME_CELL_FRAME -> themeColor(ThemeSlot.PRIMARY)
     ThemeSlot.TIME_CELL_GROUND -> uiColor(UiRole.DIALOG_GROUND)

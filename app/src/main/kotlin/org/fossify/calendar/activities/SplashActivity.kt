@@ -1,5 +1,7 @@
 package org.fossify.calendar.activities
 
+import org.fossify.calendar.extensions.withAppLanguage
+import android.content.Context
 import android.content.Intent
 import org.fossify.calendar.extensions.getNewEventTimestampFromCode
 import org.fossify.calendar.helpers.*
@@ -9,6 +11,8 @@ import org.joda.time.DateTime
 // Commons' sideloading detection is neutralised app-wide in App.onCreate, plus a resource keep
 // rule (res/raw/keep.xml) keeps the drawable it probes, so there is nothing to handle here.
 class SplashActivity : BaseSplashActivity() {
+    override fun attachBaseContext(newBase: Context) = super.attachBaseContext(newBase.withAppLanguage())
+
     override fun initActivity() {
         when {
             intent.extras?.containsKey(DAY_CODE) == true -> Intent(this, MainActivity::class.java).apply {

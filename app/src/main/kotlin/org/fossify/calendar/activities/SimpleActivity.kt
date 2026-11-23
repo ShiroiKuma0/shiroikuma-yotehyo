@@ -1,5 +1,6 @@
 package org.fossify.calendar.activities
 
+import org.fossify.calendar.extensions.withAppLanguage
 import android.content.Context
 import android.database.ContentObserver
 import android.os.Handler
@@ -25,6 +26,8 @@ import org.fossify.commons.helpers.isSPlus
 import org.fossify.commons.helpers.isTiramisuPlus
 
 open class SimpleActivity : BaseSimpleActivity() {
+    override fun attachBaseContext(newBase: Context) = super.attachBaseContext(newBase.withAppLanguage())
+
     val CALDAV_REFRESH_DELAY = 3000L
     val calDAVRefreshHandler = Handler()
     var calDAVRefreshCallback: (() -> Unit)? = null

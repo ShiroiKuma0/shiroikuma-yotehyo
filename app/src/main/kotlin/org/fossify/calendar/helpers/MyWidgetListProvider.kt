@@ -47,6 +47,9 @@ class MyWidgetListProvider : AppWidgetProvider() {
 
                 val views = RemoteViews(context.packageName, R.layout.widget_event_list).apply {
                     applyColorFilter(R.id.widget_event_list_background, context.config.widgetBgColor)
+                    // set here, not left to the layout: the launcher would resolve the layout's string in
+                    // the system language, not in the app's own
+                    setTextViewText(R.id.widget_event_list_empty, context.getString(R.string.no_upcoming_events))
                     setTextColor(R.id.widget_event_list_empty, textColor)
                     setTextSize(R.id.widget_event_list_empty, fontSize)
 
@@ -136,6 +139,7 @@ class MyWidgetListProvider : AppWidgetProvider() {
                 }
 
                 val views = RemoteViews(context.packageName, R.layout.widget_event_list).apply {
+                    setTextViewText(R.id.widget_event_list_empty, context.getString(R.string.no_upcoming_events))
                     setViewVisibility(R.id.widget_event_list_today, headerVisibility)
                     setViewVisibility(R.id.widget_event_go_to_today, headerVisibility)
                     setViewVisibility(R.id.widget_event_new_event, headerVisibility)

@@ -4,4 +4,5 @@
     <item name="outlined_switch_tag" type="id" />
     <!-- Marks a Settings row whose label was already turned into a pill (SettingsActivity.pillRow) -->
     <item name="settings_row_styled" type="id" />
+    <item name="row_icon_sizer" type="id" />
 </resources>

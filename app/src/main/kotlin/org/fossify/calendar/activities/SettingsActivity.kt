@@ -139,6 +139,7 @@ import org.fossify.commons.helpers.isRPlus
 import org.fossify.commons.helpers.isTiramisuPlus
 import org.fossify.commons.models.AlarmSound
 import org.fossify.commons.models.RadioItem
+import org.fossify.calendar.extensions.setLabelIcon
 import org.joda.time.DateTime
 import org.joda.time.DateTimeConstants
 import java.io.File
@@ -159,8 +160,6 @@ import android.view.View
 import org.fossify.commons.R as CR
 
 // A row's icon, and the pill of a row that opens something.
-private const val ROW_ICON_DP = 20
-private const val ROW_ICON_GAP_DP = 10
 private const val PILL_PAD_H_DP = 16
 private const val PILL_PAD_V_DP = 9
 private const val PILL_ROW_PAD_DP = 3
@@ -348,20 +347,15 @@ class SettingsActivity : SimpleActivity() {
         settingsHomeTimeZoneLabel.valueRow(R.drawable.ic_globe_vector, view, settingsHomeTimeZone)
     }
 
-    private fun TextView.rowIcon(iconRes: Int, slot: ThemeSlot) {
-        val density = resources.displayMetrics.density
-        val size = (ROW_ICON_DP * density).roundToInt()
-        val icon = resources.getColoredDrawableWithColor(iconRes, themeColor(slot))
-        icon.setBounds(0, 0, size, size)
-        setCompoundDrawablesRelative(icon, null, null, null)
-        compoundDrawablePadding = (ROW_ICON_GAP_DP * density).roundToInt()
-    }
+    // sized by the label: 1.25 × its text size, never under 18 dp (extensions/RowIcons.kt)
+    private fun TextView.rowIcon(iconRes: Int, slot: ThemeSlot, onGutter: ((Int) -> Unit)? = null) =
+        setLabelIcon(iconRes, themeColor(slot), onGutter)
 
     // The value sits under the label's text, not under its icon; it is what a tap changes, so in the accent.
     private fun TextView.valueRow(iconRes: Int, slot: ThemeSlot, value: TextView) {
-        rowIcon(iconRes, slot)
-        val inset = ((ROW_ICON_DP + ROW_ICON_GAP_DP) * resources.displayMetrics.density).roundToInt()
-        value.setPaddingRelative(inset, value.paddingTop, value.paddingEnd, value.paddingBottom)
+        rowIcon(iconRes, slot) { gutter ->
+            value.setPaddingRelative(gutter, value.paddingTop, value.paddingEnd, value.paddingBottom)
+        }
         value.setTextColor(themeColor(ThemeSlot.SETTINGS_VALUE))
     }
 
@@ -471,23 +465,11 @@ class SettingsActivity : SimpleActivity() {
         }
     }
 
-    private fun setupUseEnglish() = binding.apply {
-        settingsUseEnglishHolder.beVisibleIf((config.wasUseEnglishToggled || Locale.getDefault().language != "en") && !isTiramisuPlus())
-        settingsUseEnglish.isChecked = config.useEnglish
-        settingsUseEnglishHolder.setOnClickListener {
-            settingsUseEnglish.toggle()
-            config.useEnglish = settingsUseEnglish.isChecked
-            exitProcess(0)
-        }
-    }
+    // Superseded by the language picker below; an install that had it on was moved to English.
+    private fun setupUseEnglish() = binding.settingsUseEnglishHolder.beGone()
 
-    private fun setupLanguage() = binding.apply {
-        settingsLanguage.text = Locale.getDefault().displayLanguage
-        settingsLanguageHolder.beVisibleIf(isTiramisuPlus())
-        settingsLanguageHolder.setOnClickListener {
-            launchChangeAppLanguageIntent()
-        }
-    }
+    // The app's language is chosen on the UI page ("App's language"), not here.
+    private fun setupLanguage() = binding.settingsLanguageHolder.beGone()
 
     private fun setupManageCalendars() {
         binding.settingsManageCalendarsHolder.setOnClickListener {

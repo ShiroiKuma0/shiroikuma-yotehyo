@@ -79,6 +79,18 @@ android {
         buildConfig = true
     }
 
+    // The languages the in-app picker offers: one per values-<language> directory, as BCP 47 tags.
+    defaultConfig {
+        val localeDir = Regex("^values-([a-z]{2,3})(?:-r([A-Z]{2}))?$")
+        val bcpDir = Regex("^values-b\\+(.+)$")
+        val tags = file("src/main/res").listFiles().orEmpty().mapNotNull { dir ->
+            localeDir.find(dir.name)?.let { m ->
+                m.groupValues[1] + if (m.groupValues[2].isEmpty()) "" else "-" + m.groupValues[2]
+            } ?: bcpDir.find(dir.name)?.groupValues?.get(1)?.replace('+', '-')
+        }.sorted()
+        buildConfigField("String", "APP_LOCALES", "\"${(listOf("en") + tags).joinToString(",")}\"")
+    }
+
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"

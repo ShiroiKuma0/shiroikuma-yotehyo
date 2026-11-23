@@ -1,6 +1,9 @@
 package org.fossify.calendar
 
+import android.content.res.Configuration
+import org.fossify.calendar.extensions.applyAppLanguage
 import org.fossify.calendar.extensions.hasDummyAlarm
+import org.fossify.calendar.extensions.migrateUseEnglishToAppLanguage
 import org.fossify.calendar.extensions.migrateSlotsToRoles
 import org.fossify.calendar.extensions.migrateToPureYellowIfNeeded
 import org.fossify.calendar.extensions.seedBlackYellowThemeIfNeeded
@@ -13,6 +16,9 @@ import org.fossify.commons.FossifyApp
 class App : FossifyApp() {
     override fun onCreate() {
         super.onCreate()
+        // The app's own language, before anything builds a string.
+        migrateUseEnglishToAppLanguage()
+        applyAppLanguage()
         // Apply the default black/yellow look once, before any activity themes itself.
         seedBlackYellowThemeIfNeeded()
         // Seed the yellow dialog border + boxed buttons once (separate flag so existing installs get it).
@@ -26,5 +32,10 @@ class App : FossifyApp() {
         if (!hasDummyAlarm()) {
             AppStartupWorker.start(this)
         }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        applyAppLanguage()
     }
 }

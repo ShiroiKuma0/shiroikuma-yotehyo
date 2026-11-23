@@ -1,5 +1,7 @@
 package org.fossify.calendar.activities
 
+import org.fossify.calendar.extensions.withAppLanguage
+import android.content.Context
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import org.fossify.calendar.R
@@ -9,6 +11,8 @@ import org.fossify.commons.dialogs.RadioGroupDialog
 import org.fossify.commons.models.RadioItem
 
 class CalendarPickerActivity : AppCompatActivity() {
+    override fun attachBaseContext(newBase: Context) = super.attachBaseContext(newBase.withAppLanguage())
+
     private val TYPE_EVENT = 0
     private val TYPE_TASK = 1
 

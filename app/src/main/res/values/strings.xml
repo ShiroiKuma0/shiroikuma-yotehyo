@@ -9,28 +9,28 @@
     <string name="theme_and_colors">Theme &amp; colors</string>
     <!-- 白い熊 予定表 UI: category-based settings Export/Import (top section of the UI page) -->
     <string name="eim_heading">Export / Import</string>
-    <string name="eim_desc">Export or import everything — events &amp; tasks, colours, fonts, calendar categories, widgets — by category.</string>
+    <string name="eim_desc">Export or import everything — appointments &amp; to-dos, colours, fonts, calendar categories, widgets — by category.</string>
     <string name="eim_dir">Export directory (tap to choose)</string>
     <string name="eim_dir_unset">Not set — tap to choose a directory</string>
     <string name="eim_warn_nodir">No directory set yet — pick one to enable one-tap export.</string>
     <string name="eim_warn_none">No export in this directory yet.</string>
     <string name="eim_last">Last export: %1$s</string>
     <string name="eim_select_all">Select all</string>
-    <string name="eim_cat_events">All calendars (all events &amp; tasks)</string>
+    <string name="eim_cat_events">All calendars (all appointments &amp; to-dos)</string>
     <string name="eim_cat_general">General settings</string>
     <string name="eim_cat_ui">UI &amp; theme (colours, grid, dialogs)</string>
     <string name="eim_cat_fonts">Imported font files</string>
     <string name="eim_cat_widgets">Widgets</string>
     <string name="eim_cat_calendars">Calendar categories</string>
     <!-- Bare category nouns, used in the automation progress lines ("Categories 3/6 — Widgets") -->
-    <string name="eim_cat_events_short">Events</string>
+    <string name="eim_cat_events_short">Appointments</string>
     <string name="eim_cat_general_short">General</string>
     <string name="eim_cat_ui_short">UI &amp; theme</string>
     <string name="eim_cat_fonts_short">Fonts</string>
     <string name="eim_cat_widgets_short">Widgets</string>
     <string name="eim_cat_calendars_short">Calendars</string>
     <string name="state_progress_unit_category">Categories</string>
-    <string name="state_progress_unit_events">Events</string>
+    <string name="state_progress_unit_events">Appointments</string>
     <string name="eim_export">Export</string>
     <string name="eim_import">Import</string>
     <string name="eim_none_selected">No categories selected.</string>
@@ -65,7 +65,7 @@
          calendar has two halves and only one of them is ours: local events and tasks exist nowhere
          else, while a synced account\'s calendars come back by themselves once it is signed in. The
          rows say which is which, so 白い熊 can tell from the list what the backup is really keeping. -->
-    <string name="automation_contains_events">Local events and tasks — reminders and repeat rules</string>
+    <string name="automation_contains_events">Local appointments and to-dos — reminders and repeat rules</string>
     <string name="automation_contains_calendars">Local calendar categories and their styling</string>
     <string name="automation_contains_settings">Settings</string>
     <string name="automation_contains_appearance">Appearance — colours and imported fonts</string>
@@ -107,7 +107,7 @@
     <string name="theme_grid_line_right">Right border</string>
     <string name="theme_grid_line_color">Line color</string>
     <string name="theme_grid_line_thickness">Line thickness</string>
-    <string name="theme_event_text">Event text</string>
+    <string name="theme_event_text">Appointment text</string>
     <string name="theme_today_box_fill">Today box fill</string>
     <string name="theme_day_box_header">Header background</string>
     <string name="theme_day_box_header_text">Header text</string>
@@ -127,7 +127,7 @@
     <string name="theme_date_format_custom">Custom format…</string>
     <string name="theme_date_format_pattern_hint">Date pattern</string>
     <string name="theme_date_format_legend">Pattern letters: d day, M month, y year, E weekday, G era. Repeat a letter for longer forms (EEEE = full weekday name). Any other characters appear literally.</string>
-    <string name="theme_event_time_format">Event time format</string>
+    <string name="theme_event_time_format">Appointment time format</string>
     <string name="theme_category_background">Background colour</string>
     <string name="category_add_font_hint">Import new fonts from the 白い熊 予定表 UI settings page.</string>
     <string name="category_day_frame">Whole-day frame</string>
@@ -166,7 +166,7 @@
     <string name="font_weight_bold">Bold (700)</string>
     <string name="font_weight_black">Black (900)</string>
     <string name="theme_sub_weekly_view">Weekly view</string>
-    <string name="theme_sub_events">Events</string>
+    <string name="theme_sub_events">Appointments</string>
     <string name="theme_sub_day_boxes">Day boxes</string>
     <string name="theme_sub_today_boxes">Today boxes</string>
     <string name="theme_sub_weekend_boxes">Weekend boxes</string>
@@ -190,44 +190,44 @@
     <string name="monthly_view">Monthly view</string>
     <string name="monthly_daily_view">Monthly and daily view</string>
     <string name="yearly_view">Yearly view</string>
-    <string name="simple_event_list">Simple event list</string>
-    <string name="no_upcoming_events">No upcoming events.</string>
+    <string name="simple_event_list">Simple appointment list</string>
+    <string name="no_upcoming_events">No upcoming appointments.</string>
     <string name="go_to_today">Go to today</string>
     <string name="go_to_date">Go to date</string>
 
     <!-- Widget titles -->
     <string name="widget_monthly">Calendar monthly</string>
-    <string name="widget_list">Calendar event list</string>
+    <string name="widget_list">Calendar appointment list</string>
     <string name="widget_todays_date">Calendar today\'s date</string>
 
     <!-- Event -->
-    <string name="event">Event</string>
-    <string name="edit_event">Edit Event</string>
-    <string name="new_event">New Event</string>
-    <string name="create_new_event">Create a new event</string>
-    <string name="duplicate_event">Duplicate event</string>
+    <string name="event">Appointment</string>
+    <string name="edit_event">Edit Appointment</string>
+    <string name="new_event">New Appointment</string>
+    <string name="create_new_event">Create a new appointment</string>
+    <string name="duplicate_event">Duplicate appointment</string>
     <string name="title_empty">Title cannot be empty</string>
-    <string name="end_before_start">The event cannot end earlier than it starts</string>
-    <string name="event_added">Event added successfully</string>
-    <string name="event_updated">Event updated successfully</string>
-    <string name="filter_events_by_type">Filter events by calendar</string>
+    <string name="end_before_start">The appointment cannot end earlier than it starts</string>
+    <string name="event_added">Appointment added successfully</string>
+    <string name="event_updated">Appointment updated successfully</string>
+    <string name="filter_events_by_type">Filter appointments by calendar</string>
     <string name="please_fill_location">Please fill in a location to be shown on a map</string>
-    <string name="public_event_notification_text">An event is upcoming</string>
+    <string name="public_event_notification_text">An appointment is upcoming</string>
     <string name="everything_filtered_out">You have filtered out all calendars</string>
-    <string name="event_color">Event color</string>
+    <string name="event_color">Appointment color</string>
     <string name="default_calendar_color">Default calendar color</string>
 
     <!-- Tasks -->
-    <string name="task">Task</string>
-    <string name="tasks">Tasks</string>
-    <string name="edit_task">Edit Task</string>
-    <string name="new_task">New Task</string>
-    <string name="create_new_task">Create a new task</string>
-    <string name="duplicate_task">Duplicate task</string>
+    <string name="task">To-do</string>
+    <string name="tasks">To-dos</string>
+    <string name="edit_task">Edit To-do</string>
+    <string name="new_task">New To-do</string>
+    <string name="create_new_task">Create a new to-do</string>
+    <string name="duplicate_task">Duplicate to-do</string>
     <string name="mark_completed">Mark completed</string>
     <string name="mark_incomplete">Mark incomplete</string>
     <string name="fixed_entry">Fixed entry (no checkbox, never rolls over)</string>
-    <string name="task_color">Task color</string>
+    <string name="task_color">To-do color</string>
 
     <!-- Event Repetition -->
     <string name="repetition">Repetition</string>
@@ -241,9 +241,9 @@
     <string name="years_raw">years</string>
     <string name="repeat_till">Repeat till</string>
     <string name="forever">Forever</string>
-    <string name="event_is_repeatable">The event is repeatable</string>
-    <string name="task_is_repeatable">The task is repeatable</string>
-    <string name="selection_contains_repetition">The selection contains repeating events</string>
+    <string name="event_is_repeatable">The appointment is repeatable</string>
+    <string name="task_is_repeatable">The to-do is repeatable</string>
+    <string name="selection_contains_repetition">The selection contains repeating appointments</string>
     <string name="delete_one_only">Delete the selected occurrence only</string>
     <string name="delete_future_occurrences">Delete this and all future occurrences</string>
     <string name="delete_all_occurrences">Delete all occurrences</string>
@@ -302,7 +302,7 @@
     <string name="reminder">Reminder</string>
     <string name="before">before</string>
     <string name="add_another_reminder">Add another reminder</string>
-    <string name="event_reminders">Event reminders</string>
+    <string name="event_reminders">Appointment reminders</string>
     <string name="reminders">Reminders</string>
 
     <!-- Event attendees -->
@@ -317,14 +317,14 @@
     <string name="enter_a_country">Enter a country or time zone</string>
 
     <!-- Export / Import -->
-    <string name="import_events">Import events</string>
-    <string name="export_events">Export events</string>
-    <string name="import_events_from_ics">Import events from an .ics file</string>
-    <string name="import_events_from_ics_pro">Import events from an .ics file (Pro)</string>
-    <string name="export_events_to_ics">Export events to an .ics file</string>
+    <string name="import_events">Import appointments</string>
+    <string name="export_events">Export appointments</string>
+    <string name="import_events_from_ics">Import appointments from an .ics file</string>
+    <string name="import_events_from_ics_pro">Import appointments from an .ics file (Pro)</string>
+    <string name="export_events_to_ics">Export appointments to an .ics file</string>
     <string name="default_event_type">Default calendar</string>
-    <string name="export_past_events_too">Export past events too</string>
-    <string name="export_tasks">Export tasks</string>
+    <string name="export_past_events_too">Export past appointments too</string>
+    <string name="export_tasks">Export to-dos</string>
     <string name="export_past_entries">Export past entries too</string>
     <string name="include_event_types">Include calendars</string>
     <string name="filename_without_ics">Filename (without .ics)</string>
@@ -349,8 +349,8 @@
     <string name="offline_never_synced">Offline (never synced)</string>
     <string name="cannot_delete_default_type">Built-in calendar cannot be deleted</string>
     <string name="select_event_type">Select a calendar</string>
-    <string name="move_events_into_default">Move affected events into the default calendar</string>
-    <string name="remove_affected_events">Permanently remove affected events</string>
+    <string name="move_events_into_default">Move affected appointments into the default calendar</string>
+    <string name="remove_affected_events">Permanently remove affected appointments</string>
     <string name="unsync_caldav_calendar">To remove a CalDAV calendar you have to unsynchronize it</string>
 
     <!-- Holidays -->
@@ -369,7 +369,7 @@
     <string name="manage_event_types">Manage calendars</string>
     <string name="start_day_at">Start day at</string>
     <string name="end_day_at">End day at</string>
-    <string name="midnight_spanning">Show events spanning across midnight at the top bar</string>
+    <string name="midnight_spanning">Show appointments spanning across midnight at the top bar</string>
     <string name="allow_customizing_day_count">Allow customizing day count</string>
     <string name="week_numbers">Show week numbers</string>
     <string name="vibrate">Vibrate on reminder notification</string>
@@ -378,30 +378,30 @@
     <string name="no_ringtone_selected">None</string>
     <string name="day_end_before_start">The day cannot end earlier than it starts</string>
     <string name="caldav_sync">CalDAV sync</string>
-    <string name="event_lists">Event lists</string>
-    <string name="display_past_events">Display events from the past</string>
-    <string name="replace_description_with_location">Replace event description with location</string>
+    <string name="event_lists">Appointment lists</string>
+    <string name="display_past_events">Display appointments from the past</string>
+    <string name="replace_description_with_location">Replace appointment description with location</string>
     <string name="display_description_or_location">Display description or location</string>
-    <string name="delete_all_events">Delete all events</string>
-    <string name="delete_all_events_and_tasks">Delete all events and tasks</string>
-    <string name="delete_all_events_confirmation">Are you sure you want to delete all events and tasks? This will leave your calendars and other settings intact.</string>
+    <string name="delete_all_events">Delete all appointments</string>
+    <string name="delete_all_events_and_tasks">Delete all appointments and to-dos</string>
+    <string name="delete_all_events_confirmation">Are you sure you want to delete all appointments and to-dos? This will leave your calendars and other settings intact.</string>
     <string name="show_a_grid">Show a grid</string>
     <string name="loop_reminders">Loop reminders until dismissed</string>
-    <string name="dim_past_events">Dim past events</string>
-    <string name="dim_completed_tasks">Dim completed tasks</string>
-    <string name="events">Events</string>
+    <string name="dim_past_events">Dim past appointments</string>
+    <string name="dim_completed_tasks">Dim completed to-dos</string>
+    <string name="events">Appointments</string>
     <string name="reminder_stream">Audio stream used by reminders</string>
     <string name="system_stream">System</string>
     <string name="alarm_stream">Alarm</string>
     <string name="notification_stream">Notification</string>
     <string name="ring_stream">Ring</string>
-    <string name="use_last_event_reminders">Use the last event\'s reminders as the default for new events</string>
+    <string name="use_last_event_reminders">Use the last appointment\'s reminders as the default for new appointments</string>
     <string name="default_reminder_1">Default reminder 1</string>
     <string name="default_reminder_2">Default reminder 2</string>
     <string name="default_reminder_3">Default reminder 3</string>
-    <string name="view_to_open_from_widget">View to open from the event list widget</string>
+    <string name="view_to_open_from_widget">View to open from the appointment list widget</string>
     <string name="last_view">Last view</string>
-    <string name="new_events">New events</string>
+    <string name="new_events">New appointments</string>
     <string name="default_start_time">Default start time</string>
     <string name="next_full_hour">Next full hour</string>
     <string name="current_time">Current time</string>
@@ -410,10 +410,10 @@
     <string name="other_time">Other time</string>
     <string name="highlight_weekends">Highlight weekends on some views</string>
     <string name="highlight_weekends_color">Color of highlighted weekends</string>
-    <string name="allow_changing_time_zones">Allow changing event time zones</string>
+    <string name="allow_changing_time_zones">Allow changing appointment time zones</string>
     <string name="manage_quick_filter_event_types">Manage quick filter calendars</string>
-    <string name="allow_creating_tasks">Allow creating tasks</string>
-    <string name="roll_over_incomplete_tasks">Roll unfinished tasks over to today</string>
+    <string name="allow_creating_tasks">Allow creating to-dos</string>
+    <string name="roll_over_incomplete_tasks">Roll unfinished to-dos over to today</string>
 
     <!-- CalDAV sync -->
     <string name="caldav">CalDAV</string>
@@ -428,11 +428,11 @@
     <string name="synchronization_completed">Sync completed</string>
     <string name="select_a_different_caldav_color">Select a different color (might be applied locally only)</string>
     <string name="insufficient_permissions">You are not allowed to write in the selected calendar</string>
-    <string name="caldav_event_not_found">Event not found. Please enable CalDAV sync for the appropriate calendar in the app settings.</string>
+    <string name="caldav_event_not_found">Appointment not found. Please enable CalDAV sync for the appropriate calendar in the app settings.</string>
     <string name="no_synchronized_calendars">No synchronizable calendars have been found</string>
     <string name="status_free">Free</string>
     <string name="status_busy">Busy</string>
-    <string name="fetching_event_failed">Fetching event %s failed</string>
+    <string name="fetching_event_failed">Fetching appointment %s failed</string>
     <string name="status_tentative">Tentative</string>
     <string name="status_confirmed">Confirmed</string>
     <string name="status_canceled">Canceled</string>
@@ -461,7 +461,7 @@
     <string name="sample_title_5">Coffee time</string>
 
     <!-- List widget config -->
-    <string name="show_events_happening">Show events happening:</string>
+    <string name="show_events_happening">Show appointments happening:</string>
     <string name="within_the_next_one_year">Within the next 1 year</string>
     <string name="today_only">Today only</string>
     <string name="within_the_next">Within the next…</string>
@@ -492,7 +492,7 @@
     <string name="faq_1_title">How can I remove the holidays imported via the \"Add holidays\" button?</string>
     <string name="faq_1_text">Holidays created that way are inserted in a new calendar called \"Holidays\". You can go in Settings -> Manage calendars,
         long press the given calendar and delete it by selecting the trashbin.</string>
-    <string name="faq_2_title">Can I sync my events via Google Calendar, or other service supporting CalDAV?</string>
+    <string name="faq_2_title">Can I sync my appointments via Google Calendar, or other service supporting CalDAV?</string>
     <string name="faq_2_title_extra">Maybe even share calendars with other people?</string>
     <string name="faq_2_text">Yes, just toggle \"CalDAV sync\" in the app settings and select the calendars you want to sync. However, you will need some third-party app handling the synchronization between the device and servers.
         In case you want to synchronize a Google calendar, their official Calendar app will do the job. For other calendars you will need a third-party sync adapter, for example DAVx5.</string>
@@ -500,8 +500,8 @@
     <string name="faq_3_text">Not just displaying the actual reminder, but playing the audio is hugely affected by the system too. If you can\'t hear any sound, try going in the app settings,
         pressing the \"Audio stream used by reminders\" option and changing it to a different value. If it still won\'t work, check your sound settings, if the particular stream isn\'t muted.</string>
     <string name="faq_4_title">Does the app support time zones?</string>
-    <string name="faq_4_text">Yes, it does. By default all events are created in your current time zone. If you want to change an event\'s time zone,
-        you will first have to enable the time zone picker at the app settings, then change it at the Event Details screen. It is disabled by default as most people won\'t need it.</string>
+    <string name="faq_4_text">Yes, it does. By default all appointments are created in your current time zone. If you want to change an appointment\'s time zone,
+        you will first have to enable the time zone picker at the app settings, then change it at the Appointment Details screen. It is disabled by default as most people won\'t need it.</string>
     <string name="faq_5_title">The app shows no notifications, why is that?</string>
     <string name="faq_5_text">Check your device battery and notification settings, if there is nothing blocking the reminders, or killing the app in the background. You might also want to take a look at &lt;a href=https://dontkillmyapp.com&gt;https://dontkillmyapp.com&lt;/a&gt;, it has some useful tips.</string>
     <string name="faq_6_title">How can I modify or delete an existing calendar?</string>
@@ -530,8 +530,8 @@
     <string name="travel_banner_here">Here</string>
     <string name="travel_banner_home">Home</string>
     <!-- The + menu's two pills -->
-    <string name="add_event">Add event</string>
-    <string name="add_task">Add task</string>
+    <string name="add_event">Add appointment</string>
+    <string name="add_task">Add to-do</string>
     <!-- Black-yellow theme: menu pills, settings-page pills, the outlined switch -->
     <string name="theme_group_menus">Menus</string>
     <string name="theme_group_settings_page">Settings pages</string>
@@ -556,16 +556,29 @@
     <string name="theme_reset_action">Reset</string>
     <string name="theme_sub_views">Calendar views</string>
     <string name="theme_sub_year_view">Year view</string>
-    <string name="theme_sub_event_list">Event list</string>
-    <string name="theme_sub_editor">Event and task editors</string>
+    <string name="theme_sub_event_list">Appointment list</string>
+    <string name="theme_sub_editor">Appointment and to-do editors</string>
     <string name="theme_sub_fab_menu">The + menu</string>
     <string name="theme_sub_time_entry">Time entry</string>
     <string name="theme_menu_role_connect">Icon: synchronises, resets</string>
     <string name="theme_menu_role_block">Icon: locks, keeps secret</string>
     <string name="theme_status_warning">Warnings</string>
     <string name="theme_fab_menu_text">Label</string>
-    <string name="theme_fab_menu_frame">Frame</string>
-    <string name="theme_fab_menu_ground">Ground</string>
+    <string name="theme_fab_menu_frame">Pill frame</string>
+    <string name="theme_fab_menu_ground">Pill ground</string>
+    <string name="app_language">App\'s language</string>
+    <string name="app_language_desc">The language of this app only — the system language stays as it is. The app restarts when you pick another one.</string>
+    <string name="theme_sub_section_icons">Section icons of this page</string>
+    <string name="theme_section_icons_note">The icon on each heading and chip of this page is coloured by what kind of thing its section is.</string>
+    <string name="theme_section_base">The base: what the app is, and its settings</string>
+    <string name="theme_section_controls">Controls: what you operate</string>
+    <string name="theme_section_words">Words, written and read</string>
+    <string name="theme_section_frame">The frame and its boxes</string>
+    <string name="theme_section_reach">The app reaches out: asks, offers, hands over</string>
+    <string name="theme_section_warning">Warning: resets and wipes</string>
+    <string name="theme_section_flash">A brief flash</string>
+    <string name="theme_fab_menu_panel_frame">Border round the menu</string>
+    <string name="theme_fab_menu_panel_ground">Menu ground</string>
     <string name="theme_fab_menu_scrim">Veil over the screen behind</string>
     <string name="theme_time_cell_frame">Digit box frame</string>
     <string name="theme_time_cell_ground">Digit box ground</string>
@@ -575,14 +588,14 @@
     <string name="theme_day_number">Day numbers and weekday letters</string>
     <string name="theme_week_number">Week number</string>
     <string name="theme_hour_label">Hours of the weekly view</string>
-    <string name="theme_new_event_mark">Tapped slot for a new event</string>
+    <string name="theme_new_event_mark">Tapped slot for a new appointment</string>
     <string name="theme_year_month_label">Month names</string>
     <string name="theme_year_current_month">Current month</string>
     <string name="theme_year_day_number">Day numbers</string>
     <string name="theme_year_today_mark">Today</string>
     <string name="theme_list_item_text">Entry text</string>
     <string name="theme_list_placeholder">Note when the list is empty</string>
-    <string name="theme_list_new_event_link">“New event” link</string>
+    <string name="theme_list_new_event_link">“New appointment” link</string>
     <string name="theme_editor_icon">Row icons</string>
     <string name="theme_editor_icon_people">Attendees icon</string>
     <string name="theme_editor_map_icon">Map button</string>

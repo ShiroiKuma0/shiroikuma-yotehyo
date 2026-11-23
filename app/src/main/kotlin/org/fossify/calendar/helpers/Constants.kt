@@ -196,12 +196,17 @@ const val PALETTE_BLACK = 0xFF000000.toInt()
 const val PALETTE_YELLOW = 0xFFFFFF00.toInt()
 // The one hue the black/yellow palette leaves unused, so it reads as "today" and nothing else.
 const val PALETTE_BLUE = 0xFF2979FF.toInt()
-// Menu icon roles (ThemeSlot.MENU_ROLE_*): what an icon's colour says its row does
-const val PALETTE_CYAN = 0xFF00FFFF.toInt() // about a contact or person
+// Menu icon roles (ThemeSlot.MENU_ROLE_*): what an icon's colour says its row does. Persons take the
+// sky blue, "connects" the deep green and "blocks" the rose below — the cyan, pure green and magenta
+// they had were hard for 白い熊 to tell from yellow and from each other (2026-11-23).
 const val PALETTE_ORANGE = 0xFFFF8000.toInt() // copies, shares, exports
 const val PALETTE_RED = 0xFFFF0000.toInt() // deletes — the warning colour
-const val PALETTE_GREEN = 0xFF00FF00.toInt() // connects, synchronises
-const val PALETTE_MAGENTA = 0xFFFF00FF.toInt() // blocks, locks, keeps secret
+// Section icon colours of the UI page (ThemeSlot.SECTION_*): what kind of thing a section is. Chosen
+// with 白い熊 by eye — no violet or magenta, blues far apart, a heavy green that does not read as yellow.
+const val PALETTE_SKY = 0xFF00B0FF.toInt() // words, written and read; in menus: about a person
+const val PALETTE_DEEP_BLUE = 0xFF0066FF.toInt() // the frame and its boxes
+const val PALETTE_DEEP_GREEN = 0xFF00A550.toInt() // controls; in menus: connects, synchronises
+const val PALETTE_ROSE = 0xFFFF3D7F.toInt() // a brief flash — rare; in menus: blocks, locks
 const val PALETTE_WARNING = 0xFFFF5252.toInt() // a warning that is only read
 const val PALETTE_WEEKEND = 0xFFEC2E2A.toInt() // the weekend highlight's default
 

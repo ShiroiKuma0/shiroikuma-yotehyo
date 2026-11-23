@@ -93,9 +93,24 @@ import org.fossify.commons.helpers.NavigationIcon
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.helpers.isRPlus
 import org.fossify.commons.models.RadioItem
+import androidx.annotation.DrawableRes
+import org.fossify.calendar.extensions.appLanguageLabel
+import org.fossify.calendar.extensions.showAppLanguagePicker
+import org.fossify.calendar.extensions.labelIconGutter
+import org.fossify.calendar.extensions.setLabelIcon
+import org.fossify.commons.R as CR
 
-/** A top-level section of the page: its stored [key] (never rename one), its heading, and what builds its rows. */
-private class UiSection(val key: String, val title: String, val fill: () -> Unit)
+/**
+ * A top-level section of the page: its stored [key] (never rename one), its heading, the [icon] its
+ * heading and its index chip both carry — in the colour of [role] — and what builds its rows.
+ */
+private class UiSection(
+    val key: String,
+    val title: String,
+    @DrawableRes val icon: Int,
+    val role: ThemeSlot,
+    val fill: () -> Unit,
+)
 
 /**
  * The icon a row of the page carries, coloured by what the row does. The colours are the menu icon
@@ -117,6 +132,7 @@ private enum class RowIcon(val res: Int, val role: ThemeSlot) {
     DIRECTORY(org.fossify.commons.R.drawable.ic_folder_vector, ThemeSlot.MENU_ROLE_SHARE),
     AUTOMATION(org.fossify.commons.R.drawable.ic_code_vector, ThemeSlot.MENU_ROLE_SHARE),
     DELETE(org.fossify.commons.R.drawable.ic_delete_vector, ThemeSlot.MENU_ROLE_DELETE),
+    LANGUAGE(R.drawable.ic_globe_vector, ThemeSlot.MENU_ROLE_VIEW),
 }
 
 // The chip index under the app-settings pill, the folding headings, and a row's icon.
@@ -129,8 +145,11 @@ private const val SECTION_GAP_DP = 10f
 private const val SECTION_HEADER_PAD_DP = 8f
 private const val SECTION_TITLE_SP = 20f
 private const val SECTION_CHEVRON_SP = 22f
-private const val ROW_ICON_DP = 20f
-private const val ROW_ICON_GAP_DP = 10f
+private const val SECTION_ICON_GAP_DP = 12f
+private const val INDEX_ICON_GAP_DP = 5f
+
+// An icon is 1.25 × the text size of the label it stands before, so it follows the font scale.
+private const val ICON_PER_TEXT = 1.25f
 
 // The consolidated "白い熊 予定表 UI" screen: the way to the app's own settings, a chip index, then the
 // sections — each a folding block, folded unless 白い熊 opened it, in the order the chips were dragged into. Built from a section -> (optional subsection) -> rows
@@ -230,31 +249,47 @@ class ThemeActivity : SimpleActivity() {
         ) { openAppSettings() }
 
         val built = ArrayList<UiSection>()
-        fun section(key: String, @StringRes titleRes: Int, fill: () -> Unit) =
-            built.add(UiSection(key, getString(titleRes), fill))
+        // Every section has an icon — on its heading and on its chip — coloured by what kind of thing the
+        // section is (ThemeSlot.SECTION_*). The default order below keeps two of one colour apart.
+        fun section(
+            key: String,
+            @StringRes titleRes: Int,
+            @DrawableRes icon: Int,
+            role: ThemeSlot,
+            fill: () -> Unit,
+        ) = built.add(UiSection(key, getString(titleRes), icon, role, fill))
         fun slots(group: ThemeGroup) = slotsOf(group).forEach { addSlot(it) }
 
         // Your data first (backup, housekeeping), then the look, surface by surface.
-        section("exim", R.string.eim_heading) {
+        section("exim", R.string.eim_heading, CR.drawable.ic_share_vector, ThemeSlot.SECTION_REACH) {
             addExportImportRow()
             // Automation sits directly below the export row it drives — the placement every sister app shares.
             addSubsection(R.string.automation)
             addAutomationRows()
         }
-        section("maintenance", R.string.theme_maintenance) { addMaintenanceRows() }
-        section("foundation", R.string.theme_group_foundation) { slots(ThemeGroup.FOUNDATION) }
-        section("text", UiRoleSection.TEXT.labelRes) {
+        section("language", R.string.app_language, R.drawable.ic_globe_vector, ThemeSlot.SECTION_WORDS) {
+            addActionRow(appLanguageLabel(), getString(R.string.app_language_desc), main = true, opens = true, icon = RowIcon.LANGUAGE) {
+                showAppLanguagePicker()
+            }
+        }
+        section("maintenance", R.string.theme_maintenance, CR.drawable.ic_reset_vector, ThemeSlot.SECTION_WARNING) { addMaintenanceRows() }
+        section("foundation", R.string.theme_group_foundation, R.drawable.ic_color_outline_vector, ThemeSlot.SECTION_BASE) { slots(ThemeGroup.FOUNDATION) }
+        section("text", UiRoleSection.TEXT.labelRes, CR.drawable.ic_article_outline_vector, ThemeSlot.SECTION_WORDS) {
             slots(ThemeGroup.TEXT_STATUS)
             addRoleRows(UiRoleSection.TEXT)
         }
-        section("fields", UiRoleSection.FIELDS.labelRes) { addRoleRows(UiRoleSection.FIELDS) }
-        section("buttons", UiRoleSection.BUTTONS.labelRes) {
+        section("buttons", UiRoleSection.BUTTONS.labelRes, CR.drawable.ic_check_circle_vector, ThemeSlot.SECTION_CONTROLS) {
             addRoleRows(UiRoleSection.BUTTONS)
             addSubsection(R.string.theme_sub_fab_menu)
             slots(ThemeGroup.BUTTONS)
         }
+        section("fields", UiRoleSection.FIELDS.labelRes, CR.drawable.ic_rename_vector, ThemeSlot.SECTION_WORDS) { addRoleRows(UiRoleSection.FIELDS) }
+        section("switches", UiRoleSection.SWITCHES.labelRes, R.drawable.ic_circle_vector, ThemeSlot.SECTION_CONTROLS) {
+            slots(ThemeGroup.SWITCHES)
+            addRoleRows(UiRoleSection.SWITCHES)
+        }
         // Dialogs — the frame drawn around every dialog, its buttons, every colour of a dialog and of the pickers.
-        section("dialogs", R.string.theme_group_dialogs) {
+        section("dialogs", R.string.theme_group_dialogs, CR.drawable.ic_info_outline_vector, ThemeSlot.SECTION_REACH) {
             addThicknessRow(R.string.theme_dialog_border_width, config.dialogBorderWidth, min = 0, max = 8) {
                 config.dialogBorderWidth = it
             }
@@ -272,32 +307,33 @@ class ThemeActivity : SimpleActivity() {
             addSubsection(R.string.theme_sub_font_picker)
             slots(ThemeGroup.FONT_PICKER)
         }
-        section("switches", UiRoleSection.SWITCHES.labelRes) {
-            slots(ThemeGroup.SWITCHES)
-            addRoleRows(UiRoleSection.SWITCHES)
-        }
-        section("marks", UiRoleSection.MARKS.labelRes) { addRoleRows(UiRoleSection.MARKS) }
+        section("marks", UiRoleSection.MARKS.labelRes, CR.drawable.ic_check_vector, ThemeSlot.SECTION_CONTROLS) { addRoleRows(UiRoleSection.MARKS) }
         // Menus — every action row is an outlined pill; its icon is coloured by what the row does.
-        section("menus", R.string.theme_group_menus) {
+        section("menus", R.string.theme_group_menus, CR.drawable.ic_three_dots_vector, ThemeSlot.SECTION_REACH) {
             addDescriptionRow(R.string.theme_menus_note)
             slots(ThemeGroup.MENUS)
             addRoleRows(UiRoleSection.MENUS)
         }
-        section("lists", UiRoleSection.LISTS.labelRes) {
+        section("lists", UiRoleSection.LISTS.labelRes, CR.drawable.ic_sort_vector, ThemeSlot.SECTION_FRAME) {
             addRoleRows(UiRoleSection.LISTS)
             addSubsection(R.string.theme_sub_calendar_lists)
             slots(ThemeGroup.LISTS)
         }
-        section("search", R.string.theme_group_search) { slots(ThemeGroup.SEARCH) }
-        section("chrome", R.string.theme_group_chrome) { slots(ThemeGroup.CHROME) }
-        section("bars", UiRoleSection.BARS.labelRes) { addRoleRows(UiRoleSection.BARS) }
-        section("settings_page", R.string.theme_group_settings_page) { slots(ThemeGroup.SETTINGS_PAGE) }
-        section("cal_views", R.string.theme_sub_views) { addCalendarViewRows() }
-        section("cal_boxes", R.string.theme_sub_day_boxes) { addDayBoxRows() }
-        section("cal_events", R.string.theme_sub_events) { addEventRows() }
-        section("editor", R.string.theme_sub_editor) { slots(ThemeGroup.EDITOR) }
-        section("widget_setup", R.string.theme_sub_widget_setup) { slots(ThemeGroup.WIDGET_SETUP) }
-        section("toasts", UiRoleSection.TOASTS.labelRes) { addRoleRows(UiRoleSection.TOASTS) }
+        section("toasts", UiRoleSection.TOASTS.labelRes, R.drawable.ic_bell_outline_vector, ThemeSlot.SECTION_FLASH) { addRoleRows(UiRoleSection.TOASTS) }
+        section("chrome", R.string.theme_group_chrome, CR.drawable.ic_move_to_top_vector, ThemeSlot.SECTION_FRAME) { slots(ThemeGroup.CHROME) }
+        section("settings_page", R.string.theme_group_settings_page, CR.drawable.ic_settings_cog_vector, ThemeSlot.SECTION_BASE) {
+            slots(ThemeGroup.SETTINGS_PAGE)
+            addSubsection(R.string.theme_sub_section_icons)
+            addDescriptionRow(R.string.theme_section_icons_note)
+            slots(ThemeGroup.SECTION_ICONS)
+        }
+        section("search", R.string.theme_group_search, CR.drawable.ic_search_vector, ThemeSlot.SECTION_WORDS) { slots(ThemeGroup.SEARCH) }
+        section("bars", UiRoleSection.BARS.labelRes, CR.drawable.ic_drag_handle_vector, ThemeSlot.SECTION_FRAME) { addRoleRows(UiRoleSection.BARS) }
+        section("cal_views", R.string.theme_sub_views, R.drawable.ic_change_view_vector, ThemeSlot.SECTION_BASE) { addCalendarViewRows() }
+        section("cal_boxes", R.string.theme_sub_day_boxes, R.drawable.ic_today_vector, ThemeSlot.SECTION_FRAME) { addDayBoxRows() }
+        section("cal_events", R.string.theme_sub_events, R.drawable.ic_calendar_vector, ThemeSlot.SECTION_BASE) { addEventRows() }
+        section("editor", R.string.theme_sub_editor, CR.drawable.ic_edit_vector, ThemeSlot.SECTION_WORDS) { slots(ThemeGroup.EDITOR) }
+        section("widget_setup", R.string.theme_sub_widget_setup, CR.drawable.ic_apps_vector, ThemeSlot.SECTION_REACH) { slots(ThemeGroup.WIDGET_SETUP) }
         sections = orderedSections(built)
 
         addSectionIndex()
@@ -408,6 +444,10 @@ class ThemeActivity : SimpleActivity() {
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, INDEX_TEXT_SP)
                 setPadding(px(INDEX_PAD_H_DP), px(INDEX_PAD_V_DP), px(INDEX_PAD_H_DP), px(INDEX_PAD_V_DP))
                 background = pillDrawable(uiColor(UiRole.BUTTON_FRAME), uiColor(UiRole.BUTTON_GROUND), main = false)
+                // the section's own icon, in its role colour; the chip stays as wide as icon + label
+                gravity = Gravity.CENTER_VERTICAL
+                setCompoundDrawablesRelative(sectionIcon(section, textSize), null, null, null)
+                compoundDrawablePadding = px(INDEX_ICON_GAP_DP)
                 setOnClickListener { jumpToSection(section.key) }
                 setOnLongClickListener { chip ->
                     chip.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
@@ -493,6 +533,12 @@ class ThemeActivity : SimpleActivity() {
             gravity = Gravity.CENTER_VERTICAL
             setPaddingRelative(margin, px(SECTION_HEADER_PAD_DP), margin, px(SECTION_HEADER_PAD_DP))
             background = rippleDrawable()
+            addView(
+                ImageView(this@ThemeActivity).apply { setImageDrawable(sectionIcon(section, label.textSize)) },
+                LinearLayout.LayoutParams(iconSize(label.textSize), iconSize(label.textSize)).apply {
+                    marginEnd = px(SECTION_ICON_GAP_DP)
+                },
+            )
             addView(labelColumn, LinearLayout.LayoutParams(wrap, wrap))
             addView(View(this@ThemeActivity), LinearLayout.LayoutParams(0, 0, 1f))
             addView(chevron)
@@ -509,6 +555,14 @@ class ThemeActivity : SimpleActivity() {
         sectionChevrons[section.key] = chevron
         showSectionState(section.key, section.key in config.uiSectionsOpen)
     }
+
+    private fun iconSize(labelTextSizePx: Float) = (labelTextSizePx * ICON_PER_TEXT).toInt()
+
+    /** The section's icon, sized by its label and in the colour of its role — the same on its heading and on its chip. */
+    private fun sectionIcon(section: UiSection, labelTextSizePx: Float) =
+        resources.getColoredDrawableWithColor(section.icon, themeColor(section.role)).apply {
+            setBounds(0, 0, iconSize(labelTextSizePx), iconSize(labelTextSizePx))
+        }
 
     private fun setSectionOpen(key: String, open: Boolean) {
         val stored = config.uiSectionsOpen
@@ -566,14 +620,9 @@ class ThemeActivity : SimpleActivity() {
         }
     }
 
-    // The row's icon, before its label and in the colour of what the row does.
-    private fun TextView.setRowIcon(icon: RowIcon, color: Int = themeColor(icon.role)) {
-        val size = px(ROW_ICON_DP)
-        val drawable = resources.getColoredDrawableWithColor(icon.res, color)
-        drawable.setBounds(0, 0, size, size)
-        setCompoundDrawablesRelative(drawable, null, null, null)
-        compoundDrawablePadding = px(ROW_ICON_GAP_DP)
-    }
+    // The row's icon, before its label and in the colour of what the row does; sized by the label.
+    private fun TextView.setRowIcon(icon: RowIcon, color: Int = themeColor(icon.role), onGutter: ((Int) -> Unit)? = null) =
+        setLabelIcon(icon.res, color, onGutter)
 
     // A swatch: the colour inside a thin ring of the text role, so a swatch in the background colour shows.
     private fun swatch(color: Int) = GradientDrawable().apply {
@@ -1319,6 +1368,7 @@ class ThemeActivity : SimpleActivity() {
     ): TextView? {
         val padH = px(16f)
         val padV = px(9f)
+        var descUnderPill: TextView? = null
         val ink = uiColor(if (destructive) UiRole.BUTTON_DESTRUCTIVE else UiRole.BUTTON_TEXT)
         val frame = uiColor(if (destructive) UiRole.BUTTON_DESTRUCTIVE else UiRole.BUTTON_FRAME)
         val pill = TextView(this).apply {
@@ -1327,7 +1377,8 @@ class ThemeActivity : SimpleActivity() {
             setTextColor(ink)
             if (main) setTypeface(typeface, Typeface.BOLD)
             gravity = Gravity.CENTER_VERTICAL
-            setRowIcon(icon)
+            // the explanation beneath starts under the label's text, wherever the icon's size puts that
+            setRowIcon(icon) { gutter -> descUnderPill?.setPaddingRelative(padH + gutter, 0, padH, px(2f)) }
             background = pillDrawable(frame, uiColor(UiRole.BUTTON_GROUND), main)
             setPadding(padH, padV, padH, padV)
             isClickable = true
@@ -1344,7 +1395,8 @@ class ThemeActivity : SimpleActivity() {
         }
         val descView = desc?.let { text ->
             noteView(text).apply {
-                setPaddingRelative(padH + px(ROW_ICON_DP + ROW_ICON_GAP_DP), 0, padH, px(2f))
+                setPaddingRelative(padH + pill.labelIconGutter(), 0, padH, px(2f))
+                descUnderPill = this
                 column.addView(this)
             }
         }

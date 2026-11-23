@@ -1,5 +1,7 @@
 package org.fossify.calendar.activities
 
+import org.fossify.calendar.extensions.withAppLanguage
+import android.content.Context
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import org.fossify.calendar.extensions.config
@@ -10,6 +12,8 @@ import org.fossify.commons.extensions.showPickSecondsDialogHelper
 import org.fossify.commons.helpers.ensureBackgroundThread
 
 class SnoozeReminderActivity : AppCompatActivity() {
+    override fun attachBaseContext(newBase: Context) = super.attachBaseContext(newBase.withAppLanguage())
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 

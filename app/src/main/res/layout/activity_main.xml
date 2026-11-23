@@ -44,9 +44,9 @@
                 android:alpha="0"
                 android:visibility="gone" />
 
-            <!-- The + menu: two bare pills stacked above the button, 鍵暗号-style — a Material
-                 extended FAB each (56 dp tall, 16 dp corners, label-large text), unfilled, in an
-                 accent frame. No panel around them, no icons. Colours are set in code. -->
+            <!-- The + menu: two pills stacked above the button, 鍵暗号-style — a Material extended
+                 FAB each (56 dp tall, 16 dp corners, label-large text), unfilled, in an accent
+                 frame — inside one framed panel. No icons. Colours and the panel are set in code. -->
             <LinearLayout
                 android:id="@+id/fab_menu"
                 android:layout_width="wrap_content"
@@ -55,28 +55,27 @@
                 android:layout_marginBottom="@dimen/activity_margin"
                 android:alpha="0"
                 android:orientation="vertical"
+                android:padding="@dimen/medium_margin"
                 android:visibility="gone"
                 app:layout_constraintBottom_toTopOf="@+id/calendar_fab"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_goneMarginBottom="@dimen/activity_margin">
 
                 <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-                    android:id="@+id/fab_task_label"
-                    android:layout_width="wrap_content"
+                    android:id="@+id/fab_event_label"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="end"
-                    android:layout_marginBottom="@dimen/activity_margin"
+                    android:layout_marginBottom="@dimen/medium_margin"
                     android:stateListAnimator="@null"
-                    android:text="@string/add_task"
+                    android:text="@string/add_event"
                     app:elevation="0dp" />
 
                 <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-                    android:id="@+id/fab_event_label"
-                    android:layout_width="wrap_content"
+                    android:id="@+id/fab_task_label"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="end"
                     android:stateListAnimator="@null"
-                    android:text="@string/add_event"
+                    android:text="@string/add_task"
                     app:elevation="0dp" />
 
             </LinearLayout>

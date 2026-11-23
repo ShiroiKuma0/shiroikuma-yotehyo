@@ -1376,6 +1376,12 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
         }
         val pillFrame = themeColor(ThemeSlot.FAB_MENU_FRAME)
         val pillStroke = (2 * resources.displayMetrics.density).toInt()
+        // the panel round both pills: 8 dp of padding outside the pills' 16 dp corners
+        fabMenu.background = android.graphics.drawable.GradientDrawable().apply {
+            cornerRadius = 24 * resources.displayMetrics.density
+            setColor(themeColor(ThemeSlot.FAB_MENU_PANEL_GROUND))
+            setStroke(pillStroke, themeColor(ThemeSlot.FAB_MENU_PANEL_FRAME))
+        }
         arrayOf(fabEventLabel, fabTaskLabel).forEach { pill ->
             pill.backgroundTintList =
                 android.content.res.ColorStateList.valueOf(themeColor(ThemeSlot.FAB_MENU_GROUND))
