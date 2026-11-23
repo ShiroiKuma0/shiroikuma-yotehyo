@@ -19,7 +19,7 @@ upstream release, replay our `custom` customizations on top of it, and produce a
 - Fork `versionName` = `"<VERSION_NAME>+<BUILD_NUMBER zero-padded to 3 digits>"` (e.g. `1.12.2+001`),
   `versionCode` = `VERSION_CODE * 10000 + BUILD_NUMBER` (plain integer — the padding is text only).
 - This fork builds against our **patched Fossify Commons** (`commons = "<ver>-skN"` from `mavenLocal`,
-  currently `7.1.3-sk1`, the `~/git/shiroikuma-commons` fork, which both strips Commons' anti-tamper
+  currently `7.1.3-sk2`, the `~/git/shiroikuma-commons` fork, which both strips Commons' anti-tamper
   "fake version" / sideloading nags **and** carries fork-package fixes; `-skN` is our patch revision).
   When upstream bumps Commons, the patched fork must be re-cut at the new version — see step 4.
 
@@ -53,7 +53,7 @@ line's, keeping upgrades monotonic.
      (the `-skN` counter restarts at `sk1` for a new Commons base).
    - Resolve the `commons` pin conflict in favour of **our `-sk1` suffix at the new version**
      (`<newver>-sk1`), never the bare upstream value.
-   If Commons is unchanged, keep the existing `<ver>-skN` pin (currently `7.1.3-sk1`; re-publish only if
+   If Commons is unchanged, keep the existing `<ver>-skN` pin (currently `7.1.3-sk2`; re-publish only if
    `~/.m2` was cleared).
 
 5. **Update versioning in `gradle.properties`:**
@@ -67,7 +67,7 @@ line's, keeping upgrades monotonic.
    | Installed app ID | `shiroikuma.yotehyo` | `gradle.properties` → `APP_ID` |
    | Code namespace | `org.fossify.calendar` (unchanged from upstream) | `gradle.properties` → `APP_NAMESPACE` |
    | App launcher label | `白い熊 予定表` | `app_launcher_name` in `values/strings.xml` + `values-ja/strings.xml` |
-   | Patched Commons pin | `commons = "<ver>-skN"` (from `mavenLocal`; currently `7.1.3-sk1`) | `gradle/libs.versions.toml` |
+   | Patched Commons pin | `commons = "<ver>-skN"` (from `mavenLocal`; currently `7.1.3-sk2`) | `gradle/libs.versions.toml` |
    | Fork version logic | `forkVersionName` / `forkVersionCode` + `buildFoss` task | `app/build.gradle.kts` |
    | `namespace = APP_NAMESPACE` | not `APP_ID` | `app/build.gradle.kts` |
 

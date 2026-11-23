@@ -183,13 +183,14 @@ the fork as of `-sk18`; this app has no such Settings row and no `CustomizationA
 - **Source:** the `shiroikuma-commons` fork (`~/git/shiroikuma-commons`, branch `custom`), which strips
   Commons' anti-tamper "fake version" / sideloading checks out entirely **and** carries fork-package
   fixes for spots where Commons hard-codes `org.fossify.*` (documented in that repo's CLAUDE.md).
-- **Delivery:** published to the local Maven repo, consumed as `commons = "7.1.3-sk1"` in
+- **Delivery:** published to the local Maven repo, consumed as `commons = "7.1.3-sk2"` in
   `gradle/libs.versions.toml` (`mavenLocal()` is already a repository in `settings.gradle.kts`).
 - **Commons 7 (+090, 2026-11-22):** `7.1.3-sk1` is every patch of `6.1.6-sk1`–`sk19` replayed onto
   upstream Commons 7.1.3, so the `-skN` labels below name the 6.1.6-line revision that introduced each
   patch; all of them are in `7.1.3-sk1`. The move changed only the flavour bool: `hide_google_relations`
   became `is_google_play_build` (inverted; false for foss, true for gplay) in the flavours' `bools.xml`
-  and in `MainActivity`'s two checks. A further Commons change is published as `7.1.3-sk2`, ….
+  and in `MainActivity`'s two checks. Later Commons changes are published as `7.1.3-sk2`, ….
+- **`7.1.3-sk2` (+010, 2026-11-23):** the 16 strings Commons lacked in Japanese; a pin bump only.
 - Because Commons itself no longer nags, this app carries **no** in-app workaround — no `getPackageName`
   spoof, no `SIDELOADING_FALSE`, no `res/raw/keep.xml`.
 
@@ -239,7 +240,7 @@ drops custom toast views from a backgrounded app. So the "Saving…" flash on sa
 
 - **The role tables.** The commons' is `helpers/UiRoles.kt` (`UiRole`; `uiColor` / `setUiColor` /
   `resetUiColor`, stored under `ui_role_<key>`). This app's own is `ThemeSlot` in
-  `extensions/ThemeColors.kt` (86 roles). A slot with `role = UiRole.X` IS that commons role under the
+  `extensions/ThemeColors.kt` (95 roles). A slot with `role = UiRole.X` IS that commons role under the
   app's label; `migrateSlotsToRoles()` moves older overrides at every start and after an import.
   Defaults live in `themeDefault()` and name only the `PALETTE_*` constants or another role.
 - **No colour in XML.** No layout, style or in-app drawable carries a colour, and
@@ -269,7 +270,7 @@ git checkout <new-commons-tag>     # then re-apply all patches (anti-tamper stri
 JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 ./gradlew :commons:publishToMavenLocal -PVERSION=<ver>-skN
 ```
 
-Then set this app's `commons` pin to the same `<ver>-skN` (currently `7.1.3-sk1`; `-skN` is our patch
+Then set this app's `commons` pin to the same `<ver>-skN` (currently `7.1.3-sk2`; `-skN` is our patch
 revision — see the commons fork's CLAUDE.md). The patched AAR lives only in `~/.m2`, not in the repo.
 
 ## Commit convention — no Claude attribution
