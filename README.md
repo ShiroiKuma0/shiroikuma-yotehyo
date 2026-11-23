@@ -10,7 +10,7 @@ A fork of [Fossify Calendar](https://github.com/FossifyOrg/Calendar) with **majo
 
 Installs **side-by-side** with Fossify Calendar (app id `shiroikuma.yotehyo`).
 
-**📥 Latest release: [`1.12.2+002`](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases)
+**📥 Latest release: [`1.12.2+011`](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-yotehyo/releases)
 
 </div>
 
@@ -51,6 +51,11 @@ Any text element — events, day-box headers, menus, the view switcher — can g
 
 ## 🇯🇵 Japanese time formats & quick navigation
 Event times in a Japanese clock/duration style (or any custom pattern), 日週月年 view-switcher glyphs in the search bar, long-press the overflow button for the UI page, swipe up in the left quarter to jump to today, and a keyboard-entry HH:MM time picker instead of the clock face.
+
+## 🌐 The app's own language, fully in Japanese
+The UI page has an **App's language** section: pick any of the 84 languages the app carries, each listed under its own name, and only this app changes — the system language stays as it is, on every Android version. Every string the fork adds is translated into Japanese, so a Japanese screen has no English lines in it. In English, the fixed entries are called **appointments** and the ones you tick off **to-dos**.
+
+---
 
 ## ✈️ Time zones that understand a flight
 An event can leave in one zone and land in another. Type the times as the ticket prints them — each is read on its own zone's clock — and the editor shows start and end in their own framed cards with a live line between them: the real flight time, the arrival on the departure clock, the 時差, and a red warning if the arrival would come before the departure. In the day view and the event list the device-clock times are followed by 発 / 着 lines with the city, the local time, an outlined zone tag, the time difference and 翌日 when it lands on another date; an event in one foreign zone gets a single 現地 line. Find a zone by city, by its code or by the airport code on the boarding pass (`PRG`, `IST`, `NRT`…), with your recent zones on top. Set a home zone and, while you are away from it, the day view shows where you are and what time it is at home. The arrival zone syncs over CalDAV and survives ICS export / import, and a ✈ marks such events in the month and week grids.

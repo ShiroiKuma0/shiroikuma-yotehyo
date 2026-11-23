@@ -4,6 +4,48 @@ This file carries **both** histories. The 白い熊 予定表 fork releases come
 everything below the `# Changelog` heading further down is Fossify Calendar's own changelog,
 kept verbatim.
 
+## 白い熊 予定表 1.12.2+011 — 2026-11-23
+Built on Fossify Calendar 1.12.2.
+
+### Major features
+- **App's language.** The UI page has a section "App's language": a list of "System default" and the
+  84 languages the app carries, each under its own name. The choice applies to this app only, on
+  every Android version, and the app restarts into it. The system language and Android's own per-app
+  language screen are left alone. The Settings rows "Language" and "Use English language" are gone;
+  an install that had "Use English language" on stays in English.
+- **Full Japanese.** The 176 strings of the fork that had no Japanese translation have one — the UI
+  page, Export / Import, automation, the time-zone features, the + menu. The patched Commons closes
+  its own gap of 16 strings.
+- **Appointment and To-do.** In English an event is now an "appointment" and a task a "to-do", in
+  every string: the + menu, the editors, the type chooser, filters, settings, notifications, the
+  widget name. Other languages keep their own words.
+
+### UI & theming
+- **The + menu.** "Add appointment" is above "Add to-do", the two are 8 dp apart and equally wide,
+  and both sit in one framed panel. Two new colour roles: the panel's border and its ground.
+- **Section icons on the UI page.** Every section has an icon on its heading and the same icon on
+  its chip in the index. The chips stay as wide as their content.
+- **Seven icon colours, each with one meaning:** yellow for the base of the app and its settings,
+  green for controls, light blue for words, heavy blue for the frame, orange where the app reaches
+  out (export, dialogs, menus, widgets), red for Maintenance, rose for toasts. The seven are
+  settable under Settings pages → "Section icons of this page". The default section order keeps two
+  of one colour apart; an order already dragged is kept.
+- **Menu icon colours.** Three defaults moved to colours that are easier to tell apart: about a
+  person is light blue `#00B0FF`, synchronises / resets is heavy green `#00A550`, locks is rose
+  `#FF3D7F`. A colour set on the UI page is kept.
+- **Icons sized by their label.** The icons of the UI page's headings, chips and rows, and of the
+  Settings screen's rows, are 1.25 × the label's text size and never under 18 dp, and sit on the
+  label's first line.
+
+### Fixes & behavior
+- The event-list widget's "No upcoming appointments" line is set by the app, so it follows the
+  app's language and not the system's.
+
+### Packaging
+- Version **1.12.2+011**, version code 250011. Builds `+003` to `+010` were steps on the way and
+  were not released.
+- Patched Fossify Commons **7.1.3-sk2**.
+
 ## 白い熊 予定表 1.12.2+002 — 2026-11-22
 Built on Fossify Calendar 1.12.2.
 
